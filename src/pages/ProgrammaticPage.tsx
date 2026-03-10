@@ -505,9 +505,39 @@ const ProgrammaticPage = () => {
     enabled: !!parsed?.citySlug && shouldFetchEvents,
   });
 
-  // Apply family/date-night filtering + priority sorting to events
+  // Exclusion terms for live music pages
+  const LIVE_MUSIC_EXCLUDE_TERMS = ["class", "classes", "course", "courses", "workshop", "workshops", "lesson", "lessons", "recording", "dj set", "dj night", "tutorial"];
+
+  // Apply family/date-night/live-music filtering + priority sorting to events
   const events = useMemo(() => {
     if (!rawEvents) return rawEvents;
+
+    // LIVE MUSIC filtering — only real performances
+    if (parsed?.categorySlug === "live-music") {
+      return rawEvents.filter(event => {
+        const tags: string[] = event.tags || [];
+        const title = event.title.toLowerCase();
+        const desc = (event.short_description || event.description || "").toLowerCase();
+        const combined = title + " " + desc;
+
+        // Exclude non-performance content
+        if (LIVE_MUSIC_EXCLUDE_TERMS.some(t => combined.includes(t))) return false;
+        if (tags.includes("workshop") || tags.includes("workshops")) return false;
+
+        // Include if has music performance tags
+        if (tags.some(t => ["live-music", "music", "concert", "gig", "band", "acoustic", "jazz"].includes(t))) return true;
+
+        // Include if title suggests live performance
+        if (title.includes("live") || title.includes("concert") || title.includes("gig") ||
+            title.includes("band") || title.includes("acoustic") || title.includes("session") ||
+            title.includes("singer") || title.includes("songwriter")) return true;
+
+        // Include general music events (not classes/workshops which are already excluded above)
+        if (tags.includes("music") || title.includes("music")) return true;
+
+        return false;
+      });
+    }
 
     // DATE NIGHT filtering
     if (isDateNightPage) {
