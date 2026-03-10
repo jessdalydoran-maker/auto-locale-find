@@ -96,6 +96,19 @@ const AdminPage = () => {
     },
   });
 
+  const { data: searchTrends } = useQuery({
+    queryKey: ["admin-search-trends"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("search_trends")
+        .select("*")
+        .order("trend_score", { ascending: false })
+        .limit(50);
+      if (error) throw error;
+      return data;
+    },
+  });
+
   const settingsMap = new Map(
     automationSettings?.map((s) => [s.key, s.value]) || []
   );
