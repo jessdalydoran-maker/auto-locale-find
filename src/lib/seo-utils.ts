@@ -178,10 +178,10 @@ export function generateTitle(
 
   // Things to do cluster
   if (categoryName.toLowerCase() === "things to do") {
-    if (modifier === "free") return `Free Things To Do in ${location}${timeLabel ? ` ${timeLabel}` : ""} | Activities & Attractions`;
-    if (modifier === "family") return `Family Activities in ${location}${timeLabel ? ` ${timeLabel}` : ""} | Kids & Family Fun`;
-    if (modifier === "date-night" || modifier === "romantic") return `Date Night in ${location} | Romantic Ideas & Activities`;
-    if (modifier === "indoor" || timeIntent === "rainy-day") return `Indoor Activities in ${location} | Rainy Day Ideas`;
+    if (modifier === "free" || modifier === "cheap") return `Cheap & Free Things To Do in ${location}${timeLabel ? ` ${timeLabel}` : ""} | Budget-Friendly Activities`;
+    if (modifier === "family") return `Family Day Out in ${location}${timeLabel ? ` ${timeLabel}` : ""} | Kids & Family Fun`;
+    if (modifier === "date-night" || modifier === "romantic") return `Date Night Ideas in ${location} | Romantic Restaurants & Activities`;
+    if (modifier === "rainy-day" || modifier === "indoor" || timeIntent === "rainy-day") return `Rainy Day Ideas in ${location} | Indoor Activities & Things To Do`;
     if (timeLabel) return `Things To Do in ${location} ${timeLabel} | Activities & Events`;
     return `Things To Do in ${location} | Best Activities & Attractions`;
   }
