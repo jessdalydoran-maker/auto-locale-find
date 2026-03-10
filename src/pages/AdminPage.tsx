@@ -15,6 +15,7 @@ import { toast } from "sonner";
 const AdminPage = () => {
   const queryClient = useQueryClient();
   const [isRunning, setIsRunning] = useState(false);
+  const [isHarvesting, setIsHarvesting] = useState(false);
 
   const { data: cities } = useQuery({
     queryKey: ["admin-cities"],
