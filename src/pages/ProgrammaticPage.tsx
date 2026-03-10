@@ -658,11 +658,55 @@ const ProgrammaticPage = () => {
           </div>
         )}
 
+        {/* Landmark Map */}
+        {isLandmarkPage && landmark && listings && listings.length > 0 && (
+          <div className="my-8">
+            <LandmarkMap
+              landmarkName={landmark.name}
+              landmarkLat={landmark.latitude}
+              landmarkLng={landmark.longitude}
+              listings={listings.map((l) => ({
+                name: l.name,
+                latitude: l.latitude,
+                longitude: l.longitude,
+                slug: l.slug,
+              }))}
+              radiusKm={landmark.radius_km}
+            />
+          </div>
+        )}
+
+        {/* Explore Near Other Landmarks */}
+        {isLandmarkPage && landmarks && landmarks.length > 1 && (
+          <div className="my-6">
+            <h3 className="font-display font-semibold text-sm text-foreground mb-3">Explore Near Other Landmarks</h3>
+            <div className="flex flex-wrap gap-2">
+              {landmarks
+                .filter((l) => l.slug !== parsed?.nearLandmark)
+                .slice(0, 6)
+                .map((l) => (
+                  <Link
+                    key={l.slug}
+                    to={`/${parsed?.categorySlug || "things-to-do"}-near-${l.slug}-${parsed?.citySlug || "belfast"}`}
+                    className="text-xs px-3 py-1.5 bg-card border border-border text-muted-foreground rounded-full hover:border-accent/40 hover:text-accent transition-colors"
+                  >
+                    {parsed?.categorySlug === "things-to-do" ? "Things To Do" : category?.name || "Places"} Near {l.name}
+                  </Link>
+                ))}
+            </div>
+          </div>
+        )}
+
         {/* Listings Grid */}
         {!showEvents && (
           <div className="my-8">
             <h2 className="font-display font-semibold text-xl text-foreground mb-6">
-              {isWeekendPage ? `Popular Places ${formatTimeIntent(parsed?.timeIntent || null)}` : `Top ${itemCount > 0 ? itemCount : ""} ${modifier?.name || ""} ${category?.name || "Places"}`} in {locationName}
+              {isLandmarkPage
+                ? `${category?.name || "Places"} Near ${landmark?.name}`
+                : isWeekendPage
+                  ? `Popular Places ${formatTimeIntent(parsed?.timeIntent || null)}`
+                  : `Top ${itemCount > 0 ? itemCount : ""} ${modifier?.name || ""} ${category?.name || "Places"}`
+              } in {isLandmarkPage ? city?.name || "" : locationName}
             </h2>
             {listings && listings.length > 0 ? (
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
