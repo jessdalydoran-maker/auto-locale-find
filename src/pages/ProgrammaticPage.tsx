@@ -153,7 +153,7 @@ const ProgrammaticPage = () => {
     enabled: !!parsed?.citySlug && !!parsed?.categorySlug && !showEvents,
   });
 
-  // Fetch events
+  // Fetch events (for event pages OR weekend/time-intent "things to do" pages)
   const { data: events } = useQuery({
     queryKey: ["prog-events", parsed?.categorySlug, parsed?.citySlug, parsed?.neighbourhoodSlug, parsed?.timeIntent, parsed?.modifierSlug],
     queryFn: async () => {
@@ -184,10 +184,10 @@ const ProgrammaticPage = () => {
       if (error) throw error;
       return data;
     },
-    enabled: !!parsed?.citySlug && showEvents,
+    enabled: !!parsed?.citySlug && (showEvents || isWeekendPage),
   });
 
-  const itemCount = showEvents ? (events?.length || 0) : (listings?.length || 0);
+  const itemCount = (showEvents ? (events?.length || 0) : (listings?.length || 0)) + (isWeekendPage ? (events?.length || 0) : 0);
   const isNeighbourhoodPage = !!parsed?.neighbourhoodSlug;
   const hasEnoughContent = meetsContentThreshold(itemCount, showEvents, isNeighbourhoodPage);
   const isThin = isThinContent(itemCount);
