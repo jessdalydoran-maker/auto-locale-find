@@ -374,8 +374,9 @@ const Index = () => {
                 venueName={event.venue_name}
                 venueAddress={event.venue_address}
                 imageUrl={event.image_url}
-                imageSource={(event as any).image_source}
-                imageAlt={(event as any).image_alt}
+                imageSource={event.image_source}
+                imageAlt={event.image_alt}
+                imageStatus={event.image_status}
                 cityName={(event.cities as any)?.name}
                 isFree={event.is_free}
                 isFamilyFriendly={event.is_family_friendly}
