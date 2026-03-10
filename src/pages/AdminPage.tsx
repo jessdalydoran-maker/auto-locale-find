@@ -409,6 +409,7 @@ const AdminPage = () => {
                       <th className="text-left p-3 font-medium text-muted-foreground">City</th>
                       <th className="text-left p-3 font-medium text-muted-foreground">Category</th>
                       <th className="text-left p-3 font-medium text-muted-foreground">Rating</th>
+                      <th className="text-left p-3 font-medium text-muted-foreground">Audience Tags</th>
                       <th className="text-left p-3 font-medium text-muted-foreground">Image Status</th>
                       <th className="text-left p-3 font-medium text-muted-foreground">Actions</th>
                     </tr>
