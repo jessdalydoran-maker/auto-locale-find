@@ -375,6 +375,79 @@ const ProgrammaticPage = () => {
 
   const listings = isLandmarkPage ? nearbyListings : regularListings;
 
+  // Fetch venue listings for event-category pages (live-music, theatre, comedy etc)
+  // so we show both events AND related venues
+  const VENUE_CATEGORY_MAP: Record<string, string[]> = {
+    "live-music": ["bars", "nightlife", "live-music"],
+    "theatre": ["theatre", "attractions"],
+    "comedy": ["comedy", "bars", "nightlife"],
+    "exhibitions": ["exhibitions", "museums", "attractions"],
+    "markets": ["markets"],
+    "festivals": ["festivals", "attractions"],
+  };
+
+  const venueCategories = showEvents && parsed?.categorySlug ? VENUE_CATEGORY_MAP[parsed.categorySlug] || [] : [];
+
+  const { data: venueListings } = useQuery({
+    queryKey: ["venue-listings", parsed?.categorySlug, parsed?.citySlug, locationFilter],
+    queryFn: async () => {
+      let query = supabase
+        .from("listings")
+        .select("*, cities!inner(slug, name), categories!inner(slug, name)")
+        .eq("is_approved", true)
+        .order("rating", { ascending: false })
+        .limit(30);
+
+      if (isNIWide) {
+        if (locationFilter) {
+          query = query.eq("cities.slug", locationFilter);
+        }
+      } else {
+        query = query.eq("cities.slug", parsed!.citySlug);
+      }
+
+      // For live-music, include bars that host live music
+      if (parsed?.categorySlug === "live-music") {
+        query = query.or(`categories.slug.in.(${venueCategories.join(",")})`);
+      }
+
+      const { data, error } = await query;
+      if (error) throw error;
+
+      let results = data || [];
+
+      // For live-music, also include bars with music-related names/descriptions
+      if (parsed?.categorySlug === "live-music") {
+        results = results.filter((l: any) => {
+          const catSlug = (l.categories as any)?.slug || "";
+          const name = l.name?.toLowerCase() || "";
+          const desc = (l.short_description || l.description || "").toLowerCase();
+          const tags: string[] = l.audience_tags || [];
+
+          // Direct category match
+          if (["live-music", "nightlife"].includes(catSlug)) return true;
+
+          // Bars that have music signals
+          if (catSlug === "bars") {
+            if (name.includes("music") || name.includes("empire") || name.includes("limelight") ||
+                name.includes("front page") || name.includes("sunflower") || name.includes("voodoo") ||
+                name.includes("filthy") || name.includes("mandela") || name.includes("lavery") ||
+                name.includes("errigle") || name.includes("botanic") || name.includes("harp")) return true;
+            if (desc.includes("music") || desc.includes("live") || desc.includes("gig") || desc.includes("band")) return true;
+            if (tags.includes("live-music") || tags.includes("music")) return true;
+            // Include all bars as potential music venues (many NI bars host live music)
+            return true;
+          }
+
+          return false;
+        });
+      }
+
+      return results;
+    },
+    enabled: venueCategories.length > 0 && !!parsed?.citySlug,
+  });
+
   // Fetch events (for event pages, weekend pages, family/free/date-night pages)
   const shouldFetchEvents = showEvents || isWeekendPage || isDateNightPage ||
     (parsed?.modifierSlug === "family" && parsed?.categorySlug === "things-to-do") ||
@@ -547,7 +620,8 @@ const ProgrammaticPage = () => {
 
   const eventCount = events?.length || 0;
   const listingCount = listings?.length || 0;
-  const itemCount = (showEvents ? eventCount : listingCount) + (shouldFetchEvents && !showEvents ? eventCount : 0);
+  const venueCount = venueListings?.length || 0;
+  const itemCount = (showEvents ? eventCount + venueCount : listingCount) + (shouldFetchEvents && !showEvents ? eventCount : 0);
   const isNeighbourhoodPage = !!parsed?.neighbourhoodSlug;
   const hasEnoughContent = meetsContentThreshold(itemCount, showEvents, isNeighbourhoodPage);
   const isThin = isThinContent(itemCount);
@@ -1024,7 +1098,101 @@ const ProgrammaticPage = () => {
           </div>
         )}
 
-        {/* Weekend / Family / Free Events Section — show real events before venues */}
+        {/* Venue Listings for event-category pages (e.g. live music venues, theatres) */}
+        {showEvents && venueListings && venueListings.length > 0 && (
+          <div className="my-8">
+            <h2 className="font-display font-semibold text-xl text-foreground mb-6">
+              <MapPin className="inline h-5 w-5 mr-2 text-accent" />
+              {parsed?.categorySlug === "live-music" ? "Music Venues & Bars" :
+               parsed?.categorySlug === "theatre" ? "Theatres & Performance Venues" :
+               parsed?.categorySlug === "comedy" ? "Comedy Venues" :
+               "Venues"} {locationFilter ? `in ${niCities.find(c => c.slug === locationFilter)?.name || ""}` : isNIWide ? "Across Northern Ireland" : `in ${locationName}`}
+            </h2>
+            {isNIWide && !locationFilter ? (
+              <div className="space-y-8">
+                {(() => {
+                  const grouped: Record<string, typeof venueListings> = {};
+                  for (const l of venueListings) {
+                    const cn = (l.cities as any)?.name || "Unknown";
+                    if (!grouped[cn]) grouped[cn] = [];
+                    grouped[cn].push(l);
+                  }
+                  return Object.entries(grouped)
+                    .sort((a, b) => b[1].length - a[1].length)
+                    .map(([cityGroupName, cityListings]) => (
+                      <div key={cityGroupName}>
+                        <h3 className="font-display font-semibold text-lg text-foreground mb-4 flex items-center gap-2">
+                          <MapPin className="h-4 w-4 text-accent" />
+                          {cityGroupName}
+                          <span className="text-xs text-muted-foreground font-normal">({cityListings.length})</span>
+                        </h3>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                          {cityListings.map((listing, i) => (
+                            <div key={listing.id} className="relative">
+                              <span className="absolute -top-2 -left-2 z-10 w-7 h-7 bg-accent text-accent-foreground rounded-full flex items-center justify-center text-xs font-bold card-shadow">
+                                {i + 1}
+                              </span>
+                              <ListingCard
+                                name={listing.name}
+                                slug={listing.slug}
+                                citySlug={(listing.cities as any)?.slug || ""}
+                                shortDescription={listing.short_description || ""}
+                                rating={listing.rating}
+                                reviewCount={listing.review_count || 0}
+                                imageUrl={listing.image_url}
+                                imageSource={(listing as any).image_source}
+                                imageAlt={(listing as any).image_alt}
+                                imageStatus={(listing as any).image_status}
+                                categorySlug={(listing.categories as any)?.slug}
+                                categoryName={(listing.categories as any)?.name}
+                                cityName={cityGroupName}
+                                address={listing.address}
+                                priceLevel={listing.price_level}
+                                googleMapsLink={listing.google_maps_link}
+                                isFeatured={listing.is_featured}
+                                index={i}
+                              />
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    ));
+                })()}
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                {venueListings.map((listing, i) => (
+                  <div key={listing.id} className="relative">
+                    <span className="absolute -top-2 -left-2 z-10 w-7 h-7 bg-accent text-accent-foreground rounded-full flex items-center justify-center text-xs font-bold card-shadow">
+                      {i + 1}
+                    </span>
+                    <ListingCard
+                      name={listing.name}
+                      slug={listing.slug}
+                      citySlug={(listing.cities as any)?.slug || ""}
+                      shortDescription={listing.short_description || ""}
+                      rating={listing.rating}
+                      reviewCount={listing.review_count || 0}
+                      imageUrl={listing.image_url}
+                      imageSource={(listing as any).image_source}
+                      imageAlt={(listing as any).image_alt}
+                      imageStatus={(listing as any).image_status}
+                      categorySlug={(listing.categories as any)?.slug}
+                      categoryName={(listing.categories as any)?.name}
+                      cityName={(listing.cities as any)?.name}
+                      address={listing.address}
+                      priceLevel={listing.price_level}
+                      googleMapsLink={listing.google_maps_link}
+                      isFeatured={listing.is_featured}
+                      index={i}
+                    />
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+
         {!showEvents && shouldFetchEvents && events && events.length > 0 && (
           <div className="my-8">
             <h2 className="font-display font-semibold text-xl text-foreground mb-6">
