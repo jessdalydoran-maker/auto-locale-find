@@ -23,7 +23,7 @@ const QUICK_LINKS = [
 const POPULAR_SEARCHES = [
   { label: "What's on this weekend", to: "/events-belfast-this-weekend" },
   { label: "Free events Belfast", to: "/free-events-belfast" },
-  { label: "Family activities", to: "/family-activities-belfast" },
+  { label: "Family activities", to: "/family-activities" },
   { label: "Best restaurants Belfast", to: "/best-restaurants-belfast" },
   { label: "Best brunch Belfast", to: "/best-brunch-belfast" },
   { label: "Date night Belfast", to: "/date-night-belfast" },
