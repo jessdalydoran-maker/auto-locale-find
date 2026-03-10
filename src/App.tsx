@@ -26,13 +26,51 @@ const App = () => (
           <Route path="/categories" element={<CategoriesPage />} />
           <Route path="/search" element={<SearchPage />} />
           <Route path="/admin" element={<AdminPage />} />
-          <Route path="/best-:slug" element={<ProgrammaticPage />} />
-          <Route path="/:citySlug" element={<CityPage />} />
-          <Route path="*" element={<NotFound />} />
+          {/* Catch-all programmatic SEO pages: /best-restaurants-belfast, /restaurants-cathedral-quarter-belfast, etc. */}
+          <Route path="/*" element={<ProgrammaticPageOrCity />} />
         </Routes>
       </BrowserRouter>
     </TooltipProvider>
   </QueryClientProvider>
 );
+
+/**
+ * Smart router: tries to match programmatic SEO slug first,
+ * falls back to city page, then 404.
+ */
+import { useParams } from "react-router-dom";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
+
+const ProgrammaticPageOrCity = () => {
+  const { "*": path } = useParams();
+  const slug = path || "";
+
+  // Simple heuristic: if slug has a hyphen, it's likely a programmatic page
+  // If it matches a known city slug exactly, show city page
+  const { data: city, isLoading } = useQuery({
+    queryKey: ["check-city", slug],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("cities")
+        .select("slug")
+        .eq("slug", slug)
+        .maybeSingle();
+      return data;
+    },
+    staleTime: 1000 * 60 * 10,
+  });
+
+  if (isLoading) return null;
+
+  // Exact city match → CityPage
+  if (city) return <CityPage />;
+
+  // Contains hyphens → programmatic page
+  if (slug.includes("-")) return <ProgrammaticPage />;
+
+  // Nothing matched
+  return <NotFound />;
+};
 
 export default App;
