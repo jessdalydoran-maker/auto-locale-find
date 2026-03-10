@@ -76,6 +76,7 @@ const Index = () => {
         .from("events")
         .select("*, cities!inner(slug, name)")
         .eq("status", "active")
+        .eq("cities.slug", "belfast")
         .gte("date_start", today)
         .order("date_start", { ascending: true })
         .limit(6);
