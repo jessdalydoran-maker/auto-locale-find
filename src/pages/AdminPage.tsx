@@ -151,13 +151,19 @@ const AdminPage = () => {
     }
   };
 
+  const [ingestionSourceType, setIngestionSourceType] = useState<string>("all");
+
   const runEventIngestion = async () => {
     setIsIngesting(true);
     try {
-      const { data, error } = await supabase.functions.invoke("ingest-events");
+      const body: any = { max_sources: 15 };
+      if (ingestionSourceType !== "all") {
+        body.source_type = ingestionSourceType;
+      }
+      const { data, error } = await supabase.functions.invoke("ingest-events", { body });
       if (error) throw error;
       toast.success(
-        `Event ingestion complete: ${data.stats?.sources_checked || 0} sources checked, ${data.stats?.events_added || 0} events added, ${data.stats?.events_skipped || 0} skipped`
+        `Event ingestion complete: ${data.stats?.sources_checked || 0} sources checked, ${data.stats?.events_added || 0} events added (Firecrawl: ${data.stats?.firecrawl_used || 0})`
       );
       queryClient.invalidateQueries({ queryKey: ["admin-automation-logs"] });
     } catch (err) {
@@ -266,18 +272,35 @@ const AdminPage = () => {
                         <><TrendingUp className="h-4 w-4 mr-2" /> Run Search Harvester</>
                       )}
                     </Button>
-                    <Button
-                      onClick={runEventIngestion}
-                      disabled={isIngesting}
-                      variant="outline"
-                      className="w-full"
-                    >
-                      {isIngesting ? (
-                        <><RefreshCw className="h-4 w-4 mr-2 animate-spin" /> Ingesting Events...</>
-                      ) : (
-                        <><Calendar className="h-4 w-4 mr-2" /> Run Event Ingestion</>
-                      )}
-                    </Button>
+                    <div className="space-y-2">
+                      <div className="flex gap-1 flex-wrap">
+                        {["all", "council", "venue", "festival", "recurring"].map((t) => (
+                          <button
+                            key={t}
+                            onClick={() => setIngestionSourceType(t)}
+                            className={`px-2 py-1 text-[10px] font-medium rounded ${
+                              ingestionSourceType === t
+                                ? "bg-accent text-accent-foreground"
+                                : "bg-muted text-muted-foreground hover:bg-accent/20"
+                            }`}
+                          >
+                            {t === "all" ? "All Sources" : t.charAt(0).toUpperCase() + t.slice(1)}
+                          </button>
+                        ))}
+                      </div>
+                      <Button
+                        onClick={runEventIngestion}
+                        disabled={isIngesting}
+                        variant="outline"
+                        className="w-full"
+                      >
+                        {isIngesting ? (
+                          <><RefreshCw className="h-4 w-4 mr-2 animate-spin" /> Ingesting Events...</>
+                        ) : (
+                          <><Calendar className="h-4 w-4 mr-2" /> Run Event Ingestion ({ingestionSourceType})</>
+                        )}
+                      </Button>
+                    </div>
                     <p className="text-xs text-muted-foreground text-center">
                       {settingsMap.get("last_manual_run")
                         ? `Last manual run: ${new Date(settingsMap.get("last_manual_run")!).toLocaleString()}`

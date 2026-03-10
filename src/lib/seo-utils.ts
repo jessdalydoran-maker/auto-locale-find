@@ -56,6 +56,11 @@ const CATEGORY_ALIASES: Record<string, string> = {
   "cheap-things-to-do": "things-to-do",
 };
 
+/** City slug aliases — allows short forms like "ni" for "northern-ireland" */
+const CITY_ALIASES: Record<string, string> = {
+  "ni": "northern-ireland",
+};
+
 /**
  * Parse a programmatic SEO slug into its components.
  */
@@ -89,12 +94,18 @@ export function parseSlug(
     }
   }
 
-  // 3. Try to match city at the end
+  // 3. Try to match city at the end (including aliases like "ni" → "northern-ireland")
   let citySlug: string | null = null;
-  const sortedCities = [...knownCities].sort((a, b) => b.length - a.length);
+  // Also check city aliases
+  const allCitySlugs = [...knownCities];
+  for (const [alias, resolved] of Object.entries(CITY_ALIASES)) {
+    if (!allCitySlugs.includes(alias)) allCitySlugs.push(alias);
+  }
+  const sortedCities = allCitySlugs.sort((a, b) => b.length - a.length);
   for (const city of sortedCities) {
     if (remaining.endsWith("-" + city) || remaining === city) {
-      citySlug = city;
+      // Resolve alias if needed
+      citySlug = CITY_ALIASES[city] || city;
       remaining =
         remaining === city ? "" : remaining.slice(0, -(city.length + 1));
       break;

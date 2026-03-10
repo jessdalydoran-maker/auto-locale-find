@@ -7,6 +7,7 @@ const corsHeaders = {
 };
 
 const AI_GATEWAY_URL = "https://ai.gateway.lovable.dev/v1/chat/completions";
+const FIRECRAWL_API_URL = "https://api.firecrawl.dev/v1/scrape";
 
 interface EventCandidate {
   title: string;
@@ -38,7 +39,40 @@ function slugify(text: string): string {
     .slice(0, 120);
 }
 
-async function fetchPageContent(url: string): Promise<string | null> {
+/** Scrape page content using Firecrawl (handles JS-rendered sites) */
+async function fetchWithFirecrawl(url: string, apiKey: string): Promise<string | null> {
+  try {
+    const resp = await fetch(FIRECRAWL_API_URL, {
+      method: "POST",
+      headers: {
+        "Authorization": `Bearer ${apiKey}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        url,
+        formats: ["markdown"],
+        onlyMainContent: true,
+        waitFor: 3000,
+      }),
+    });
+
+    if (!resp.ok) {
+      const errText = await resp.text();
+      console.error(`Firecrawl error for ${url}: ${resp.status} ${errText}`);
+      return null;
+    }
+
+    const data = await resp.json();
+    const markdown = data?.data?.markdown || data?.markdown || "";
+    return markdown.slice(0, 15000) || null;
+  } catch (e) {
+    console.error(`Firecrawl fetch failed for ${url}:`, e);
+    return null;
+  }
+}
+
+/** Fallback: simple HTML fetch for sites that don't need JS rendering */
+async function fetchSimple(url: string): Promise<string | null> {
   try {
     const resp = await fetch(url, {
       headers: { "User-Agent": "CityScoutGuide/1.0 EventBot" },
@@ -46,16 +80,14 @@ async function fetchPageContent(url: string): Promise<string | null> {
     });
     if (!resp.ok) return null;
     const html = await resp.text();
-    // Strip HTML tags to get text content, keep structure hints
     return html
-      .replace(/<script[^>]*>[\\s\\S]*?<\/script>/gi, "")
-      .replace(/<style[^>]*>[\\s\\S]*?<\/style>/gi, "")
+      .replace(/<script[^>]*>[\s\S]*?<\/script>/gi, "")
+      .replace(/<style[^>]*>[\s\S]*?<\/style>/gi, "")
       .replace(/<[^>]+>/g, " ")
       .replace(/\s+/g, " ")
       .trim()
-      .slice(0, 15000); // Keep to reasonable token size
-  } catch (e) {
-    console.error(`Failed to fetch ${url}:`, e);
+      .slice(0, 15000);
+  } catch {
     return null;
   }
 }
@@ -70,7 +102,7 @@ async function extractEventsWithAI(
   const prompt = `You are an event data extraction assistant. Extract real upcoming events from the following web page content from "${sourceName}".
 
 RULES:
-- Only extract real events with specific dates (not general venue info or permanent exhibitions)
+- Only extract REAL events with specific dates (not general venue info or permanent exhibitions)
 - Only include events from ${today} onwards
 - Each event must have at minimum: title, date_start (YYYY-MM-DD format)
 - Set is_free to true only if clearly stated as free
@@ -78,10 +110,12 @@ RULES:
 - Use tags from: music, theatre, comedy, film, art, exhibitions, festival, food, market, workshop, dance, literature, family, kids, outdoor, indoor, nightlife, sport, community, heritage
 - For time_start/time_end use HH:MM:SS format (24h)
 - Keep descriptions concise (1-2 sentences)
+- Extract ticket links where visible
 - If you cannot find real events with dates, return an empty array
+- Do NOT invent or generate events. Only extract what is explicitly on the page.
 
 Return a JSON array of events. Example:
-[{"title":"Belfast Music Night","date_start":"2026-04-15","time_start":"19:30:00","venue_name":"The MAC","description":"Live music showcase","tags":["music","indoor"],"is_free":false,"price":"£15"}]
+[{"title":"Belfast Music Night","date_start":"2026-04-15","time_start":"19:30:00","venue_name":"The MAC","description":"Live music showcase","tags":["music","indoor"],"is_free":false,"price":"£15","ticket_url":"https://example.com/tickets"}]
 
 Web page content:
 ${pageContent}`;
@@ -109,7 +143,6 @@ ${pageContent}`;
     const data = await resp.json();
     const content = data.choices?.[0]?.message?.content || "";
 
-    // Extract JSON from response
     const jsonMatch = content.match(/\[[\s\S]*\]/);
     if (!jsonMatch) return [];
 
@@ -129,6 +162,7 @@ Deno.serve(async (req) => {
   const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
   const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
   const lovableApiKey = Deno.env.get("LOVABLE_API_KEY");
+  const firecrawlApiKey = Deno.env.get("FIRECRAWL_API_KEY");
   const supabase = createClient(supabaseUrl, supabaseKey);
 
   if (!lovableApiKey) {
@@ -138,13 +172,15 @@ Deno.serve(async (req) => {
     );
   }
 
-  // Parse optional filters from request body
+  // Parse optional filters
   let sourceFilter: string | null = null;
-  let maxSources = 5;
+  let maxSources = 10;
+  let cityFilter: string | null = null;
   try {
     const body = await req.json();
     sourceFilter = body?.source_type || null;
-    maxSources = body?.max_sources || 5;
+    maxSources = body?.max_sources || 10;
+    cityFilter = body?.city_slug || null;
   } catch {}
 
   // Create automation log
@@ -160,11 +196,24 @@ Deno.serve(async (req) => {
     events_found: 0,
     events_added: 0,
     events_skipped: 0,
+    firecrawl_used: 0,
+    fallback_used: 0,
     errors: [] as string[],
   };
 
   try {
-    // Fetch active sources, prioritised
+    // Resolve city filter
+    let cityId: string | null = null;
+    if (cityFilter) {
+      const { data: cityData } = await supabase
+        .from("cities")
+        .select("id")
+        .eq("slug", cityFilter)
+        .maybeSingle();
+      cityId = cityData?.id || null;
+    }
+
+    // Fetch active sources
     let query = supabase
       .from("event_sources")
       .select("*")
@@ -174,6 +223,9 @@ Deno.serve(async (req) => {
 
     if (sourceFilter) {
       query = query.eq("source_type", sourceFilter);
+    }
+    if (cityId) {
+      query = query.eq("city_id", cityId);
     }
 
     const { data: sources, error: srcErr } = await query;
@@ -191,11 +243,29 @@ Deno.serve(async (req) => {
       }
 
       console.log(`Fetching events from: ${source.name} (${url})`);
-      const content = await fetchPageContent(url);
+
+      // Try Firecrawl first (handles JS-rendered sites), fallback to simple fetch
+      let content: string | null = null;
+      if (firecrawlApiKey) {
+        content = await fetchWithFirecrawl(url, firecrawlApiKey);
+        if (content && content.length > 100) {
+          stats.firecrawl_used++;
+        }
+      }
+
       if (!content || content.length < 100) {
-        stats.errors.push(`${source.name}: failed to fetch or empty content`);
+        content = await fetchSimple(url);
+        if (content && content.length > 100) {
+          stats.fallback_used++;
+        }
+      }
+
+      if (!content || content.length < 100) {
+        stats.errors.push(`${source.name}: failed to fetch content`);
         continue;
       }
+
+      console.log(`${source.name}: got ${content.length} chars, extracting events...`);
 
       const candidates = await extractEventsWithAI(content, source.name, lovableApiKey);
       stats.events_found += candidates.length;
@@ -207,13 +277,12 @@ Deno.serve(async (req) => {
           continue;
         }
 
-        // Validate date format
         if (!/^\d{4}-\d{2}-\d{2}$/.test(event.date_start)) {
           stats.events_skipped++;
           continue;
         }
 
-        // Check for duplicate by title + date + city
+        // Check for duplicate
         const eventSlug = slugify(`${event.title}-${event.date_start}`);
         const { data: existing } = await supabase
           .from("events")
@@ -226,10 +295,7 @@ Deno.serve(async (req) => {
           continue;
         }
 
-        // Determine venue name: use source name if event doesn't specify
         const venueName = event.venue_name || (source.source_type === "venue" ? source.name : null);
-
-        // Merge source tags with event tags
         const allTags = [...new Set([...(event.tags || []), ...(source.tags || [])])];
 
         const { error: insertErr } = await supabase.from("events").insert({
@@ -257,7 +323,7 @@ Deno.serve(async (req) => {
           status: "active",
           image_url: event.image_url || null,
           image_source: event.image_url ? "scraped" : "fallback",
-          image_status: event.image_url ? "needs_review" : "needs_review",
+          image_status: "needs_review",
         });
 
         if (insertErr) {
@@ -275,7 +341,6 @@ Deno.serve(async (req) => {
         .eq("id", source.id);
     }
 
-    // Update log
     if (logId) {
       await supabase
         .from("automation_logs")
