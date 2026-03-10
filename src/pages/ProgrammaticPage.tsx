@@ -295,8 +295,7 @@ const ProgrammaticPage = () => {
     (parsed?.modifierSlug === "family" && parsed?.categorySlug === "things-to-do") ||
     (parsed?.modifierSlug === "free" && parsed?.categorySlug === "things-to-do");
 
-  // NI-wide pages show events from all NI cities
-  const isNIWide = parsed?.citySlug === "northern-ireland";
+  // NI-wide event query uses the isNIWide variable from above
 
   const { data: events } = useQuery({
     queryKey: ["prog-events", parsed?.categorySlug, parsed?.citySlug, parsed?.neighbourhoodSlug, parsed?.timeIntent, parsed?.modifierSlug],
