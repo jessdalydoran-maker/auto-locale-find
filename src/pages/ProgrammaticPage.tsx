@@ -682,7 +682,36 @@ const ProgrammaticPage = () => {
           </div>
         )}
 
-        {/* Intro text */}
+        {/* Location filter for NI-wide pages */}
+        {isNIWide && niCities.length > 0 && (
+          <div className="flex items-center gap-2 my-4 flex-wrap">
+            <MapPin className="h-4 w-4 text-muted-foreground" />
+            <button
+              onClick={() => setLocationFilter(null)}
+              className={`px-3 py-1.5 text-xs font-medium rounded-full transition-colors ${
+                !locationFilter
+                  ? "bg-accent text-accent-foreground"
+                  : "bg-muted text-muted-foreground hover:bg-accent hover:text-accent-foreground"
+              }`}
+            >
+              All Northern Ireland
+            </button>
+            {niCities.map((c) => (
+              <button
+                key={c.slug}
+                onClick={() => setLocationFilter(locationFilter === c.slug ? null : c.slug)}
+                className={`px-3 py-1.5 text-xs font-medium rounded-full transition-colors ${
+                  locationFilter === c.slug
+                    ? "bg-accent text-accent-foreground"
+                    : "bg-muted text-muted-foreground hover:bg-accent hover:text-accent-foreground"
+                }`}
+              >
+                {c.name}
+              </button>
+            ))}
+          </div>
+        )}
+
         {introText && hasEnoughContent && (
           <p className="text-muted-foreground text-[14px] leading-relaxed max-w-3xl my-6">{introText}</p>
         )}
