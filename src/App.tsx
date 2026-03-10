@@ -26,7 +26,7 @@ const App = () => (
           <Route path="/categories" element={<CategoriesPage />} />
           <Route path="/search" element={<SearchPage />} />
           <Route path="/admin" element={<AdminPage />} />
-          {/* Catch-all programmatic SEO pages: /best-restaurants-belfast, /restaurants-cathedral-quarter-belfast, etc. */}
+          {/* Catch-all: programmatic SEO pages, city pages, or 404 */}
           <Route path="/*" element={<ProgrammaticPageOrCity />} />
         </Routes>
       </BrowserRouter>
@@ -46,8 +46,6 @@ const ProgrammaticPageOrCity = () => {
   const { "*": path } = useParams();
   const slug = path || "";
 
-  // Simple heuristic: if slug has a hyphen, it's likely a programmatic page
-  // If it matches a known city slug exactly, show city page
   const { data: city, isLoading } = useQuery({
     queryKey: ["check-city", slug],
     queryFn: async () => {
@@ -66,7 +64,7 @@ const ProgrammaticPageOrCity = () => {
   // Exact city match → CityPage
   if (city) return <CityPage />;
 
-  // Contains hyphens → programmatic page
+  // Contains hyphens or matches known patterns → programmatic page
   if (slug.includes("-")) return <ProgrammaticPage />;
 
   // Nothing matched

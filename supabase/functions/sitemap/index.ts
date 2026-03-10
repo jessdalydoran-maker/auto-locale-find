@@ -16,11 +16,9 @@ Deno.serve(async (req) => {
   const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
   const supabase = createClient(supabaseUrl, supabaseKey);
 
-  // Get the site base URL from request or default
   const url = new URL(req.url);
   const baseUrl = url.searchParams.get("base") || "https://bestlocal.co.uk";
 
-  // Fetch all data in parallel
   const [citiesRes, categoriesRes, modifiersRes, neighbourhoodsRes] =
     await Promise.all([
       supabase.from("cities").select("slug"),
@@ -44,39 +42,57 @@ Deno.serve(async (req) => {
   urls.push(baseUrl);
   urls.push(`${baseUrl}/cities`);
   urls.push(`${baseUrl}/categories`);
+  urls.push(`${baseUrl}/search`);
 
-  // City pages
+  const timeIntents = ["today", "tonight", "this-week", "this-weekend"];
+
   for (const city of cities) {
+    // City page
     urls.push(`${baseUrl}/${city.slug}`);
-  }
 
-  // Programmatic pages: modifier + category + city
-  for (const city of cities) {
     for (const cat of categories) {
-      // No modifier
+      // category + city
       urls.push(`${baseUrl}/${cat.slug}-${city.slug}`);
-      // With modifiers
+
+      // category + city + time
+      for (const ti of timeIntents) {
+        urls.push(`${baseUrl}/${cat.slug}-${city.slug}-${ti}`);
+      }
+
+      // modifier + category + city
       for (const mod of modifiers) {
         urls.push(`${baseUrl}/${mod.slug}-${cat.slug}-${city.slug}`);
+
+        // modifier + category + city + time
+        for (const ti of timeIntents) {
+          urls.push(`${baseUrl}/${mod.slug}-${cat.slug}-${city.slug}-${ti}`);
+        }
       }
     }
   }
 
-  // Neighbourhood pages: modifier + category + neighbourhood + city
+  // Neighbourhood pages
   for (const nb of neighbourhoods) {
     const citySlug = (nb.cities as any)?.slug;
     if (!citySlug) continue;
+
     for (const cat of categories) {
       urls.push(`${baseUrl}/${cat.slug}-${nb.slug}-${citySlug}`);
       for (const mod of modifiers) {
-        urls.push(
-          `${baseUrl}/${mod.slug}-${cat.slug}-${nb.slug}-${citySlug}`
-        );
+        urls.push(`${baseUrl}/${mod.slug}-${cat.slug}-${nb.slug}-${citySlug}`);
+      }
+      for (const ti of timeIntents) {
+        urls.push(`${baseUrl}/${cat.slug}-${nb.slug}-${citySlug}-${ti}`);
       }
     }
   }
 
-  // Build XML
+  // Special alias pages
+  for (const city of cities) {
+    urls.push(`${baseUrl}/whats-on-${city.slug}`);
+    urls.push(`${baseUrl}/whats-on-${city.slug}-this-weekend`);
+  }
+
   const xml = `<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
 ${urls
@@ -84,8 +100,8 @@ ${urls
     (u) => `  <url>
     <loc>${u}</loc>
     <lastmod>${today}</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>${u === baseUrl ? "1.0" : "0.8"}</priority>
+    <changefreq>${u.includes("today") || u.includes("tonight") ? "daily" : "weekly"}</changefreq>
+    <priority>${u === baseUrl ? "1.0" : u.includes("belfast") ? "0.9" : "0.8"}</priority>
   </url>`
   )
   .join("\n")}
