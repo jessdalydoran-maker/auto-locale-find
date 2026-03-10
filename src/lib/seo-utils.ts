@@ -150,10 +150,20 @@ export function generateTitle(
   categoryName: string,
   locationName: string,
   cityName?: string,
-  timeIntent?: string | null
+  timeIntent?: string | null,
+  nearLandmark?: string | null
 ): string {
   const location = cityName ? `${locationName}, ${cityName}` : locationName;
   const timeLabel = formatTimeIntent(timeIntent);
+
+  // Near-landmark pattern
+  if (nearLandmark) {
+    const landmarkLabel = nearLandmark.split("-").map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(" ");
+    if (categoryName.toLowerCase() === "things to do") {
+      return `Things To Do Near ${landmarkLabel} | Activities & Attractions Nearby`;
+    }
+    return `${categoryName} Near ${landmarkLabel} | Best Places Nearby`;
+  }
 
   // Event / What's On cluster
   if (categoryName.toLowerCase() === "events") {
@@ -173,7 +183,6 @@ export function generateTitle(
 
   // Food & Drink cluster
   if (["restaurants", "brunch", "cafes", "bars", "cocktail bars"].includes(categoryName.toLowerCase())) {
-    const catLower = categoryName.toLowerCase();
     if (modifier === "best") return `Best ${categoryName} in ${location} | Top-Rated ${categoryName}`;
     if (modifier === "cheap") return `Cheap ${categoryName} in ${location} | Budget-Friendly Dining`;
     if (modifier === "romantic") return `Romantic ${categoryName} in ${location} | Date Night Dining`;
@@ -202,12 +211,19 @@ export function generateMetaDescription(
   categoryName: string,
   locationName: string,
   cityName?: string,
-  timeIntent?: string | null
+  timeIntent?: string | null,
+  nearLandmark?: string | null
 ): string {
   const location = cityName ? `${locationName}, ${cityName}` : locationName;
   const catLower = categoryName.toLowerCase();
   const timeLabel = formatTimeIntent(timeIntent);
   const timePart = timeLabel ? ` ${timeLabel.toLowerCase()}` : "";
+
+  // Near-landmark
+  if (nearLandmark) {
+    const landmarkLabel = nearLandmark.split("-").map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(" ");
+    return `Discover the best ${catLower} near ${landmarkLabel} including cafes, bars and places to visit within walking distance.`;
+  }
 
   // Event cluster
   if (catLower === "events") {

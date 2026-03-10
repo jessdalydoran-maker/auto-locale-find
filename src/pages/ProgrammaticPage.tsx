@@ -5,6 +5,7 @@ import { Layout } from "@/components/Layout";
 import { ListingCard } from "@/components/ListingCard";
 import { EventCard } from "@/components/EventCard";
 import { AdPlaceholder } from "@/components/AdPlaceholder";
+import { LandmarkMap } from "@/components/LandmarkMap";
 import { MapPin, ChevronRight, Calendar, Filter, ArrowRight, AlertCircle } from "lucide-react";
 import {
   parseSlug,
@@ -20,6 +21,7 @@ import {
 import {
   getCityClusters,
   getNeighbourhoodCluster,
+  getLandmarkCluster,
   getSiblingPages,
   getCrossClusterLinks,
 } from "@/lib/seo-clusters";
@@ -78,6 +80,17 @@ const ProgrammaticPage = () => {
     staleTime: 1000 * 60 * 10,
   });
 
+  // Fetch landmarks
+  const { data: landmarks } = useQuery({
+    queryKey: ["all-landmarks"],
+    queryFn: async () => {
+      const { data, error } = await supabase.from("landmarks").select("*");
+      if (error) throw error;
+      return data;
+    },
+    staleTime: 1000 * 60 * 10,
+  });
+
   // Parse slug
   const parsed = useMemo(() => {
     if (!cities || !neighbourhoods) return null;
@@ -98,10 +111,16 @@ const ProgrammaticPage = () => {
     [neighbourhoods, parsed]
   );
 
-  const locationName = neighbourhood?.name || city?.name || "";
-  const cityName = neighbourhood ? city?.name : undefined;
+  // Resolve landmark
+  const landmark = useMemo(() => {
+    if (!parsed?.nearLandmark || !landmarks) return null;
+    return landmarks.find((l) => l.slug === parsed.nearLandmark) || null;
+  }, [parsed, landmarks]);
+
+  const isLandmarkPage = !!parsed?.nearLandmark && !!landmark;
+  const locationName = isLandmarkPage ? landmark!.name : (neighbourhood?.name || city?.name || "");
+  const cityName = (neighbourhood || isLandmarkPage) ? city?.name : undefined;
   const showEvents = parsed ? isEventCategory(parsed.categorySlug) : false;
-  // "things-to-do" with a time intent should show BOTH events and listings
   const isWeekendPage = parsed?.categorySlug === "things-to-do" && !!parsed?.timeIntent;
   const dateRange = parsed ? getTimeIntentDateRange(parsed.timeIntent || null) : null;
   const currentUrl = "/" + slug;
@@ -116,14 +135,49 @@ const ProgrammaticPage = () => {
     if (cityNbs.length > 0) {
       cityClusters.push(getNeighbourhoodCluster(city.slug, city.name, cityNbs));
     }
+    // Add landmark cluster
+    if (landmarks && landmarks.length > 0) {
+      const cityLandmarks = landmarks
+        .filter((l) => l.city_id === city.id)
+        .map((l) => ({ name: l.name, slug: l.slug }));
+      if (cityLandmarks.length > 0) {
+        cityClusters.push(getLandmarkCluster(city.slug, city.name, cityLandmarks));
+      }
+    }
     return cityClusters;
-  }, [city, neighbourhoods]);
+  }, [city, neighbourhoods, landmarks]);
 
   const siblingPages = useMemo(() => getSiblingPages(currentUrl, clusters), [currentUrl, clusters]);
   const crossClusterLinks = useMemo(() => getCrossClusterLinks(currentUrl, clusters), [currentUrl, clusters]);
 
-  // Fetch listings
-  const { data: listings } = useQuery({
+  // Fetch nearby listings (for landmark pages)
+  const { data: nearbyListings } = useQuery({
+    queryKey: ["nearby-listings", landmark?.id, parsed?.categorySlug],
+    queryFn: async () => {
+      const catSlug = parsed!.categorySlug === "things-to-do" ? null : parsed!.categorySlug;
+      const { data, error } = await supabase.rpc("nearby_listings", {
+        p_lat: landmark!.latitude,
+        p_lng: landmark!.longitude,
+        p_radius_km: landmark!.radius_km,
+        p_category_slug: catSlug,
+        p_limit: 20,
+      });
+      if (error) throw error;
+      // Need to fetch categories for each listing
+      if (!data || data.length === 0) return [];
+      const ids = data.map((l: any) => l.id);
+      const { data: enriched } = await supabase
+        .from("listings")
+        .select("*, cities!inner(slug, name), categories!inner(slug, name)")
+        .in("id", ids)
+        .order("rating", { ascending: false });
+      return enriched || [];
+    },
+    enabled: isLandmarkPage && !showEvents,
+  });
+
+  // Fetch regular listings (non-landmark pages)
+  const { data: regularListings } = useQuery({
     queryKey: ["prog-listings", parsed?.categorySlug, parsed?.citySlug, parsed?.neighbourhoodSlug, parsed?.modifierSlug],
     queryFn: async () => {
       let query = supabase
@@ -150,8 +204,10 @@ const ProgrammaticPage = () => {
       if (error) throw error;
       return data;
     },
-    enabled: !!parsed?.citySlug && !!parsed?.categorySlug && !showEvents,
+    enabled: !!parsed?.citySlug && !!parsed?.categorySlug && !showEvents && !isLandmarkPage,
   });
+
+  const listings = isLandmarkPage ? nearbyListings : regularListings;
 
   // Fetch events (for event pages OR weekend/time-intent "things to do" pages)
   const { data: events } = useQuery({
@@ -206,11 +262,11 @@ const ProgrammaticPage = () => {
 
   // SEO content
   const title = category && city
-    ? generateTitle(modifier?.name?.toLowerCase() || parsed?.modifierSlug || null, category.name, locationName, cityName, parsed?.timeIntent)
+    ? generateTitle(modifier?.name?.toLowerCase() || parsed?.modifierSlug || null, category.name, locationName, cityName, parsed?.timeIntent, parsed?.nearLandmark)
     : "Loading...";
 
   const metaDesc = category && city
-    ? generateMetaDescription(modifier?.name?.toLowerCase() || parsed?.modifierSlug || null, category.name, locationName, cityName, parsed?.timeIntent)
+    ? generateMetaDescription(modifier?.name?.toLowerCase() || parsed?.modifierSlug || null, category.name, locationName, cityName, parsed?.timeIntent, parsed?.nearLandmark)
     : "";
 
   const introText = category && city
@@ -612,11 +668,55 @@ const ProgrammaticPage = () => {
           </div>
         )}
 
+        {/* Landmark Map */}
+        {isLandmarkPage && landmark && listings && listings.length > 0 && (
+          <div className="my-8">
+            <LandmarkMap
+              landmarkName={landmark.name}
+              landmarkLat={landmark.latitude}
+              landmarkLng={landmark.longitude}
+              listings={listings.map((l) => ({
+                name: l.name,
+                latitude: l.latitude,
+                longitude: l.longitude,
+                slug: l.slug,
+              }))}
+              radiusKm={landmark.radius_km}
+            />
+          </div>
+        )}
+
+        {/* Explore Near Other Landmarks */}
+        {isLandmarkPage && landmarks && landmarks.length > 1 && (
+          <div className="my-6">
+            <h3 className="font-display font-semibold text-sm text-foreground mb-3">Explore Near Other Landmarks</h3>
+            <div className="flex flex-wrap gap-2">
+              {landmarks
+                .filter((l) => l.slug !== parsed?.nearLandmark)
+                .slice(0, 6)
+                .map((l) => (
+                  <Link
+                    key={l.slug}
+                    to={`/${parsed?.categorySlug || "things-to-do"}-near-${l.slug}-${parsed?.citySlug || "belfast"}`}
+                    className="text-xs px-3 py-1.5 bg-card border border-border text-muted-foreground rounded-full hover:border-accent/40 hover:text-accent transition-colors"
+                  >
+                    {parsed?.categorySlug === "things-to-do" ? "Things To Do" : category?.name || "Places"} Near {l.name}
+                  </Link>
+                ))}
+            </div>
+          </div>
+        )}
+
         {/* Listings Grid */}
         {!showEvents && (
           <div className="my-8">
             <h2 className="font-display font-semibold text-xl text-foreground mb-6">
-              {isWeekendPage ? `Popular Places ${formatTimeIntent(parsed?.timeIntent || null)}` : `Top ${itemCount > 0 ? itemCount : ""} ${modifier?.name || ""} ${category?.name || "Places"}`} in {locationName}
+              {isLandmarkPage
+                ? `${category?.name || "Places"} Near ${landmark?.name}`
+                : isWeekendPage
+                  ? `Popular Places ${formatTimeIntent(parsed?.timeIntent || null)}`
+                  : `Top ${itemCount > 0 ? itemCount : ""} ${modifier?.name || ""} ${category?.name || "Places"}`
+              } in {isLandmarkPage ? city?.name || "" : locationName}
             </h2>
             {listings && listings.length > 0 ? (
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
