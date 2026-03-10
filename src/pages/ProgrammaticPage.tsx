@@ -197,12 +197,19 @@ const ProgrammaticPage = () => {
 
   // Determine if this is a family-oriented page
   const isFamilyPage = parsed?.modifierSlug === "family";
+  // Determine if this is a date-night page
+  const isDateNightPage = parsed?.modifierSlug === "date-night" || parsed?.modifierSlug === "romantic";
 
   // Categories to exclude for family pages
   const FAMILY_EXCLUDED_CATEGORIES = ["bars", "cocktail-bars", "nightlife", "late-night", "pubs"];
   const FAMILY_EXCLUDED_TAGS = ["nightlife", "late-night", "cocktails", "romantic", "adults-only"];
   // Only allow fallback categories that are inherently family-suitable (not restaurants/cafes/generic)
   const FAMILY_FALLBACK_CATEGORIES = ["parks", "museums", "zoos", "science-centres", "indoor-play", "leisure-centres", "activity-centres"];
+
+  // Date night relevant categories and tags
+  const DATE_NIGHT_CATEGORIES = ["bars", "cocktail-bars", "restaurants", "nightlife", "pubs", "wine-bars"];
+  const DATE_NIGHT_EVENT_TAGS = ["theatre", "comedy", "live-music", "cinema", "film", "date-night", "jazz", "cabaret", "music", "art", "exhibitions", "nightlife", "cocktails"];
+  const DATE_NIGHT_EXCLUDED_TAGS = ["kids", "family", "workshop", "workshops", "craft"];
 
   // Fetch regular listings (non-landmark pages)
   const { data: regularListings } = useQuery({
