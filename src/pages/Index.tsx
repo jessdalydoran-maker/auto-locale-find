@@ -148,7 +148,7 @@ const Index = () => {
           description: e.short_description || "",
           imageUrl: e.image_url, imageSource: e.image_source as string | null, imageAlt: e.image_alt as string | null,
           category: "Event", citySlug: (e.cities as any)?.slug || "belfast",
-          type: "event", link: `/${(e.cities as any)?.slug || "belfast"}/${e.slug}`,
+          type: "event", link: `/event/${e.slug}`,
           badge: e.is_free ? "Free" : undefined,
         });
       }
