@@ -166,6 +166,7 @@ export type Database = {
           id: string
           image_alt: string | null
           image_source: string | null
+          image_status: string
           image_url: string | null
           is_family_friendly: boolean
           is_free: boolean
@@ -198,6 +199,7 @@ export type Database = {
           id?: string
           image_alt?: string | null
           image_source?: string | null
+          image_status?: string
           image_url?: string | null
           is_family_friendly?: boolean
           is_free?: boolean
@@ -230,6 +232,7 @@ export type Database = {
           id?: string
           image_alt?: string | null
           image_source?: string | null
+          image_status?: string
           image_url?: string | null
           is_family_friendly?: boolean
           is_free?: boolean
@@ -287,6 +290,7 @@ export type Database = {
           id: string
           image_alt: string | null
           image_source: string | null
+          image_status: string
           image_url: string | null
           is_approved: boolean
           is_archived: boolean
@@ -315,6 +319,7 @@ export type Database = {
           id?: string
           image_alt?: string | null
           image_source?: string | null
+          image_status?: string
           image_url?: string | null
           is_approved?: boolean
           is_archived?: boolean
@@ -343,6 +348,7 @@ export type Database = {
           id?: string
           image_alt?: string | null
           image_source?: string | null
+          image_status?: string
           image_url?: string | null
           is_approved?: boolean
           is_archived?: boolean
