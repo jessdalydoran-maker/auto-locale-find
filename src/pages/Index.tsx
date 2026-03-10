@@ -61,6 +61,7 @@ const Index = () => {
         .from("listings")
         .select("*, cities!inner(slug, name), categories!inner(slug, name)")
         .eq("is_featured", true)
+        .eq("cities.slug", "belfast")
         .limit(8);
       if (error) throw error;
       return data;
