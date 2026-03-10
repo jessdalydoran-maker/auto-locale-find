@@ -114,21 +114,23 @@ const Index = () => {
       const friStr = friday.toISOString().split("T")[0];
       const sunStr = sunday.toISOString().split("T")[0];
 
-      // Fetch weekend events
+      // Fetch weekend events — Belfast only
       const { data: events } = await supabase
         .from("events")
         .select("id, title, slug, short_description, date_start, image_url, image_source, image_alt, is_free, venue_name, cities!inner(slug, name), category_id")
         .eq("status", "active")
+        .eq("cities.slug", "belfast")
         .gte("date_start", friStr)
         .lte("date_start", sunStr)
         .order("date_start", { ascending: true })
         .limit(4);
 
-      // Fetch popular listings to supplement
+      // Fetch popular listings to supplement — Belfast only
       const { data: listings } = await supabase
         .from("listings")
         .select("id, name, slug, short_description, rating, image_url, image_source, image_alt, image_status, address, cities!inner(slug, name), categories!inner(slug, name)")
         .eq("is_approved", true)
+        .eq("cities.slug", "belfast")
         .order("rating", { ascending: false })
         .limit(4);
 
