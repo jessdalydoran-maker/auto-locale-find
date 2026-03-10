@@ -8,7 +8,9 @@ import { AdPlaceholder } from "@/components/AdPlaceholder";
 import { MapPin } from "lucide-react";
 
 const CityPage = () => {
-  const { citySlug } = useParams<{ citySlug: string }>();
+  const { citySlug, "*": wildcard } = useParams();
+  // Support both /:citySlug and /* routing
+  const resolvedCitySlug = citySlug || wildcard || "";
   const [searchParams] = useSearchParams();
   const categoryFilter = searchParams.get("category");
 

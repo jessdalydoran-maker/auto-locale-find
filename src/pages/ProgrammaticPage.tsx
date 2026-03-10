@@ -34,7 +34,7 @@ const ProgrammaticPage = () => {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("neighbourhoods")
-        .select("id, name, slug, city_id, cities!inner(slug)")
+        .select("id, name, slug, description, city_id, cities!inner(slug)")
         .eq("is_active", true);
       if (error) throw error;
       return data;
