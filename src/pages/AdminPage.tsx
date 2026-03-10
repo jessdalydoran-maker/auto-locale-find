@@ -476,7 +476,7 @@ const AdminPage = () => {
                             </Badge>
                           </td>
                           <td className="p-3">
-                            <div className="flex gap-1">
+                            <div className="flex flex-wrap gap-1">
                               {imgStatus !== "verified" && listing.image_url && (
                                 <Button
                                   size="sm"
@@ -516,6 +516,39 @@ const AdminPage = () => {
                                 }}
                               >
                                 Replace
+                              </Button>
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                className="text-[10px] h-6 px-2"
+                                onClick={async () => {
+                                  const desc = prompt("Edit description for " + listing.name, listing.description || listing.short_description || "");
+                                  if (desc !== null) {
+                                    await supabase
+                                      .from("listings")
+                                      .update({ description: desc })
+                                      .eq("id", listing.id);
+                                    queryClient.invalidateQueries({ queryKey: ["admin-listings"] });
+                                    toast.success(`Description updated for ${listing.name}`);
+                                  }
+                                }}
+                              >
+                                Edit Desc
+                              </Button>
+                              <Button
+                                size="sm"
+                                variant={listing.is_featured ? "default" : "outline"}
+                                className="text-[10px] h-6 px-2"
+                                onClick={async () => {
+                                  await supabase
+                                    .from("listings")
+                                    .update({ is_featured: !listing.is_featured })
+                                    .eq("id", listing.id);
+                                  queryClient.invalidateQueries({ queryKey: ["admin-listings"] });
+                                  toast.success(`${listing.name} ${listing.is_featured ? "unfeatured" : "featured"}`);
+                                }}
+                              >
+                                {listing.is_featured ? "★ Featured" : "☆ Feature"}
                               </Button>
                             </div>
                           </td>
