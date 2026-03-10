@@ -544,6 +544,7 @@ const ProgrammaticPage = () => {
                     imageUrl={event.image_url}
                     imageSource={(event as any).image_source}
                     imageAlt={(event as any).image_alt}
+                    imageStatus={(event as any).image_status}
                     categorySlug={parsed?.categorySlug}
                     cityName={city?.name}
                     isFree={event.is_free}
