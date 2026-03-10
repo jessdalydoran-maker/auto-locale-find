@@ -151,13 +151,19 @@ const AdminPage = () => {
     }
   };
 
+  const [ingestionSourceType, setIngestionSourceType] = useState<string>("all");
+
   const runEventIngestion = async () => {
     setIsIngesting(true);
     try {
-      const { data, error } = await supabase.functions.invoke("ingest-events");
+      const body: any = { max_sources: 15 };
+      if (ingestionSourceType !== "all") {
+        body.source_type = ingestionSourceType;
+      }
+      const { data, error } = await supabase.functions.invoke("ingest-events", { body });
       if (error) throw error;
       toast.success(
-        `Event ingestion complete: ${data.stats?.sources_checked || 0} sources checked, ${data.stats?.events_added || 0} events added, ${data.stats?.events_skipped || 0} skipped`
+        `Event ingestion complete: ${data.stats?.sources_checked || 0} sources checked, ${data.stats?.events_added || 0} events added (Firecrawl: ${data.stats?.firecrawl_used || 0})`
       );
       queryClient.invalidateQueries({ queryKey: ["admin-automation-logs"] });
     } catch (err) {
