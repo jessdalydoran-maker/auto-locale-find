@@ -213,8 +213,81 @@ const ProgrammaticPage = () => {
 
   // Fetch regular listings (non-landmark pages)
   const { data: regularListings } = useQuery({
-    queryKey: ["prog-listings", parsed?.categorySlug, parsed?.citySlug, parsed?.neighbourhoodSlug, parsed?.modifierSlug, locationFilter],
+    queryKey: ["prog-listings", parsed?.categorySlug, parsed?.citySlug, parsed?.neighbourhoodSlug, parsed?.modifierSlug, locationFilter, isDateNightPage],
     queryFn: async () => {
+      const fetchLimit = (isFamilyPage || isDateNightPage) && isNIWide ? 200 : 30;
+
+      // For date-night pages, fetch broadly across all categories then filter client-side
+      if (isDateNightPage) {
+        let dnQuery = supabase
+          .from("listings")
+          .select("*, cities!inner(slug, name), categories!inner(slug, name)")
+          .eq("is_approved", true)
+          .order("rating", { ascending: false })
+          .limit(fetchLimit);
+
+        if (isNIWide) {
+          if (locationFilter) {
+            dnQuery = dnQuery.eq("cities.slug", locationFilter);
+          }
+        } else {
+          dnQuery = dnQuery.eq("cities.slug", parsed!.citySlug);
+        }
+
+        if (parsed?.neighbourhoodSlug && neighbourhood) {
+          dnQuery = dnQuery.eq("neighbourhood_id", neighbourhood.id);
+        }
+
+        const { data: dnData, error: dnErr } = await dnQuery;
+        if (dnErr) throw dnErr;
+
+        let results = dnData || [];
+
+        // Filter for date-night-relevant listings
+        results = results.filter((l: any) => {
+          const catSlug = (l.categories as any)?.slug || "";
+          const tags: string[] = l.audience_tags || [];
+          const name = l.name?.toLowerCase() || "";
+
+          // Include if category matches date night categories
+          if (DATE_NIGHT_CATEGORIES.includes(catSlug)) return true;
+
+          // Include if tagged date-night or romantic
+          if (tags.includes("date-night") || tags.includes("romantic") || tags.includes("cocktails") || tags.includes("wine")) return true;
+
+          // Include restaurants (evening dining, not fast food/cafes)
+          if (catSlug === "restaurants" || catSlug === "fine-dining") {
+            // Exclude fast food signals
+            if (name.includes("mcdonald") || name.includes("kfc") || name.includes("subway") || name.includes("chip")) return false;
+            return true;
+          }
+
+          // Include venues with relevant names
+          if (name.includes("cocktail") || name.includes("wine bar") || name.includes("jazz") || name.includes("lounge")) return true;
+
+          // Exclude kids/family-only
+          if (tags.includes("kids") || tags.includes("family")) return false;
+
+          return false;
+        });
+
+        // Priority sort for date night
+        const DATE_NIGHT_CATEGORY_PRIORITY: Record<string, number> = {
+          "cocktail-bars": 10, "wine-bars": 9, "bars": 7, "nightlife": 6,
+          "restaurants": 5, "fine-dining": 8, "pubs": 3,
+        };
+
+        results.sort((a: any, b: any) => {
+          const aCat = (a.categories as any)?.slug || "";
+          const bCat = (b.categories as any)?.slug || "";
+          const aScore = (DATE_NIGHT_CATEGORY_PRIORITY[aCat] || 0) + ((a.rating || 0) * 0.5);
+          const bScore = (DATE_NIGHT_CATEGORY_PRIORITY[bCat] || 0) + ((b.rating || 0) * 0.5);
+          return bScore - aScore;
+        });
+
+        return results.slice(0, 40);
+      }
+
       let query = supabase
         .from("listings")
         .select("*, cities!inner(slug, name), categories!inner(slug, name)")
@@ -227,7 +300,6 @@ const ProgrammaticPage = () => {
         if (locationFilter) {
           query = query.eq("cities.slug", locationFilter);
         }
-        // No city filter = all NI cities
       } else {
         query = query.eq("cities.slug", parsed!.citySlug);
       }
@@ -250,7 +322,6 @@ const ProgrammaticPage = () => {
       let results = data || [];
 
       if (isFamilyPage) {
-        // For family NI-wide, re-fetch across all categories without city restriction
         let familyQuery = supabase
           .from("listings")
           .select("*, cities!inner(slug, name), categories!inner(slug, name)")
@@ -271,21 +342,15 @@ const ProgrammaticPage = () => {
           results = familyData;
         }
 
-        // STRICT filter — only keep listings explicitly tagged family/kids
         results = results.filter((l: any) => {
           const tags: string[] = (l as any).audience_tags || [];
           const catSlug = (l.categories as any)?.slug || "";
           const isFamilyTagged = tags.includes("family") || tags.includes("kids") || (l as any).family_friendly === true || (l as any).kids_friendly === true;
-          
-          // Hard exclude
           if (FAMILY_EXCLUDED_CATEGORIES.includes(catSlug)) return false;
           if (tags.some((t: string) => FAMILY_EXCLUDED_TAGS.includes(t))) return false;
-          
-          // ONLY show explicitly family-tagged listings — no generic fallbacks
           return isFamilyTagged;
         });
 
-        // Priority sort — family+kids first, then family, then kids, then fallback categories
         results.sort((a: any, b: any) => {
           const aTags: string[] = a.audience_tags || [];
           const bTags: string[] = b.audience_tags || [];
