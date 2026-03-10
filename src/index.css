@@ -6,23 +6,23 @@
 
 @layer base {
   :root {
-    --background: 210 20% 98%;
-    --foreground: 220 20% 14%;
+    --background: 0 0% 97%;
+    --foreground: 220 15% 16%;
 
     --card: 0 0% 100%;
-    --card-foreground: 220 20% 14%;
+    --card-foreground: 220 15% 16%;
 
     --popover: 0 0% 100%;
-    --popover-foreground: 220 20% 14%;
+    --popover-foreground: 220 15% 16%;
 
-    --primary: 220 20% 14%;
-    --primary-foreground: 210 20% 98%;
+    --primary: 220 15% 16%;
+    --primary-foreground: 0 0% 100%;
 
-    --secondary: 210 17% 95%;
-    --secondary-foreground: 220 20% 14%;
+    --secondary: 220 10% 94%;
+    --secondary-foreground: 220 15% 16%;
 
-    --muted: 210 17% 95%;
-    --muted-foreground: 215 14% 46%;
+    --muted: 220 10% 94%;
+    --muted-foreground: 220 8% 50%;
 
     --accent: 217 91% 53%;
     --accent-foreground: 0 0% 100%;
@@ -30,23 +30,21 @@
     --destructive: 0 84% 60%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 214 20% 90%;
-    --input: 214 20% 90%;
+    --border: 220 13% 91%;
+    --input: 220 13% 91%;
     --ring: 217 91% 53%;
 
-    --radius: 0.75rem;
+    --radius: 0.5rem;
 
-    --hero-gradient: linear-gradient(135deg, hsl(220 20% 14%) 0%, hsl(220 25% 22%) 50%, hsl(217 91% 53%) 100%);
-    --card-shadow: 0 1px 3px 0 hsl(220 20% 14% / 0.06), 0 1px 2px -1px hsl(220 20% 14% / 0.06);
-    --card-shadow-hover: 0 10px 25px -3px hsl(220 20% 14% / 0.1), 0 4px 6px -4px hsl(220 20% 14% / 0.06);
-    --card-shadow-lg: 0 20px 40px -8px hsl(220 20% 14% / 0.12);
+    --card-shadow: 0 1px 3px 0 hsl(220 15% 16% / 0.04), 0 1px 2px -1px hsl(220 15% 16% / 0.03);
+    --card-shadow-hover: 0 4px 12px -2px hsl(220 15% 16% / 0.08), 0 2px 4px -2px hsl(220 15% 16% / 0.04);
 
-    --sidebar-background: 0 0% 98%;
-    --sidebar-foreground: 240 5.3% 26.1%;
-    --sidebar-primary: 240 5.9% 10%;
-    --sidebar-primary-foreground: 0 0% 98%;
-    --sidebar-accent: 240 4.8% 95.9%;
-    --sidebar-accent-foreground: 240 5.9% 10%;
+    --sidebar-background: 0 0% 100%;
+    --sidebar-foreground: 220 15% 16%;
+    --sidebar-primary: 220 15% 16%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 220 10% 94%;
+    --sidebar-accent-foreground: 220 15% 16%;
     --sidebar-border: 220 13% 91%;
     --sidebar-ring: 217 91% 53%;
   }
@@ -68,26 +66,11 @@
 }
 
 @layer utilities {
-  .hero-gradient {
-    background: var(--hero-gradient);
-  }
-
   .card-shadow {
     box-shadow: var(--card-shadow);
   }
 
   .card-shadow-hover {
     box-shadow: var(--card-shadow-hover);
-  }
-
-  .card-shadow-lg {
-    box-shadow: var(--card-shadow-lg);
-  }
-
-  .text-gradient {
-    background: linear-gradient(135deg, hsl(0 0% 100%) 0%, hsl(217 91% 75%) 100%);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
   }
 }
