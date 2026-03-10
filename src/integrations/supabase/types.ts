@@ -14,7 +14,252 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      categories: {
+        Row: {
+          created_at: string
+          description: string | null
+          icon: string | null
+          id: string
+          is_active: boolean
+          name: string
+          slug: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          icon?: string | null
+          id?: string
+          is_active?: boolean
+          name: string
+          slug: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          icon?: string | null
+          id?: string
+          is_active?: boolean
+          name?: string
+          slug?: string
+        }
+        Relationships: []
+      }
+      cities: {
+        Row: {
+          country: string
+          created_at: string
+          description: string | null
+          id: string
+          image_url: string | null
+          latitude: number | null
+          longitude: number | null
+          name: string
+          slug: string
+        }
+        Insert: {
+          country?: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          image_url?: string | null
+          latitude?: number | null
+          longitude?: number | null
+          name: string
+          slug: string
+        }
+        Update: {
+          country?: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          image_url?: string | null
+          latitude?: number | null
+          longitude?: number | null
+          name?: string
+          slug?: string
+        }
+        Relationships: []
+      }
+      listings: {
+        Row: {
+          address: string | null
+          category_id: string
+          city_id: string
+          created_at: string
+          description: string | null
+          google_maps_link: string | null
+          id: string
+          image_url: string | null
+          is_approved: boolean
+          is_featured: boolean
+          latitude: number | null
+          longitude: number | null
+          name: string
+          phone: string | null
+          price_level: string | null
+          rating: number | null
+          review_count: number | null
+          short_description: string | null
+          slug: string
+          updated_at: string
+          website: string | null
+        }
+        Insert: {
+          address?: string | null
+          category_id: string
+          city_id: string
+          created_at?: string
+          description?: string | null
+          google_maps_link?: string | null
+          id?: string
+          image_url?: string | null
+          is_approved?: boolean
+          is_featured?: boolean
+          latitude?: number | null
+          longitude?: number | null
+          name: string
+          phone?: string | null
+          price_level?: string | null
+          rating?: number | null
+          review_count?: number | null
+          short_description?: string | null
+          slug: string
+          updated_at?: string
+          website?: string | null
+        }
+        Update: {
+          address?: string | null
+          category_id?: string
+          city_id?: string
+          created_at?: string
+          description?: string | null
+          google_maps_link?: string | null
+          id?: string
+          image_url?: string | null
+          is_approved?: boolean
+          is_featured?: boolean
+          latitude?: number | null
+          longitude?: number | null
+          name?: string
+          phone?: string | null
+          price_level?: string | null
+          rating?: number | null
+          review_count?: number | null
+          short_description?: string | null
+          slug?: string
+          updated_at?: string
+          website?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "listings_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "categories"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "listings_city_id_fkey"
+            columns: ["city_id"]
+            isOneToOne: false
+            referencedRelation: "cities"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      page_views: {
+        Row: {
+          category_id: string | null
+          city_id: string | null
+          created_at: string
+          date: string
+          id: string
+          page_path: string
+          view_count: number
+        }
+        Insert: {
+          category_id?: string | null
+          city_id?: string | null
+          created_at?: string
+          date?: string
+          id?: string
+          page_path: string
+          view_count?: number
+        }
+        Update: {
+          category_id?: string | null
+          city_id?: string | null
+          created_at?: string
+          date?: string
+          id?: string
+          page_path?: string
+          view_count?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "page_views_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "categories"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "page_views_city_id_fkey"
+            columns: ["city_id"]
+            isOneToOne: false
+            referencedRelation: "cities"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      search_trends: {
+        Row: {
+          category_id: string | null
+          city_id: string | null
+          created_at: string
+          id: string
+          page_generated: boolean
+          query: string
+          search_volume: number | null
+          trend_score: number | null
+        }
+        Insert: {
+          category_id?: string | null
+          city_id?: string | null
+          created_at?: string
+          id?: string
+          page_generated?: boolean
+          query: string
+          search_volume?: number | null
+          trend_score?: number | null
+        }
+        Update: {
+          category_id?: string | null
+          city_id?: string | null
+          created_at?: string
+          id?: string
+          page_generated?: boolean
+          query?: string
+          search_volume?: number | null
+          trend_score?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "search_trends_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "categories"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "search_trends_city_id_fkey"
+            columns: ["city_id"]
+            isOneToOne: false
+            referencedRelation: "cities"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
