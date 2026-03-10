@@ -354,24 +354,52 @@ const ProgrammaticPage = () => {
     enabled: !!parsed?.citySlug && shouldFetchEvents,
   });
 
-  // Apply family priority sorting to events
+  // Apply family filtering + priority sorting to events
   const events = useMemo(() => {
     if (!rawEvents) return rawEvents;
     if (!isFamilyPage) return rawEvents;
     
-    return [...rawEvents].sort((a, b) => {
+    // Helper: detect professional sports fixtures by title pattern
+    const isProfessionalSport = (event: typeof rawEvents[0]) => {
+      const t = event.title.toLowerCase();
+      const tags: string[] = event.tags || [];
+      const hasSportTag = tags.includes("sport") || tags.includes("boxing") || tags.includes("rugby") || tags.includes("football");
+      const isVsMatch = /\bvs\.?\b|\bversus\b/i.test(event.title);
+      const isChampionship = /championship|league|cup\b/i.test(event.title);
+      const isRace = /\b\d+k\b|\bmarathon\b|\bhalf.?marathon\b/i.test(t);
+      // It's a professional sport if it has sport tag AND (vs match OR championship OR race)
+      return hasSportTag && (isVsMatch || isChampionship || isRace);
+    };
+
+    // Helper: is genuinely family-oriented (not just generically tagged)
+    const isGenuinelyFamily = (event: typeof rawEvents[0]) => {
+      const t = event.title.toLowerCase();
+      const tags: string[] = event.tags || [];
+      return tags.includes("kids") || tags.includes("workshop") || tags.includes("workshops") ||
+        t.includes("children") || t.includes("kids") || t.includes("family fun") ||
+        t.includes("family day");
+    };
+
+    // STRICT FILTER: exclude professional sports, nightlife, bars, late-night
+    const EXCLUDED_TAGS_SET = new Set(["nightlife", "late-night", "cocktails", "adults-only"]);
+    const filtered = rawEvents.filter(event => {
+      const tags: string[] = event.tags || [];
+      // Always exclude nightlife/bars/late-night
+      if (tags.some(t => EXCLUDED_TAGS_SET.has(t))) return false;
+      // Exclude professional sports unless genuinely kids-oriented
+      if (isProfessionalSport(event) && !isGenuinelyFamily(event)) return false;
+      return true;
+    });
+
+    // Sort by family relevance
+    return filtered.sort((a, b) => {
+      // Score by family priority tags
       const aTags: string[] = a.tags || [];
       const bTags: string[] = b.tags || [];
-      
-      // Deprioritise sports unless explicitly family-tagged
-      const aIsSport = aTags.some(t => FAMILY_EVENT_DEPRIORITY_TAGS.includes(t)) && !a.is_family_friendly;
-      const bIsSport = bTags.some(t => FAMILY_EVENT_DEPRIORITY_TAGS.includes(t)) && !b.is_family_friendly;
-      if (aIsSport && !bIsSport) return 1;
-      if (!aIsSport && bIsSport) return -1;
-      
-      // Score by family priority tags
-      const aScore = aTags.reduce((s, t) => s + (FAMILY_EVENT_PRIORITY_TAGS[t] || 0), 0);
-      const bScore = bTags.reduce((s, t) => s + (FAMILY_EVENT_PRIORITY_TAGS[t] || 0), 0);
+      const aScore = aTags.reduce((s, t) => s + (FAMILY_EVENT_PRIORITY_TAGS[t] || 0), 0) +
+        (isGenuinelyFamily(a) ? 15 : 0);
+      const bScore = bTags.reduce((s, t) => s + (FAMILY_EVENT_PRIORITY_TAGS[t] || 0), 0) +
+        (isGenuinelyFamily(b) ? 15 : 0);
       if (bScore !== aScore) return bScore - aScore;
       
       // Same score: sort by date
