@@ -240,10 +240,10 @@ export function generateMetaDescription(
 
   // Things to do cluster
   if (catLower === "things to do") {
-    if (modifier === "free") return `Free things to do in ${location}${timePart}. Discover parks, museums, walks, exhibitions and free activities for everyone.`;
-    if (modifier === "family") return `Family activities in ${location}${timePart}. Top-rated family days out, kids activities, soft play, and family-friendly attractions.`;
-    if (modifier === "date-night" || modifier === "romantic") return `Date night ideas in ${location}. Romantic restaurants, cocktail bars, activities and unique experiences for couples.`;
-    if (modifier === "indoor" || timeIntent === "rainy-day") return `Indoor activities in ${location} for rainy days. Escape rooms, museums, cinemas, bowling, and more things to do indoors.`;
+    if (modifier === "free" || modifier === "cheap") return `Cheap and free things to do in ${location}${timePart}. Discover parks, museums, walks, free events and budget-friendly activities.`;
+    if (modifier === "family") return `Family day out in ${location}${timePart}. Top-rated family attractions, kids activities, soft play, parks and family-friendly fun.`;
+    if (modifier === "date-night" || modifier === "romantic") return `Discover the best date night ideas in ${location} including romantic restaurants, cocktail bars and fun evening activities.`;
+    if (modifier === "rainy-day" || modifier === "indoor" || timeIntent === "rainy-day") return `Rainy day ideas in ${location}. Museums, indoor activities, cafes, cinemas, escape rooms and more things to do indoors.`;
     if (timeLabel) return `Things to do in ${location} ${timeLabel.toLowerCase()}. Discover events, activities, restaurants and free things to do near you.`;
     return `Discover the best things to do in ${location}. Events, activities, restaurants, attractions and hidden gems — all in one place.`;
   }
