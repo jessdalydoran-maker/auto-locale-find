@@ -133,11 +133,29 @@ const AdminPage = () => {
     }
   };
 
+  const runHarvester = async () => {
+    setIsHarvesting(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("harvest-search-trends");
+      if (error) throw error;
+      toast.success(
+        `Harvester complete: ${data.suggestions_found} suggestions found, ${data.valid_trends} valid trends, ${data.pages_generated} pages generated`
+      );
+      queryClient.invalidateQueries({ queryKey: ["admin-search-trends"] });
+      queryClient.invalidateQueries({ queryKey: ["admin-page-quality"] });
+    } catch (err) {
+      toast.error("Harvester failed: " + String(err));
+    } finally {
+      setIsHarvesting(false);
+    }
+  };
+
   const stats = [
     { label: "Cities", value: cities?.length || 0, icon: MapPin },
     { label: "Categories", value: categories?.length || 0, icon: Layers },
     { label: "Listings", value: listings?.length || 0, icon: TrendingUp },
     { label: "Page Views", value: pageViews?.reduce((a, p) => a + p.view_count, 0) || 0, icon: BarChart3 },
+    { label: "Search Trends", value: searchTrends?.length || 0, icon: TrendingUp },
   ];
 
   return (
@@ -146,7 +164,7 @@ const AdminPage = () => {
         <h1 className="font-display font-bold text-2xl text-foreground mb-8">Admin Dashboard</h1>
 
         {/* Stats */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+        <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mb-8">
           {stats.map((stat) => (
             <div key={stat.label} className="bg-card rounded-xl p-4 card-shadow">
               <div className="flex items-center gap-2 text-muted-foreground text-sm mb-2">
