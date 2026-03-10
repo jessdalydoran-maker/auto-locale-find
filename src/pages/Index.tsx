@@ -523,10 +523,10 @@ const Index = () => {
           {["free-things-to-do", "family-activities", "date-night", "live-music", "nightlife"].map((combo) => (
             <Link
               key={combo}
-              to={`/${combo}-belfast`}
+              to={`/${combo}`}
               className="text-xs px-3 py-1.5 bg-card border border-border text-muted-foreground rounded-full hover:border-accent/40 hover:text-accent transition-colors"
             >
-              {combo.split("-").map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(" ")} Belfast
+              {combo.split("-").map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(" ")}
             </Link>
           ))}
         </div>
