@@ -105,7 +105,7 @@ const CityPage = () => {
           {categories?.map((cat) => (
             <Link
               key={cat.id}
-              to={`/${citySlug}?category=${cat.slug}`}
+              to={`/${resolvedCitySlug}?category=${cat.slug}`}
               className={`px-4 py-2 rounded-full text-sm font-medium transition-colors ${
                 categoryFilter === cat.slug
                   ? "bg-accent text-accent-foreground"
