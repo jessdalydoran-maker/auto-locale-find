@@ -211,12 +211,19 @@ export function generateMetaDescription(
   categoryName: string,
   locationName: string,
   cityName?: string,
-  timeIntent?: string | null
+  timeIntent?: string | null,
+  nearLandmark?: string | null
 ): string {
   const location = cityName ? `${locationName}, ${cityName}` : locationName;
   const catLower = categoryName.toLowerCase();
   const timeLabel = formatTimeIntent(timeIntent);
   const timePart = timeLabel ? ` ${timeLabel.toLowerCase()}` : "";
+
+  // Near-landmark
+  if (nearLandmark) {
+    const landmarkLabel = nearLandmark.split("-").map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(" ");
+    return `Discover the best ${catLower} near ${landmarkLabel} including cafes, bars and places to visit within walking distance.`;
+  }
 
   // Event cluster
   if (catLower === "events") {
