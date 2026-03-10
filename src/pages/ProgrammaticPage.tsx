@@ -302,10 +302,17 @@ const ProgrammaticPage = () => {
     (parsed?.modifierSlug === "family" && parsed?.categorySlug === "things-to-do") ||
     (parsed?.modifierSlug === "free" && parsed?.categorySlug === "things-to-do");
 
-  // NI-wide event query uses the isNIWide variable from above
+  // Family event tag priority scoring
+  const FAMILY_EVENT_PRIORITY_TAGS: Record<string, number> = {
+    "workshop": 10, "workshops": 10, "kids": 9, "family": 8,
+    "theatre": 7, "dance": 7, "literature": 7,
+    "festival": 6, "outdoor": 5, "art": 5, "exhibitions": 5,
+    "music": 4, "community": 4, "heritage": 3, "market": 3,
+  };
+  const FAMILY_EVENT_DEPRIORITY_TAGS = ["sport", "boxing", "nightlife", "concerts"];
 
-  const { data: events } = useQuery({
-    queryKey: ["prog-events", parsed?.categorySlug, parsed?.citySlug, parsed?.neighbourhoodSlug, parsed?.timeIntent, parsed?.modifierSlug],
+  const { data: rawEvents } = useQuery({
+    queryKey: ["prog-events", parsed?.categorySlug, parsed?.citySlug, parsed?.neighbourhoodSlug, parsed?.timeIntent, parsed?.modifierSlug, locationFilter],
     queryFn: async () => {
       const today = new Date().toISOString().split("T")[0];
       let query = supabase
@@ -314,10 +321,14 @@ const ProgrammaticPage = () => {
         .eq("status", "active")
         .gte("date_start", today)
         .order("date_start", { ascending: true })
-        .limit(50);
+        .limit(80);
 
-      // For NI-wide pages, don't filter by city — show all events
-      if (!isNIWide) {
+      // For NI-wide pages, optionally filter by selected location
+      if (isNIWide) {
+        if (locationFilter) {
+          query = query.eq("cities.slug", locationFilter);
+        }
+      } else {
         query = query.eq("cities.slug", parsed!.citySlug);
       }
 
@@ -342,6 +353,44 @@ const ProgrammaticPage = () => {
     },
     enabled: !!parsed?.citySlug && shouldFetchEvents,
   });
+
+  // Apply family priority sorting to events
+  const events = useMemo(() => {
+    if (!rawEvents) return rawEvents;
+    if (!isFamilyPage) return rawEvents;
+    
+    return [...rawEvents].sort((a, b) => {
+      const aTags: string[] = a.tags || [];
+      const bTags: string[] = b.tags || [];
+      
+      // Deprioritise sports unless explicitly family-tagged
+      const aIsSport = aTags.some(t => FAMILY_EVENT_DEPRIORITY_TAGS.includes(t)) && !a.is_family_friendly;
+      const bIsSport = bTags.some(t => FAMILY_EVENT_DEPRIORITY_TAGS.includes(t)) && !b.is_family_friendly;
+      if (aIsSport && !bIsSport) return 1;
+      if (!aIsSport && bIsSport) return -1;
+      
+      // Score by family priority tags
+      const aScore = aTags.reduce((s, t) => s + (FAMILY_EVENT_PRIORITY_TAGS[t] || 0), 0);
+      const bScore = bTags.reduce((s, t) => s + (FAMILY_EVENT_PRIORITY_TAGS[t] || 0), 0);
+      if (bScore !== aScore) return bScore - aScore;
+      
+      // Same score: sort by date
+      return a.date_start.localeCompare(b.date_start);
+    });
+  }, [rawEvents, isFamilyPage]);
+
+  // Group events by city for NI-wide pages
+  const eventsByCity = useMemo(() => {
+    if (!events || !isNIWide || locationFilter) return null;
+    const grouped: Record<string, typeof events> = {};
+    for (const event of events) {
+      const cityName = (event.cities as any)?.name || "Unknown";
+      if (!grouped[cityName]) grouped[cityName] = [];
+      grouped[cityName].push(event);
+    }
+    // Sort cities: those with most events first
+    return Object.entries(grouped).sort((a, b) => b[1].length - a[1].length);
+  }, [events, isNIWide, locationFilter]);
 
   const eventCount = events?.length || 0;
   const listingCount = listings?.length || 0;
