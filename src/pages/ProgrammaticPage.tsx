@@ -413,14 +413,15 @@ const ProgrammaticPage = () => {
     });
   }, [rawEvents, isFamilyPage]);
 
-  // Group events by city for NI-wide pages
+  // Group events by town/council area for NI-wide pages
   const eventsByCity = useMemo(() => {
     if (!events || !isNIWide || locationFilter) return null;
     const grouped: Record<string, typeof events> = {};
     for (const event of events) {
-      const cityName = (event.cities as any)?.name || "Unknown";
-      if (!grouped[cityName]) grouped[cityName] = [];
-      grouped[cityName].push(event);
+      // Prefer council_area, then city name for grouping
+      const groupName = (event as any).council_area || (event.cities as any)?.name || "Northern Ireland";
+      if (!grouped[groupName]) grouped[groupName] = [];
+      grouped[groupName].push(event);
     }
     // Sort cities: those with most events first
     return Object.entries(grouped).sort((a, b) => b[1].length - a[1].length);
