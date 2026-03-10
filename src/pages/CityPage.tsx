@@ -68,21 +68,22 @@ const CityPage = () => {
   return (
     <Layout>
       {/* Hero */}
-      <section className="relative h-48 md:h-64 overflow-hidden">
-        <img
-          src={city.image_url || "https://images.unsplash.com/photo-1513635269975-59663e0ac1ad?w=1200"}
-          alt={city.name}
-          className="w-full h-full object-cover"
-        />
-        <div className="absolute inset-0 bg-gradient-to-t from-primary/80 to-primary/30" />
-        <div className="absolute bottom-0 left-0 right-0 p-6 container mx-auto">
-          <div className="flex items-center gap-2 text-primary-foreground/80 text-sm mb-1">
+      <section className="bg-card border-b border-border">
+        <div className="relative h-40 md:h-52 overflow-hidden">
+          <img
+            src={city.image_url || "https://images.unsplash.com/photo-1513635269975-59663e0ac1ad?w=1200"}
+            alt={city.name}
+            className="w-full h-full object-cover"
+          />
+        </div>
+        <div className="container mx-auto px-4 py-5">
+          <div className="flex items-center gap-2 text-muted-foreground text-sm mb-1">
             <MapPin className="h-4 w-4" />
             <span>{city.country}</span>
           </div>
-          <h1 className="font-display font-bold text-2xl md:text-4xl text-primary-foreground">{pageTitle}</h1>
+          <h1 className="font-display font-bold text-2xl md:text-3xl text-foreground">{pageTitle}</h1>
           {city.description && (
-            <p className="text-primary-foreground/70 text-sm mt-2 max-w-xl">{city.description}</p>
+            <p className="text-muted-foreground text-sm mt-1.5 max-w-xl">{city.description}</p>
           )}
         </div>
       </section>

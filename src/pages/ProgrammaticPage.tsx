@@ -219,35 +219,35 @@ const ProgrammaticPage = () => {
       )}
 
       {/* Hero */}
-      <section className="hero-gradient py-10 md:py-14">
+      <section className="bg-card border-b border-border py-8 md:py-12">
         <div className="container mx-auto px-4">
           {/* Breadcrumbs */}
-          <nav className="flex items-center gap-1 text-xs text-primary-foreground/60 mb-3 flex-wrap">
+          <nav className="flex items-center gap-1 text-xs text-muted-foreground mb-3 flex-wrap">
             {breadcrumbs.map((crumb, i) => (
               <span key={i} className="flex items-center gap-1">
                 {i > 0 && <ChevronRight className="h-3 w-3" />}
                 {crumb.url ? (
-                  <Link to={crumb.url} className="hover:text-primary-foreground transition-colors">
+                  <Link to={crumb.url} className="hover:text-accent transition-colors">
                     {crumb.label}
                   </Link>
                 ) : (
-                  <span className="text-primary-foreground/90">{crumb.label}</span>
+                  <span className="text-foreground">{crumb.label}</span>
                 )}
               </span>
             ))}
           </nav>
 
           {city && (
-            <div className="flex items-center gap-2 text-primary-foreground/70 text-sm mb-2">
+            <div className="flex items-center gap-2 text-muted-foreground text-sm mb-2">
               <MapPin className="h-4 w-4" />
-              <Link to={`/${city.slug}`} className="hover:text-primary-foreground transition-colors">
+              <Link to={`/${city.slug}`} className="hover:text-accent transition-colors">
                 {neighbourhood ? `${neighbourhood.name}, ${city.name}` : city.name}
               </Link>
             </div>
           )}
-          <h1 className="font-display font-bold text-2xl md:text-4xl text-primary-foreground">{title}</h1>
+          <h1 className="font-display font-bold text-2xl md:text-3xl text-foreground">{title}</h1>
           {metaDesc && (
-            <p className="text-primary-foreground/60 text-sm mt-2 max-w-2xl">{metaDesc}</p>
+            <p className="text-muted-foreground text-sm mt-2 max-w-2xl">{metaDesc}</p>
           )}
         </div>
       </section>
@@ -268,7 +268,7 @@ const ProgrammaticPage = () => {
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
             {listings?.map((listing, i) => (
               <div key={listing.id} className="relative">
-                <span className="absolute -top-2 -left-2 z-10 w-8 h-8 bg-accent text-accent-foreground rounded-full flex items-center justify-center text-sm font-bold card-shadow">
+                <span className="absolute -top-2 -left-2 z-10 w-7 h-7 bg-accent text-accent-foreground rounded-full flex items-center justify-center text-xs font-bold card-shadow">
                   {i + 1}
                 </span>
                 <ListingCard
@@ -307,7 +307,7 @@ const ProgrammaticPage = () => {
                 <Link
                   key={i}
                   to={link.url}
-                  className="text-xs px-3 py-1.5 bg-muted text-muted-foreground rounded-full hover:bg-accent hover:text-accent-foreground transition-colors"
+                  className="text-xs px-3 py-1.5 bg-card border border-border text-muted-foreground rounded-full hover:border-accent hover:text-accent transition-colors"
                 >
                   {link.label}
                 </Link>
