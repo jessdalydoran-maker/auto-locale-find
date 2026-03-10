@@ -186,6 +186,21 @@ const ProgrammaticPage = () => {
   });
 
   const itemCount = showEvents ? (events?.length || 0) : (listings?.length || 0);
+  const isNeighbourhoodPage = !!parsed?.neighbourhoodSlug;
+  const hasEnoughContent = meetsContentThreshold(itemCount, showEvents, isNeighbourhoodPage);
+  const isThin = isThinContent(itemCount);
+
+  // Canonical URL
+  const canonicalSlug = useMemo(() => {
+    if (!parsed) return null;
+    return getCanonicalSlug(
+      parsed.modifierSlug,
+      parsed.categorySlug,
+      parsed.neighbourhoodSlug,
+      parsed.citySlug,
+      parsed.timeIntent
+    );
+  }, [parsed]);
 
   // SEO content
   const title = category && city
@@ -201,7 +216,7 @@ const ProgrammaticPage = () => {
     : "";
 
   const faqItems = useMemo(() => {
-    if (!category || !city) return [];
+    if (!category || !city || !hasEnoughContent) return [];
     return generateFaqItems(
       modifier?.name?.toLowerCase() || parsed?.modifierSlug || null,
       category.name,
@@ -210,13 +225,35 @@ const ProgrammaticPage = () => {
       cityName,
       parsed?.timeIntent
     );
-  }, [category, city, modifier, parsed, locationName, itemCount, cityName]);
+  }, [category, city, modifier, parsed, locationName, itemCount, cityName, hasEnoughContent]);
 
   useEffect(() => {
     if (title !== "Loading...") {
       document.title = title;
       const metaEl = document.querySelector('meta[name="description"]');
       if (metaEl) metaEl.setAttribute("content", metaDesc);
+
+      // Set canonical link
+      let canonicalEl = document.querySelector('link[rel="canonical"]') as HTMLLinkElement;
+      if (!canonicalEl) {
+        canonicalEl = document.createElement("link");
+        canonicalEl.rel = "canonical";
+        document.head.appendChild(canonicalEl);
+      }
+      canonicalEl.href = `https://bestlocal.co.uk${canonicalSlug || currentUrl}`;
+
+      // Noindex thin pages
+      let robotsEl = document.querySelector('meta[name="robots"]') as HTMLMetaElement;
+      if (!hasEnoughContent && itemCount === 0) {
+        if (!robotsEl) {
+          robotsEl = document.createElement("meta");
+          robotsEl.name = "robots";
+          document.head.appendChild(robotsEl);
+        }
+        robotsEl.content = "noindex, follow";
+      } else if (robotsEl) {
+        robotsEl.remove();
+      }
     }
   }, [title, metaDesc]);
 
