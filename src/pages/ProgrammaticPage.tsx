@@ -566,14 +566,18 @@ const ProgrammaticPage = () => {
   // Breadcrumb
   const breadcrumbs = useMemo(() => {
     const crumbs = [{ label: "Home", url: "/" }];
-    if (city) crumbs.push({ label: city.name, url: `/${city.slug}` });
+    if (isNIWide) {
+      crumbs.push({ label: "Northern Ireland", url: "/" });
+    } else if (city) {
+      crumbs.push({ label: city.name, url: `/${city.slug}` });
+    }
     if (neighbourhood) crumbs.push({ label: neighbourhood.name, url: `/things-to-do-${neighbourhood.slug}-${city?.slug}` });
     if (category) {
       const parts = [modifier?.name, category.name, parsed?.timeIntent ? formatTimeIntent(parsed.timeIntent) : ""].filter(Boolean);
       crumbs.push({ label: parts.join(" "), url: "" });
     }
     return crumbs;
-  }, [city, neighbourhood, category, modifier, parsed]);
+  }, [city, neighbourhood, category, modifier, parsed, isNIWide]);
 
   // Filter options
   const filterOptions = useMemo(() => {
