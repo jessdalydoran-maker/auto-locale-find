@@ -473,16 +473,16 @@ const Index = () => {
       {/* Explore Belfast by Mood */}
       <section className="container mx-auto px-4 py-10">
         <div className="mb-6">
-          <h2 className="font-display font-bold text-xl md:text-2xl text-foreground">Explore Belfast by Mood</h2>
+          <h2 className="font-display font-bold text-xl md:text-2xl text-foreground">Explore by Mood</h2>
           <p className="text-sm text-muted-foreground mt-1">Find the perfect outing for any occasion</p>
         </div>
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
           {[
-            { label: "Date Night", to: "/date-night-belfast", icon: Heart, desc: "Romantic restaurants, cocktail bars & evening activities", color: "hsl(var(--accent))" },
-            { label: "Family Day Out", to: "/family-day-out-belfast", icon: Users, desc: "Kids activities, parks & family-friendly attractions", color: "hsl(var(--accent))" },
-            { label: "Rainy Day Ideas", to: "/rainy-day-activities-belfast", icon: CloudRain, desc: "Museums, indoor activities, cafes & escape rooms", color: "hsl(var(--accent))" },
-            { label: "Cheap & Free", to: "/cheap-things-to-do-belfast", icon: Coins, desc: "Free events, parks, walks & budget-friendly fun", color: "hsl(var(--accent))" },
-            { label: "Nightlife", to: "/nightlife-belfast", icon: PartyPopper, desc: "Bars, clubs, live music & late-night spots", color: "hsl(var(--accent))" },
+            { label: "Date Night", to: "/date-night", icon: Heart, desc: "Romantic restaurants, cocktail bars & evening activities", color: "hsl(var(--accent))" },
+            { label: "Family Day Out", to: "/family-activities", icon: Users, desc: "Kids activities, parks & family-friendly attractions", color: "hsl(var(--accent))" },
+            { label: "Rainy Day Ideas", to: "/rainy-day-activities", icon: CloudRain, desc: "Museums, indoor activities, cafes & escape rooms", color: "hsl(var(--accent))" },
+            { label: "Cheap & Free", to: "/free-things-to-do", icon: Coins, desc: "Free events, parks, walks & budget-friendly fun", color: "hsl(var(--accent))" },
+            { label: "Nightlife", to: "/nightlife", icon: PartyPopper, desc: "Bars, clubs, live music & late-night spots", color: "hsl(var(--accent))" },
             { label: "Brunch & Coffee", to: "/best-brunch-belfast", icon: Coffee, desc: "Top brunch spots, specialty coffee & bakeries", color: "hsl(var(--accent))" },
           ].map((mood, i) => (
             <Link
