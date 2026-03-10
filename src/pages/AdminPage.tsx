@@ -237,6 +237,18 @@ const AdminPage = () => {
                         <><Play className="h-4 w-4 mr-2" /> Run Weekly Update Now</>
                       )}
                     </Button>
+                    <Button
+                      onClick={runHarvester}
+                      disabled={isHarvesting}
+                      variant="outline"
+                      className="w-full"
+                    >
+                      {isHarvesting ? (
+                        <><RefreshCw className="h-4 w-4 mr-2 animate-spin" /> Harvesting...</>
+                      ) : (
+                        <><TrendingUp className="h-4 w-4 mr-2" /> Run Search Harvester</>
+                      )}
+                    </Button>
                     <p className="text-xs text-muted-foreground text-center">
                       {settingsMap.get("last_manual_run")
                         ? `Last manual run: ${new Date(settingsMap.get("last_manual_run")!).toLocaleString()}`
