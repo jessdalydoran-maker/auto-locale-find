@@ -15,6 +15,7 @@ import { toast } from "sonner";
 const AdminPage = () => {
   const queryClient = useQueryClient();
   const [isRunning, setIsRunning] = useState(false);
+  const [isHarvesting, setIsHarvesting] = useState(false);
 
   const { data: cities } = useQuery({
     queryKey: ["admin-cities"],
@@ -95,6 +96,19 @@ const AdminPage = () => {
     },
   });
 
+  const { data: searchTrends } = useQuery({
+    queryKey: ["admin-search-trends"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("search_trends")
+        .select("*")
+        .order("trend_score", { ascending: false })
+        .limit(50);
+      if (error) throw error;
+      return data;
+    },
+  });
+
   const settingsMap = new Map(
     automationSettings?.map((s) => [s.key, s.value]) || []
   );
@@ -119,11 +133,29 @@ const AdminPage = () => {
     }
   };
 
+  const runHarvester = async () => {
+    setIsHarvesting(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("harvest-search-trends");
+      if (error) throw error;
+      toast.success(
+        `Harvester complete: ${data.suggestions_found} suggestions found, ${data.valid_trends} valid trends, ${data.pages_generated} pages generated`
+      );
+      queryClient.invalidateQueries({ queryKey: ["admin-search-trends"] });
+      queryClient.invalidateQueries({ queryKey: ["admin-page-quality"] });
+    } catch (err) {
+      toast.error("Harvester failed: " + String(err));
+    } finally {
+      setIsHarvesting(false);
+    }
+  };
+
   const stats = [
     { label: "Cities", value: cities?.length || 0, icon: MapPin },
     { label: "Categories", value: categories?.length || 0, icon: Layers },
     { label: "Listings", value: listings?.length || 0, icon: TrendingUp },
     { label: "Page Views", value: pageViews?.reduce((a, p) => a + p.view_count, 0) || 0, icon: BarChart3 },
+    { label: "Search Trends", value: searchTrends?.length || 0, icon: TrendingUp },
   ];
 
   return (
@@ -132,7 +164,7 @@ const AdminPage = () => {
         <h1 className="font-display font-bold text-2xl text-foreground mb-8">Admin Dashboard</h1>
 
         {/* Stats */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+        <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mb-8">
           {stats.map((stat) => (
             <div key={stat.label} className="bg-card rounded-xl p-4 card-shadow">
               <div className="flex items-center gap-2 text-muted-foreground text-sm mb-2">
@@ -147,6 +179,7 @@ const AdminPage = () => {
         <Tabs defaultValue="automation">
           <TabsList className="mb-6 flex-wrap">
             <TabsTrigger value="automation">Automation</TabsTrigger>
+            <TabsTrigger value="trends">Search Trends</TabsTrigger>
             <TabsTrigger value="listings">Listings</TabsTrigger>
             <TabsTrigger value="pages">Page Quality</TabsTrigger>
             <TabsTrigger value="cities">Cities</TabsTrigger>
@@ -202,6 +235,18 @@ const AdminPage = () => {
                         <><RefreshCw className="h-4 w-4 mr-2 animate-spin" /> Running...</>
                       ) : (
                         <><Play className="h-4 w-4 mr-2" /> Run Weekly Update Now</>
+                      )}
+                    </Button>
+                    <Button
+                      onClick={runHarvester}
+                      disabled={isHarvesting}
+                      variant="outline"
+                      className="w-full"
+                    >
+                      {isHarvesting ? (
+                        <><RefreshCw className="h-4 w-4 mr-2 animate-spin" /> Harvesting...</>
+                      ) : (
+                        <><TrendingUp className="h-4 w-4 mr-2" /> Run Search Harvester</>
                       )}
                     </Button>
                     <p className="text-xs text-muted-foreground text-center">
@@ -284,6 +329,70 @@ const AdminPage = () => {
                     </tbody>
                   </table>
                 </div>
+              </div>
+            </div>
+          </TabsContent>
+
+          {/* ─── SEARCH TRENDS TAB ─── */}
+          <TabsContent value="trends">
+            <div className="bg-card rounded-xl card-shadow overflow-hidden">
+              <div className="p-4 border-b border-border flex items-center justify-between">
+                <div>
+                  <h3 className="font-display font-semibold text-foreground">Discovered Search Trends</h3>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Queries harvested from Google autocomplete. Pages are auto-generated when content meets threshold.
+                  </p>
+                </div>
+                <Button
+                  onClick={runHarvester}
+                  disabled={isHarvesting}
+                  size="sm"
+                  variant="outline"
+                >
+                  {isHarvesting ? (
+                    <><RefreshCw className="h-3 w-3 mr-1 animate-spin" /> Harvesting</>
+                  ) : (
+                    <><TrendingUp className="h-3 w-3 mr-1" /> Harvest Now</>
+                  )}
+                </Button>
+              </div>
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="border-b border-border">
+                      <th className="text-left p-3 font-medium text-muted-foreground">Query</th>
+                      <th className="text-left p-3 font-medium text-muted-foreground">Score</th>
+                      <th className="text-left p-3 font-medium text-muted-foreground">Page Generated</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {searchTrends && searchTrends.length > 0 ? (
+                      searchTrends.map((trend) => (
+                        <tr key={trend.id} className="border-b border-border last:border-0">
+                          <td className="p-3 text-foreground text-xs font-mono">{trend.query}</td>
+                          <td className="p-3">
+                            <Badge variant="secondary">{trend.trend_score}</Badge>
+                          </td>
+                          <td className="p-3">
+                            {trend.page_generated ? (
+                              <Badge variant="default" className="text-xs">
+                                <CheckCircle2 className="h-3 w-3 mr-1" /> Yes
+                              </Badge>
+                            ) : (
+                              <Badge variant="secondary" className="text-xs">Pending</Badge>
+                            )}
+                          </td>
+                        </tr>
+                      ))
+                    ) : (
+                      <tr>
+                        <td colSpan={3} className="p-6 text-center text-muted-foreground text-sm">
+                          No search trends discovered yet. Click "Harvest Now" to start.
+                        </td>
+                      </tr>
+                    )}
+                  </tbody>
+                </table>
               </div>
             </div>
           </TabsContent>

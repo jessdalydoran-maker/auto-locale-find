@@ -172,7 +172,24 @@ Deno.serve(async (req) => {
       }
     }
 
-    // ─── 6. UPDATE AUTOMATION LOG ───
+    // ─── 6. TRIGGER SEARCH HARVESTER ───
+    try {
+      const harvesterUrl = `${supabaseUrl}/functions/v1/harvest-search-trends`;
+      const harvesterRes = await fetch(harvesterUrl, {
+        method: "POST",
+        headers: {
+          "Authorization": `Bearer ${supabaseKey}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ source: "weekly-update" }),
+      });
+      const harvesterData = await harvesterRes.json();
+      console.log("Harvester results:", harvesterData);
+    } catch (e) {
+      console.error("Harvester failed (non-fatal):", e);
+    }
+
+    // ─── 7. UPDATE AUTOMATION LOG ───
     await supabase
       .from("automation_logs")
       .update({
