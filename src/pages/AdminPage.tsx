@@ -333,6 +333,70 @@ const AdminPage = () => {
             </div>
           </TabsContent>
 
+          {/* ─── SEARCH TRENDS TAB ─── */}
+          <TabsContent value="trends">
+            <div className="bg-card rounded-xl card-shadow overflow-hidden">
+              <div className="p-4 border-b border-border flex items-center justify-between">
+                <div>
+                  <h3 className="font-display font-semibold text-foreground">Discovered Search Trends</h3>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Queries harvested from Google autocomplete. Pages are auto-generated when content meets threshold.
+                  </p>
+                </div>
+                <Button
+                  onClick={runHarvester}
+                  disabled={isHarvesting}
+                  size="sm"
+                  variant="outline"
+                >
+                  {isHarvesting ? (
+                    <><RefreshCw className="h-3 w-3 mr-1 animate-spin" /> Harvesting</>
+                  ) : (
+                    <><TrendingUp className="h-3 w-3 mr-1" /> Harvest Now</>
+                  )}
+                </Button>
+              </div>
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="border-b border-border">
+                      <th className="text-left p-3 font-medium text-muted-foreground">Query</th>
+                      <th className="text-left p-3 font-medium text-muted-foreground">Score</th>
+                      <th className="text-left p-3 font-medium text-muted-foreground">Page Generated</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {searchTrends && searchTrends.length > 0 ? (
+                      searchTrends.map((trend) => (
+                        <tr key={trend.id} className="border-b border-border last:border-0">
+                          <td className="p-3 text-foreground text-xs font-mono">{trend.query}</td>
+                          <td className="p-3">
+                            <Badge variant="secondary">{trend.trend_score}</Badge>
+                          </td>
+                          <td className="p-3">
+                            {trend.page_generated ? (
+                              <Badge variant="default" className="text-xs">
+                                <CheckCircle2 className="h-3 w-3 mr-1" /> Yes
+                              </Badge>
+                            ) : (
+                              <Badge variant="secondary" className="text-xs">Pending</Badge>
+                            )}
+                          </td>
+                        </tr>
+                      ))
+                    ) : (
+                      <tr>
+                        <td colSpan={3} className="p-6 text-center text-muted-foreground text-sm">
+                          No search trends discovered yet. Click "Harvest Now" to start.
+                        </td>
+                      </tr>
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </TabsContent>
+
           {/* ─── LISTINGS TAB ─── */}
           <TabsContent value="listings">
             <div className="bg-card rounded-xl card-shadow overflow-hidden">
