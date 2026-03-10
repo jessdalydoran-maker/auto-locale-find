@@ -21,7 +21,7 @@ const NAV_ITEMS = [
       { label: "Things To Do Belfast", to: "/things-to-do-belfast" },
       { label: "This Weekend", to: "/things-to-do-belfast-this-weekend" },
       { label: "Free Things To Do", to: "/free-things-to-do-belfast" },
-      { label: "Family Activities", to: "/family-activities-belfast" },
+      { label: "Family Activities", to: "/family-activities" },
       { label: "Date Night", to: "/date-night-belfast" },
     ],
   },

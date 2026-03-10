@@ -26,7 +26,7 @@ const FOOTER_QUICK_LINKS = [
   { name: "This Weekend", to: "/things-to-do-belfast-this-weekend" },
   { name: "Today", to: "/things-to-do-belfast-today" },
   { name: "Free Events", to: "/free-events-belfast" },
-  { name: "Family Activities", to: "/family-activities-belfast" },
+  { name: "Family Activities", to: "/family-activities" },
   { name: "Date Night", to: "/date-night-belfast" },
   { name: "Free Things To Do", to: "/free-things-to-do-belfast" },
 ];
