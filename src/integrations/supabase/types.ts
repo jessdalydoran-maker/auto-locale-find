@@ -80,6 +80,121 @@ export type Database = {
         }
         Relationships: []
       }
+      events: {
+        Row: {
+          category_id: string | null
+          city_id: string
+          created_at: string
+          date_end: string | null
+          date_start: string
+          description: string | null
+          id: string
+          image_url: string | null
+          is_family_friendly: boolean
+          is_free: boolean
+          is_indoor: boolean
+          is_outdoor: boolean
+          neighbourhood_id: string | null
+          official_url: string | null
+          price: string | null
+          short_description: string | null
+          slug: string
+          source_id: string | null
+          source_url: string | null
+          status: string
+          tags: string[] | null
+          ticket_url: string | null
+          time_end: string | null
+          time_start: string | null
+          title: string
+          updated_at: string
+          venue_address: string | null
+          venue_name: string | null
+        }
+        Insert: {
+          category_id?: string | null
+          city_id: string
+          created_at?: string
+          date_end?: string | null
+          date_start: string
+          description?: string | null
+          id?: string
+          image_url?: string | null
+          is_family_friendly?: boolean
+          is_free?: boolean
+          is_indoor?: boolean
+          is_outdoor?: boolean
+          neighbourhood_id?: string | null
+          official_url?: string | null
+          price?: string | null
+          short_description?: string | null
+          slug: string
+          source_id?: string | null
+          source_url?: string | null
+          status?: string
+          tags?: string[] | null
+          ticket_url?: string | null
+          time_end?: string | null
+          time_start?: string | null
+          title: string
+          updated_at?: string
+          venue_address?: string | null
+          venue_name?: string | null
+        }
+        Update: {
+          category_id?: string | null
+          city_id?: string
+          created_at?: string
+          date_end?: string | null
+          date_start?: string
+          description?: string | null
+          id?: string
+          image_url?: string | null
+          is_family_friendly?: boolean
+          is_free?: boolean
+          is_indoor?: boolean
+          is_outdoor?: boolean
+          neighbourhood_id?: string | null
+          official_url?: string | null
+          price?: string | null
+          short_description?: string | null
+          slug?: string
+          source_id?: string | null
+          source_url?: string | null
+          status?: string
+          tags?: string[] | null
+          ticket_url?: string | null
+          time_end?: string | null
+          time_start?: string | null
+          title?: string
+          updated_at?: string
+          venue_address?: string | null
+          venue_name?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "events_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "categories"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "events_city_id_fkey"
+            columns: ["city_id"]
+            isOneToOne: false
+            referencedRelation: "cities"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "events_neighbourhood_id_fkey"
+            columns: ["neighbourhood_id"]
+            isOneToOne: false
+            referencedRelation: "neighbourhoods"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       listings: {
         Row: {
           address: string | null

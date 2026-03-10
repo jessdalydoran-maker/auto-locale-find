@@ -3,20 +3,25 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Layout } from "@/components/Layout";
 import { ListingCard } from "@/components/ListingCard";
+import { EventCard } from "@/components/EventCard";
 import { AdPlaceholder } from "@/components/AdPlaceholder";
-import { MapPin, ChevronRight } from "lucide-react";
+import { MapPin, ChevronRight, Calendar, Filter } from "lucide-react";
 import {
   parseSlug,
   generateTitle,
   generateMetaDescription,
   generateIntroText,
   buildPageUrl,
+  formatTimeIntent,
+  getTimeIntentDateRange,
+  isEventCategory,
 } from "@/lib/seo-utils";
-import { useEffect, useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 const ProgrammaticPage = () => {
   const { "*": rawSlug } = useParams();
   const slug = rawSlug || "";
+  const [activeFilter, setActiveFilter] = useState<string | null>(null);
 
   // Fetch lookup data for slug parsing
   const { data: cities } = useQuery({
@@ -62,7 +67,7 @@ const ProgrammaticPage = () => {
     staleTime: 1000 * 60 * 10,
   });
 
-  // Parse the slug once lookup data is available
+  // Parse the slug
   const parsed = useMemo(() => {
     if (!cities || !neighbourhoods) return null;
     const citySlugs = cities.map((c) => c.slug);
@@ -84,42 +89,89 @@ const ProgrammaticPage = () => {
 
   const locationName = neighbourhood?.name || city?.name || "";
   const cityName = neighbourhood ? city?.name : undefined;
+  const showEvents = parsed ? isEventCategory(parsed.categorySlug) : false;
+  const dateRange = parsed ? getTimeIntentDateRange(parsed.timeIntent || null) : null;
 
-  // Fetch listings
+  // Fetch listings (for non-event categories or mixed)
   const { data: listings } = useQuery({
-    queryKey: ["prog-listings", parsed?.categorySlug, parsed?.citySlug, parsed?.neighbourhoodSlug],
+    queryKey: ["prog-listings", parsed?.categorySlug, parsed?.citySlug, parsed?.neighbourhoodSlug, parsed?.modifierSlug],
     queryFn: async () => {
       let query = supabase
         .from("listings")
         .select("*, cities!inner(slug, name), categories!inner(slug, name)")
         .eq("cities.slug", parsed!.citySlug)
-        .eq("categories.slug", parsed!.categorySlug)
         .eq("is_approved", true)
         .order("rating", { ascending: false })
-        .limit(10);
+        .limit(20);
+
+      // For generic categories like "things-to-do", don't filter by category
+      if (parsed!.categorySlug !== "things-to-do" && !showEvents) {
+        query = query.eq("categories.slug", parsed!.categorySlug);
+      }
 
       if (parsed?.neighbourhoodSlug && neighbourhood) {
         query = query.eq("neighbourhood_id", neighbourhood.id);
+      }
+
+      // Modifier-based filtering
+      if (parsed?.modifierSlug === "free") {
+        query = query.eq("price_level", "Free");
       }
 
       const { data, error } = await query;
       if (error) throw error;
       return data;
     },
-    enabled: !!parsed?.citySlug && !!parsed?.categorySlug,
+    enabled: !!parsed?.citySlug && !!parsed?.categorySlug && !showEvents,
   });
+
+  // Fetch events (for event-related categories)
+  const { data: events } = useQuery({
+    queryKey: ["prog-events", parsed?.categorySlug, parsed?.citySlug, parsed?.neighbourhoodSlug, parsed?.timeIntent, parsed?.modifierSlug],
+    queryFn: async () => {
+      let query = supabase
+        .from("events")
+        .select("*, cities!inner(slug, name)")
+        .eq("cities.slug", parsed!.citySlug)
+        .eq("status", "active")
+        .order("date_start", { ascending: true })
+        .limit(20);
+
+      if (parsed?.neighbourhoodSlug && neighbourhood) {
+        query = query.eq("neighbourhood_id", neighbourhood.id);
+      }
+
+      if (dateRange) {
+        query = query.gte("date_start", dateRange.start).lte("date_start", dateRange.end);
+      }
+
+      if (parsed?.modifierSlug === "free") {
+        query = query.eq("is_free", true);
+      }
+      if (parsed?.modifierSlug === "family") {
+        query = query.eq("is_family_friendly", true);
+      }
+
+      const { data, error } = await query;
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!parsed?.citySlug && showEvents,
+  });
+
+  const itemCount = showEvents ? (events?.length || 0) : (listings?.length || 0);
 
   // Dynamic document title & meta
   const title = category && city
-    ? generateTitle(modifier?.name?.toLowerCase() || null, category.name, locationName, cityName)
+    ? generateTitle(modifier?.name?.toLowerCase() || null, category.name, locationName, cityName, parsed?.timeIntent)
     : "Loading...";
 
   const metaDesc = category && city
-    ? generateMetaDescription(modifier?.name?.toLowerCase() || null, category.name, locationName, cityName)
+    ? generateMetaDescription(modifier?.name?.toLowerCase() || null, category.name, locationName, cityName, parsed?.timeIntent)
     : "";
 
-  const introText = category && city && listings
-    ? generateIntroText(modifier?.name?.toLowerCase() || null, category.name, locationName, listings.length, cityName)
+  const introText = category && city
+    ? generateIntroText(modifier?.name?.toLowerCase() || null, category.name, locationName, itemCount, cityName, parsed?.timeIntent)
     : "";
 
   useEffect(() => {
@@ -130,84 +182,176 @@ const ProgrammaticPage = () => {
     }
   }, [title, metaDesc]);
 
-  // Build JSON-LD
+  // JSON-LD
   const jsonLd = useMemo(() => {
-    if (!listings?.length || !category || !city) return null;
-    return {
-      "@context": "https://schema.org",
-      "@type": "ItemList",
-      name: title,
-      description: metaDesc,
-      numberOfItems: listings.length,
-      itemListElement: listings.map((l, i) => ({
-        "@type": "ListItem",
-        position: i + 1,
-        item: {
-          "@type": "LocalBusiness",
-          name: l.name,
-          description: l.short_description,
-          address: l.address,
-          aggregateRating: l.rating
-            ? { "@type": "AggregateRating", ratingValue: l.rating, reviewCount: l.review_count }
-            : undefined,
-          image: l.image_url,
-          url: l.website,
-        },
-      })),
-    };
-  }, [listings, category, city, title, metaDesc]);
+    if (!category || !city) return null;
 
-  // Related pages for internal linking
+    if (showEvents && events?.length) {
+      return {
+        "@context": "https://schema.org",
+        "@type": "ItemList",
+        name: title,
+        description: metaDesc,
+        numberOfItems: events.length,
+        itemListElement: events.map((e, i) => ({
+          "@type": "ListItem",
+          position: i + 1,
+          item: {
+            "@type": "Event",
+            name: e.title,
+            description: e.short_description,
+            startDate: e.date_start,
+            endDate: e.date_end || e.date_start,
+            location: e.venue_name ? {
+              "@type": "Place",
+              name: e.venue_name,
+              address: e.venue_address,
+            } : undefined,
+            isAccessibleForFree: e.is_free,
+            image: e.image_url,
+          },
+        })),
+      };
+    }
+
+    if (listings?.length) {
+      return {
+        "@context": "https://schema.org",
+        "@type": "ItemList",
+        name: title,
+        description: metaDesc,
+        numberOfItems: listings.length,
+        itemListElement: listings.map((l, i) => ({
+          "@type": "ListItem",
+          position: i + 1,
+          item: {
+            "@type": "LocalBusiness",
+            name: l.name,
+            description: l.short_description,
+            address: l.address,
+            aggregateRating: l.rating
+              ? { "@type": "AggregateRating", ratingValue: l.rating, reviewCount: l.review_count }
+              : undefined,
+            image: l.image_url,
+            url: l.website,
+          },
+        })),
+      };
+    }
+
+    return null;
+  }, [listings, events, category, city, title, metaDesc, showEvents]);
+
+  // FAQ schema
+  const faqItems = useMemo(() => {
+    if (!category || !city) return [];
+    const loc = neighbourhood ? `${neighbourhood.name}, ${city.name}` : city.name;
+    const catLower = category.name.toLowerCase();
+    const modLabel = modifier?.name?.toLowerCase() || "";
+
+    return [
+      {
+        q: `What are the best ${modLabel} ${catLower} in ${loc}?`,
+        a: `We've curated the top ${modLabel} ${catLower} in ${loc} based on reviews, ratings and local recommendations. Browse our full list above.`,
+      },
+      {
+        q: `How many ${catLower} are there in ${loc}?`,
+        a: `We currently feature ${itemCount} ${modLabel} ${catLower} in ${loc}. We're always adding new places.`,
+      },
+      {
+        q: `Are there free ${catLower} in ${loc}?`,
+        a: `Yes! Check our free ${catLower} page for ${loc} to find options that won't cost a penny.`,
+      },
+    ];
+  }, [category, city, modifier, neighbourhood, itemCount]);
+
+  // Related pages
   const relatedPages = useMemo(() => {
     if (!allCategories || !modifiers || !parsed || !city) return [];
     const links: { url: string; label: string }[] = [];
 
-    // Other categories in same city with same modifier
+    // Time intent variations
+    if (!parsed.timeIntent) {
+      ["this-weekend", "today", "this-week"].forEach((ti) => {
+        links.push({
+          url: buildPageUrl(parsed.modifierSlug, parsed.categorySlug, parsed.neighbourhoodSlug, parsed.citySlug, ti),
+          label: `${modifier?.name || ""} ${category?.name || ""} ${locationName} ${formatTimeIntent(ti)}`.trim(),
+        });
+      });
+    }
+
+    // Other categories
     allCategories
       .filter((c) => c.slug !== parsed.categorySlug)
-      .slice(0, 6)
+      .slice(0, 5)
       .forEach((cat) => {
         links.push({
-          url: buildPageUrl(parsed.modifierSlug, cat.slug, parsed.neighbourhoodSlug, parsed.citySlug),
+          url: buildPageUrl(parsed.modifierSlug, cat.slug, parsed.neighbourhoodSlug, parsed.citySlug, parsed.timeIntent),
           label: `${modifier?.name || ""} ${cat.name} ${neighbourhood?.name || city?.name || ""}`.trim(),
         });
       });
 
-    // Same category with different modifiers
+    // Different modifiers
     modifiers
       .filter((m) => m.slug !== parsed.modifierSlug)
       .slice(0, 4)
       .forEach((mod) => {
         links.push({
-          url: buildPageUrl(mod.slug, parsed.categorySlug, parsed.neighbourhoodSlug, parsed.citySlug),
+          url: buildPageUrl(mod.slug, parsed.categorySlug, parsed.neighbourhoodSlug, parsed.citySlug, parsed.timeIntent),
           label: `${mod.name} ${category?.name || ""} ${neighbourhood?.name || city?.name || ""}`.trim(),
         });
       });
 
-    // Neighbourhood variations (if in city-level, link to neighbourhoods)
+    // Neighbourhood variations
     if (!parsed.neighbourhoodSlug && neighbourhoods) {
       neighbourhoods
         .filter((n) => (n.cities as any)?.slug === parsed.citySlug)
         .slice(0, 6)
         .forEach((nb) => {
           links.push({
-            url: buildPageUrl(parsed.modifierSlug, parsed.categorySlug, nb.slug, parsed.citySlug),
+            url: buildPageUrl(parsed.modifierSlug, parsed.categorySlug, nb.slug, parsed.citySlug, parsed.timeIntent),
             label: `${modifier?.name || "Best"} ${category?.name || ""} ${nb.name}`.trim(),
           });
         });
     }
 
     return links;
-  }, [allCategories, modifiers, parsed, city, category, modifier, neighbourhood, neighbourhoods]);
+  }, [allCategories, modifiers, parsed, city, category, modifier, neighbourhood, neighbourhoods, locationName]);
 
   // Breadcrumb
   const breadcrumbs = useMemo(() => {
     const crumbs = [{ label: "Home", url: "/" }];
     if (city) crumbs.push({ label: city.name, url: `/${city.slug}` });
     if (neighbourhood) crumbs.push({ label: neighbourhood.name, url: `/${parsed?.categorySlug}-${neighbourhood.slug}-${city?.slug}` });
-    if (category) crumbs.push({ label: modifier ? `${modifier.name} ${category.name}` : category.name, url: "" });
+    if (category) {
+      const label = [modifier?.name, category.name, parsed?.timeIntent ? formatTimeIntent(parsed.timeIntent) : ""].filter(Boolean).join(" ");
+      crumbs.push({ label, url: "" });
+    }
     return crumbs;
   }, [city, neighbourhood, category, modifier, parsed]);
+
+  // Filter options for the page
+  const filterOptions = useMemo(() => {
+    if (!parsed || !city) return [];
+    const filters: { label: string; value: string; url: string }[] = [];
+
+    if (!parsed.timeIntent) {
+      filters.push(
+        { label: "Today", value: "today", url: buildPageUrl(parsed.modifierSlug, parsed.categorySlug, parsed.neighbourhoodSlug, parsed.citySlug, "today") },
+        { label: "This Weekend", value: "this-weekend", url: buildPageUrl(parsed.modifierSlug, parsed.categorySlug, parsed.neighbourhoodSlug, parsed.citySlug, "this-weekend") },
+        { label: "This Week", value: "this-week", url: buildPageUrl(parsed.modifierSlug, parsed.categorySlug, parsed.neighbourhoodSlug, parsed.citySlug, "this-week") },
+      );
+    }
+
+    if (!parsed.modifierSlug || parsed.modifierSlug !== "free") {
+      filters.push({ label: "Free", value: "free", url: buildPageUrl("free", parsed.categorySlug, parsed.neighbourhoodSlug, parsed.citySlug, parsed.timeIntent) });
+    }
+    if (!parsed.modifierSlug || parsed.modifierSlug !== "family") {
+      filters.push({ label: "Family", value: "family", url: buildPageUrl("family", parsed.categorySlug, parsed.neighbourhoodSlug, parsed.citySlug, parsed.timeIntent) });
+    }
+
+    return filters;
+  }, [parsed, city]);
 
   return (
     <Layout>
@@ -218,10 +362,46 @@ const ProgrammaticPage = () => {
         />
       )}
 
+      {/* FAQ Schema */}
+      {faqItems.length > 0 && (
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify({
+              "@context": "https://schema.org",
+              "@type": "FAQPage",
+              mainEntity: faqItems.map((f) => ({
+                "@type": "Question",
+                name: f.q,
+                acceptedAnswer: { "@type": "Answer", text: f.a },
+              })),
+            }),
+          }}
+        />
+      )}
+
+      {/* Breadcrumb Schema */}
+      {breadcrumbs.length > 1 && (
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify({
+              "@context": "https://schema.org",
+              "@type": "BreadcrumbList",
+              itemListElement: breadcrumbs.map((c, i) => ({
+                "@type": "ListItem",
+                position: i + 1,
+                name: c.label,
+                ...(c.url ? { item: `https://bestlocal.co.uk${c.url}` } : {}),
+              })),
+            }),
+          }}
+        />
+      )}
+
       {/* Hero */}
       <section className="bg-card border-b border-border py-8 md:py-12">
         <div className="container mx-auto px-4">
-          {/* Breadcrumbs */}
           <nav className="flex items-center gap-1 text-xs text-muted-foreground mb-3 flex-wrap">
             {breadcrumbs.map((crumb, i) => (
               <span key={i} className="flex items-center gap-1">
@@ -243,6 +423,13 @@ const ProgrammaticPage = () => {
               <Link to={`/${city.slug}`} className="hover:text-accent transition-colors">
                 {neighbourhood ? `${neighbourhood.name}, ${city.name}` : city.name}
               </Link>
+              {parsed?.timeIntent && (
+                <>
+                  <span className="text-border">•</span>
+                  <Calendar className="h-4 w-4" />
+                  <span>{formatTimeIntent(parsed.timeIntent)}</span>
+                </>
+              )}
             </div>
           )}
           <h1 className="font-display font-bold text-2xl md:text-3xl text-foreground">{title}</h1>
@@ -255,52 +442,134 @@ const ProgrammaticPage = () => {
       <div className="container mx-auto px-4 py-8">
         <AdPlaceholder slot="header" />
 
-        {/* Intro text (unique per page) */}
+        {/* Filters */}
+        {filterOptions.length > 0 && (
+          <div className="flex items-center gap-2 my-6 flex-wrap">
+            <Filter className="h-4 w-4 text-muted-foreground" />
+            {filterOptions.map((f) => (
+              <Link
+                key={f.value}
+                to={f.url}
+                className="px-3 py-1.5 text-xs font-medium bg-muted text-muted-foreground rounded-full hover:bg-accent hover:text-accent-foreground transition-colors"
+              >
+                {f.label}
+              </Link>
+            ))}
+            {parsed?.timeIntent && (
+              <Link
+                to={buildPageUrl(parsed.modifierSlug, parsed.categorySlug, parsed.neighbourhoodSlug, parsed.citySlug)}
+                className="px-3 py-1.5 text-xs font-medium bg-accent text-accent-foreground rounded-full"
+              >
+                {formatTimeIntent(parsed.timeIntent)} ✕
+              </Link>
+            )}
+          </div>
+        )}
+
+        {/* Intro text */}
         {introText && (
           <p className="text-muted-foreground text-sm leading-relaxed max-w-3xl my-6">{introText}</p>
         )}
 
-        {/* Top listings */}
-        <div className="my-8">
-          <h2 className="font-display font-semibold text-xl text-foreground mb-6">
-            Top {listings?.length || 0} {modifier?.name || ""} {category?.name || "Places"} in {locationName}
-          </h2>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-            {listings?.map((listing, i) => (
-              <div key={listing.id} className="relative">
-                <span className="absolute -top-2 -left-2 z-10 w-7 h-7 bg-accent text-accent-foreground rounded-full flex items-center justify-center text-xs font-bold card-shadow">
-                  {i + 1}
-                </span>
-                <ListingCard
-                  name={listing.name}
-                  slug={listing.slug}
-                  citySlug={parsed?.citySlug || ""}
-                  shortDescription={listing.short_description || ""}
-                  rating={listing.rating}
-                  reviewCount={listing.review_count || 0}
-                  imageUrl={listing.image_url}
-                  address={listing.address}
-                  priceLevel={listing.price_level}
-                  googleMapsLink={listing.google_maps_link}
-                  isFeatured={listing.is_featured}
-                  index={i}
-                />
+        {/* Events Grid */}
+        {showEvents && (
+          <div className="my-8">
+            <h2 className="font-display font-semibold text-xl text-foreground mb-6">
+              {modifier?.name || ""} {category?.name || "Events"} in {locationName}
+              {parsed?.timeIntent ? ` ${formatTimeIntent(parsed.timeIntent)}` : ""}
+            </h2>
+            {events && events.length > 0 ? (
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                {events.map((event, i) => (
+                  <EventCard
+                    key={event.id}
+                    title={event.title}
+                    slug={event.slug}
+                    shortDescription={event.short_description}
+                    dateStart={event.date_start}
+                    dateEnd={event.date_end}
+                    timeStart={event.time_start}
+                    venueName={event.venue_name}
+                    venueAddress={event.venue_address}
+                    imageUrl={event.image_url}
+                    isFree={event.is_free}
+                    isFamilyFriendly={event.is_family_friendly}
+                    ticketUrl={event.ticket_url}
+                    price={event.price}
+                    tags={event.tags || []}
+                    index={i}
+                  />
+                ))}
               </div>
-            ))}
+            ) : (
+              <div className="text-center py-16 bg-muted/50 rounded-lg">
+                <Calendar className="h-8 w-8 text-muted-foreground mx-auto mb-3" />
+                <p className="text-muted-foreground text-sm">No events found for this search yet.</p>
+                <p className="text-muted-foreground text-xs mt-1">We're adding new events all the time — check back soon!</p>
+              </div>
+            )}
           </div>
-        </div>
+        )}
 
-        {listings?.length === 0 && (
-          <div className="text-center py-20 text-muted-foreground">
-            <p>No listings found for this search yet. We're adding new places all the time!</p>
+        {/* Listings Grid */}
+        {!showEvents && (
+          <div className="my-8">
+            <h2 className="font-display font-semibold text-xl text-foreground mb-6">
+              Top {itemCount > 0 ? itemCount : ""} {modifier?.name || ""} {category?.name || "Places"} in {locationName}
+            </h2>
+            {listings && listings.length > 0 ? (
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                {listings.map((listing, i) => (
+                  <div key={listing.id} className="relative">
+                    <span className="absolute -top-2 -left-2 z-10 w-7 h-7 bg-accent text-accent-foreground rounded-full flex items-center justify-center text-xs font-bold card-shadow">
+                      {i + 1}
+                    </span>
+                    <ListingCard
+                      name={listing.name}
+                      slug={listing.slug}
+                      citySlug={parsed?.citySlug || ""}
+                      shortDescription={listing.short_description || ""}
+                      rating={listing.rating}
+                      reviewCount={listing.review_count || 0}
+                      imageUrl={listing.image_url}
+                      address={listing.address}
+                      priceLevel={listing.price_level}
+                      googleMapsLink={listing.google_maps_link}
+                      isFeatured={listing.is_featured}
+                      index={i}
+                    />
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="text-center py-16 bg-muted/50 rounded-lg">
+                <p className="text-muted-foreground text-sm">No listings found for this search yet.</p>
+                <p className="text-muted-foreground text-xs mt-1">We're adding new places all the time!</p>
+              </div>
+            )}
           </div>
         )}
 
         <AdPlaceholder slot="mid-content" />
 
-        {/* Internal links - related searches */}
+        {/* FAQ Section */}
+        {faqItems.length > 0 && (
+          <section className="py-8 border-t border-border mt-8">
+            <h2 className="font-display font-semibold text-lg text-foreground mb-4">Frequently Asked Questions</h2>
+            <div className="space-y-4 max-w-3xl">
+              {faqItems.map((faq, i) => (
+                <div key={i} className="bg-card border border-border rounded-lg p-4">
+                  <h3 className="font-display font-medium text-sm text-foreground mb-2">{faq.q}</h3>
+                  <p className="text-xs text-muted-foreground leading-relaxed">{faq.a}</p>
+                </div>
+              ))}
+            </div>
+          </section>
+        )}
+
+        {/* Internal links */}
         {relatedPages.length > 0 && (
-          <section className="py-12 border-t border-border mt-8">
+          <section className="py-8 border-t border-border">
             <h2 className="font-display font-semibold text-lg text-foreground mb-4">Related Searches</h2>
             <div className="flex flex-wrap gap-2">
               {relatedPages.map((link, i) => (
@@ -316,7 +585,7 @@ const ProgrammaticPage = () => {
           </section>
         )}
 
-        {/* Neighbourhood links for Belfast */}
+        {/* Neighbourhood links */}
         {!parsed?.neighbourhoodSlug && neighbourhoods && city && (
           <section className="py-8 border-t border-border">
             <h2 className="font-display font-semibold text-lg text-foreground mb-4">
@@ -328,7 +597,7 @@ const ProgrammaticPage = () => {
                 .map((nb) => (
                   <Link
                     key={nb.id}
-                    to={buildPageUrl(parsed?.modifierSlug || "best", parsed?.categorySlug || "restaurants", nb.slug, city.slug)}
+                    to={buildPageUrl(parsed?.modifierSlug || null, parsed?.categorySlug || "things-to-do", nb.slug, city.slug, parsed?.timeIntent)}
                     className="p-4 bg-muted rounded-lg hover:bg-accent/10 transition-colors group"
                   >
                     <span className="font-medium text-sm text-foreground group-hover:text-accent transition-colors">{nb.name}</span>

@@ -1,12 +1,46 @@
 import { Link } from "react-router-dom";
-import { Search, Menu, X } from "lucide-react";
+import { Search, Menu, X, ChevronDown } from "lucide-react";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { SearchBar } from "./SearchBar";
 
+const NAV_ITEMS = [
+  {
+    label: "What's On",
+    links: [
+      { label: "Events Belfast", to: "/events-belfast" },
+      { label: "Events This Weekend", to: "/events-belfast-this-weekend" },
+      { label: "Free Events", to: "/free-events-belfast" },
+      { label: "Family Events", to: "/family-events-belfast" },
+      { label: "Live Music", to: "/live-music-belfast" },
+    ],
+  },
+  {
+    label: "Things To Do",
+    links: [
+      { label: "Things To Do Belfast", to: "/things-to-do-belfast" },
+      { label: "This Weekend", to: "/things-to-do-belfast-this-weekend" },
+      { label: "Free Things To Do", to: "/free-things-to-do-belfast" },
+      { label: "Family Activities", to: "/family-activities-belfast" },
+      { label: "Date Night", to: "/date-night-belfast" },
+    ],
+  },
+  {
+    label: "Food & Drink",
+    links: [
+      { label: "Best Restaurants", to: "/best-restaurants-belfast" },
+      { label: "Best Brunch", to: "/best-brunch-belfast" },
+      { label: "Best Cafes", to: "/best-cafes-belfast" },
+      { label: "Bars", to: "/bars-belfast" },
+      { label: "Cocktail Bars", to: "/cocktail-bars-belfast" },
+    ],
+  },
+];
+
 export const Header = () => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
+  const [openDropdown, setOpenDropdown] = useState<string | null>(null);
 
   return (
     <header className="sticky top-0 z-50 bg-card border-b border-border">
@@ -19,11 +53,38 @@ export const Header = () => {
             <span className="font-display font-bold text-base text-foreground">BestLocal</span>
           </Link>
 
-          <nav className="hidden md:flex items-center gap-5">
-            <Link to="/cities" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
+          <nav className="hidden lg:flex items-center gap-1">
+            {NAV_ITEMS.map((item) => (
+              <div
+                key={item.label}
+                className="relative group"
+                onMouseEnter={() => setOpenDropdown(item.label)}
+                onMouseLeave={() => setOpenDropdown(null)}
+              >
+                <button className="flex items-center gap-1 px-3 py-2 text-sm text-muted-foreground hover:text-foreground transition-colors">
+                  {item.label}
+                  <ChevronDown className="h-3 w-3" />
+                </button>
+                {openDropdown === item.label && (
+                  <div className="absolute top-full left-0 bg-card border border-border rounded-lg shadow-lg py-2 min-w-[200px] z-50 animate-fade-in">
+                    {item.links.map((link) => (
+                      <Link
+                        key={link.to}
+                        to={link.to}
+                        className="block px-4 py-2 text-sm text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
+                        onClick={() => setOpenDropdown(null)}
+                      >
+                        {link.label}
+                      </Link>
+                    ))}
+                  </div>
+                )}
+              </div>
+            ))}
+            <Link to="/cities" className="px-3 py-2 text-sm text-muted-foreground hover:text-foreground transition-colors">
               Cities
             </Link>
-            <Link to="/categories" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
+            <Link to="/categories" className="px-3 py-2 text-sm text-muted-foreground hover:text-foreground transition-colors">
               Categories
             </Link>
           </nav>
@@ -40,7 +101,7 @@ export const Header = () => {
             <Button
               variant="ghost"
               size="icon"
-              className="md:hidden text-muted-foreground"
+              className="lg:hidden text-muted-foreground"
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
             >
               {mobileMenuOpen ? <X className="h-4 w-4" /> : <Menu className="h-4 w-4" />}
@@ -50,23 +111,40 @@ export const Header = () => {
 
         {searchOpen && (
           <div className="pb-3 animate-fade-in">
-            <SearchBar onClose={() => setSearchOpen(false)} />
+            <SearchBar onClose={() => setSearchOpen(false)} placeholder="Find events, things to do and places to eat..." />
           </div>
         )}
 
         {mobileMenuOpen && (
-          <div className="md:hidden pb-3 animate-fade-in border-t border-border pt-3">
-            <nav className="flex flex-col gap-2">
+          <div className="lg:hidden pb-4 animate-fade-in border-t border-border pt-3">
+            <nav className="flex flex-col gap-1">
+              {NAV_ITEMS.map((item) => (
+                <div key={item.label}>
+                  <span className="block px-2 py-2 text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                    {item.label}
+                  </span>
+                  {item.links.map((link) => (
+                    <Link
+                      key={link.to}
+                      to={link.to}
+                      className="block px-4 py-2 text-sm text-muted-foreground hover:text-foreground transition-colors"
+                      onClick={() => setMobileMenuOpen(false)}
+                    >
+                      {link.label}
+                    </Link>
+                  ))}
+                </div>
+              ))}
               <Link
                 to="/cities"
-                className="text-sm text-muted-foreground hover:text-foreground transition-colors py-1"
+                className="px-2 py-2 text-sm text-muted-foreground hover:text-foreground transition-colors"
                 onClick={() => setMobileMenuOpen(false)}
               >
                 Cities
               </Link>
               <Link
                 to="/categories"
-                className="text-sm text-muted-foreground hover:text-foreground transition-colors py-1"
+                className="px-2 py-2 text-sm text-muted-foreground hover:text-foreground transition-colors"
                 onClick={() => setMobileMenuOpen(false)}
               >
                 Categories
