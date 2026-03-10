@@ -807,8 +807,9 @@ const ProgrammaticPage = () => {
               </div>
             ) : (
               <div className="text-center py-16 bg-muted/50 rounded-lg">
-                <p className="text-muted-foreground text-sm font-medium">No listings found for this search yet</p>
-                <p className="text-muted-foreground text-xs mt-1 mb-4">We're adding new places all the time!</p>
+                <MapPin className="h-8 w-8 text-muted-foreground/30 mx-auto mb-3" />
+                <p className="text-muted-foreground text-sm font-medium">No listings yet — we're collecting the best places.</p>
+                <p className="text-muted-foreground text-xs mt-1 mb-4">Check back soon for curated recommendations.</p>
                 {siblingPages.length > 0 && (
                   <div className="flex flex-wrap justify-center gap-2">
                     {siblingPages.slice(0, 4).map((page) => (
