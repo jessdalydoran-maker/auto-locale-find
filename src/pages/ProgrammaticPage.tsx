@@ -583,19 +583,21 @@ const ProgrammaticPage = () => {
   const filterOptions = useMemo(() => {
     if (!parsed || !city) return [];
     const filters: { label: string; value: string; url: string }[] = [];
+    // For NI-wide pages, omit city slug from URLs (parser defaults to NI-wide)
+    const urlCity = isNIWide ? null : parsed.citySlug;
 
     if (!parsed.timeIntent) {
       filters.push(
-        { label: "Today", value: "today", url: buildPageUrl(parsed.modifierSlug, parsed.categorySlug, parsed.neighbourhoodSlug, parsed.citySlug, "today") },
-        { label: "This Weekend", value: "this-weekend", url: buildPageUrl(parsed.modifierSlug, parsed.categorySlug, parsed.neighbourhoodSlug, parsed.citySlug, "this-weekend") },
-        { label: "This Week", value: "this-week", url: buildPageUrl(parsed.modifierSlug, parsed.categorySlug, parsed.neighbourhoodSlug, parsed.citySlug, "this-week") },
+        { label: "Today", value: "today", url: buildPageUrl(parsed.modifierSlug, parsed.categorySlug, parsed.neighbourhoodSlug, urlCity as any, "today") },
+        { label: "This Weekend", value: "this-weekend", url: buildPageUrl(parsed.modifierSlug, parsed.categorySlug, parsed.neighbourhoodSlug, urlCity as any, "this-weekend") },
+        { label: "This Week", value: "this-week", url: buildPageUrl(parsed.modifierSlug, parsed.categorySlug, parsed.neighbourhoodSlug, urlCity as any, "this-week") },
       );
     }
     if (parsed.modifierSlug !== "free") {
-      filters.push({ label: "Free", value: "free", url: buildPageUrl("free", parsed.categorySlug, parsed.neighbourhoodSlug, parsed.citySlug, parsed.timeIntent) });
+      filters.push({ label: "Free", value: "free", url: buildPageUrl("free", parsed.categorySlug, parsed.neighbourhoodSlug, urlCity as any, parsed.timeIntent) });
     }
     if (parsed.modifierSlug !== "family") {
-      filters.push({ label: "Family", value: "family", url: buildPageUrl("family", parsed.categorySlug, parsed.neighbourhoodSlug, parsed.citySlug, parsed.timeIntent) });
+      filters.push({ label: "Family", value: "family", url: buildPageUrl("family", parsed.categorySlug, parsed.neighbourhoodSlug, urlCity as any, parsed.timeIntent) });
     }
 
     return filters;
