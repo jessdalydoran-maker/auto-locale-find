@@ -404,27 +404,90 @@ const AdminPage = () => {
                 <table className="w-full text-sm">
                   <thead>
                     <tr className="border-b border-border">
-                      <th className="text-left p-4 font-medium text-muted-foreground">Name</th>
-                      <th className="text-left p-4 font-medium text-muted-foreground">City</th>
-                      <th className="text-left p-4 font-medium text-muted-foreground">Category</th>
-                      <th className="text-left p-4 font-medium text-muted-foreground">Rating</th>
-                      <th className="text-left p-4 font-medium text-muted-foreground">Status</th>
+                      <th className="text-left p-3 font-medium text-muted-foreground">Image</th>
+                      <th className="text-left p-3 font-medium text-muted-foreground">Name</th>
+                      <th className="text-left p-3 font-medium text-muted-foreground">City</th>
+                      <th className="text-left p-3 font-medium text-muted-foreground">Category</th>
+                      <th className="text-left p-3 font-medium text-muted-foreground">Rating</th>
+                      <th className="text-left p-3 font-medium text-muted-foreground">Image Status</th>
+                      <th className="text-left p-3 font-medium text-muted-foreground">Actions</th>
                     </tr>
                   </thead>
                   <tbody>
-                    {listings?.map((listing) => (
-                      <tr key={listing.id} className="border-b border-border last:border-0">
-                        <td className="p-4 font-medium text-foreground">{listing.name}</td>
-                        <td className="p-4 text-muted-foreground">{(listing.cities as any)?.name}</td>
-                        <td className="p-4 text-muted-foreground">{(listing.categories as any)?.name}</td>
-                        <td className="p-4">{listing.rating}</td>
-                        <td className="p-4">
-                          <Badge variant={listing.is_approved ? "default" : "secondary"}>
-                            {listing.is_approved ? "Approved" : "Pending"}
-                          </Badge>
-                        </td>
-                      </tr>
-                    ))}
+                    {listings?.map((listing) => {
+                      const imgStatus = (listing as any).image_status || "needs_review";
+                      return (
+                        <tr key={listing.id} className="border-b border-border last:border-0">
+                          <td className="p-3">
+                            <div className="w-12 h-8 rounded overflow-hidden bg-muted">
+                              {listing.image_url ? (
+                                <img src={listing.image_url} alt="" className="w-full h-full object-cover" />
+                              ) : (
+                                <div className="w-full h-full flex items-center justify-center text-muted-foreground text-[9px]">N/A</div>
+                              )}
+                            </div>
+                          </td>
+                          <td className="p-3 font-medium text-foreground text-xs">{listing.name}</td>
+                          <td className="p-3 text-muted-foreground text-xs">{(listing.cities as any)?.name}</td>
+                          <td className="p-3 text-muted-foreground text-xs">{(listing.categories as any)?.name}</td>
+                          <td className="p-3 text-xs">{listing.rating}</td>
+                          <td className="p-3">
+                            <Badge
+                              variant={imgStatus === "verified" ? "default" : "secondary"}
+                              className="text-[10px]"
+                            >
+                              {imgStatus === "verified" && <><CheckCircle2 className="h-3 w-3 mr-1" />Verified</>}
+                              {imgStatus === "needs_review" && <><AlertTriangle className="h-3 w-3 mr-1" />Review</>}
+                              {imgStatus === "placeholder" && <><Archive className="h-3 w-3 mr-1" />Placeholder</>}
+                            </Badge>
+                          </td>
+                          <td className="p-3">
+                            <div className="flex gap-1">
+                              {imgStatus !== "verified" && listing.image_url && (
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  className="text-[10px] h-6 px-2"
+                                  onClick={async () => {
+                                    await supabase
+                                      .from("listings")
+                                      .update({ image_status: "verified" })
+                                      .eq("id", listing.id);
+                                    queryClient.invalidateQueries({ queryKey: ["admin-listings"] });
+                                    toast.success(`${listing.name} image verified`);
+                                  }}
+                                >
+                                  Verify
+                                </Button>
+                              )}
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                className="text-[10px] h-6 px-2"
+                                onClick={async () => {
+                                  const url = prompt("Enter new image URL for " + listing.name);
+                                  if (url) {
+                                    await supabase
+                                      .from("listings")
+                                      .update({
+                                        image_url: url,
+                                        image_source: "manual",
+                                        image_status: "verified",
+                                        image_alt: `${listing.name} — ${(listing.categories as any)?.name} in ${(listing.cities as any)?.name}`,
+                                      })
+                                      .eq("id", listing.id);
+                                    queryClient.invalidateQueries({ queryKey: ["admin-listings"] });
+                                    toast.success(`${listing.name} image updated`);
+                                  }
+                                }}
+                              >
+                                Replace
+                              </Button>
+                            </div>
+                          </td>
+                        </tr>
+                      );
+                    })}
                   </tbody>
                 </table>
               </div>
