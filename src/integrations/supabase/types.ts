@@ -329,6 +329,7 @@ export type Database = {
       listings: {
         Row: {
           address: string | null
+          audience_tags: string[] | null
           category_id: string
           city_id: string
           created_at: string
@@ -358,6 +359,7 @@ export type Database = {
         }
         Insert: {
           address?: string | null
+          audience_tags?: string[] | null
           category_id: string
           city_id: string
           created_at?: string
@@ -387,6 +389,7 @@ export type Database = {
         }
         Update: {
           address?: string | null
+          audience_tags?: string[] | null
           category_id?: string
           city_id?: string
           created_at?: string
@@ -725,6 +728,7 @@ export type Database = {
         }
         Returns: {
           address: string | null
+          audience_tags: string[] | null
           category_id: string
           city_id: string
           created_at: string

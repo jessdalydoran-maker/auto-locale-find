@@ -291,7 +291,7 @@ export function generateIntroText(
   // Things to do cluster
   if (catLower === "things to do") {
     if (modifier === "free") return `${location} is full of free things to do — you just need to know where to look. We've found ${count} free activities, from scenic walks and parks to museums and galleries with free admission.`;
-    if (modifier === "family") return `Whether it's school holidays or a rainy Saturday, ${location} has plenty to keep the kids entertained. Here are ${count} family-friendly activities, from soft play centres to outdoor adventure parks.`;
+    if (modifier === "family") return `Every listing on this page has been curated specifically for families and children visiting ${location}. Whether it's school holidays or a rainy Saturday, here are ${count} family-friendly activities — from soft play centres and parks to museums, markets and kid-friendly restaurants.`;
     if (modifier === "date-night" || modifier === "romantic") return `Planning a date in ${location}? Whether you're after cocktails, a candlelit dinner, or something more adventurous, we've picked ${count} of the best date night ideas to impress.`;
     if (modifier === "indoor" || timeIntent === "rainy-day") return `Raining again? Don't let the weather ruin your plans. Here are ${count} indoor activities in ${location} — from escape rooms and bowling to museums, cinemas and indoor climbing.`;
     if (timeIntent === "this-weekend") return `Not sure what to do this weekend in ${location}? Here are ${count} activities and events happening this Saturday and Sunday.`;

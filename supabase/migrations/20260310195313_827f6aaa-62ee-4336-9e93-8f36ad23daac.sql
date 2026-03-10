@@ -1,0 +1,1 @@
+ALTER TABLE public.listings ADD COLUMN audience_tags text[] DEFAULT '{}'::text[];

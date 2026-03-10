@@ -176,6 +176,14 @@ const ProgrammaticPage = () => {
     enabled: isLandmarkPage && !showEvents,
   });
 
+  // Determine if this is a family-oriented page
+  const isFamilyPage = parsed?.modifierSlug === "family";
+
+  // Categories to exclude for family pages
+  const FAMILY_EXCLUDED_CATEGORIES = ["bars", "cocktail-bars", "nightlife", "late-night"];
+  // Categories that are acceptable fallbacks for family pages
+  const FAMILY_FALLBACK_CATEGORIES = ["attractions", "parks", "museums", "markets", "tours", "restaurants", "cafes", "cinemas", "activity-centres"];
+
   // Fetch regular listings (non-landmark pages)
   const { data: regularListings } = useQuery({
     queryKey: ["prog-listings", parsed?.categorySlug, parsed?.citySlug, parsed?.neighbourhoodSlug, parsed?.modifierSlug],
@@ -186,7 +194,7 @@ const ProgrammaticPage = () => {
         .eq("cities.slug", parsed!.citySlug)
         .eq("is_approved", true)
         .order("rating", { ascending: false })
-        .limit(20);
+        .limit(30);
 
       if (parsed!.categorySlug !== "things-to-do" && parsed!.categorySlug !== "indoor-activities" && !showEvents) {
         query = query.eq("categories.slug", parsed!.categorySlug);
@@ -200,9 +208,57 @@ const ProgrammaticPage = () => {
         query = query.eq("price_level", "Free");
       }
 
+      // For family pages, filter by audience_tags containing family or kids
+      if (isFamilyPage) {
+        query = query.overlaps("audience_tags", ["family", "kids"]);
+      }
+
       const { data, error } = await query;
       if (error) throw error;
-      return data;
+
+      let results = data || [];
+
+      if (isFamilyPage) {
+        // Exclude nightlife/bars categories
+        results = results.filter((l: any) => {
+          const catSlug = (l.categories as any)?.slug || "";
+          const tags: string[] = (l as any).audience_tags || [];
+          return !FAMILY_EXCLUDED_CATEGORIES.includes(catSlug) && !tags.includes("nightlife");
+        });
+
+        // If fewer than 5 family-tagged results, supplement with suitable attractions
+        if (results.length < 5) {
+          const existingIds = results.map((l: any) => l.id);
+          const { data: fallback } = await supabase
+            .from("listings")
+            .select("*, cities!inner(slug, name), categories!inner(slug, name)")
+            .eq("cities.slug", parsed!.citySlug)
+            .eq("is_approved", true)
+            .order("rating", { ascending: false })
+            .limit(20);
+
+          if (fallback) {
+            const supplemental = fallback.filter((l: any) => {
+              const catSlug = (l.categories as any)?.slug || "";
+              return !existingIds.includes(l.id) &&
+                FAMILY_FALLBACK_CATEGORIES.includes(catSlug) &&
+                !FAMILY_EXCLUDED_CATEGORIES.includes(catSlug);
+            });
+            results = [...results, ...supplemental].slice(0, 20);
+          }
+        }
+
+        // Prioritise listings with family/kids tags
+        results.sort((a: any, b: any) => {
+          const aTags: string[] = a.audience_tags || [];
+          const bTags: string[] = b.audience_tags || [];
+          const aScore = (aTags.includes("family") ? 2 : 0) + (aTags.includes("kids") ? 1 : 0);
+          const bScore = (bTags.includes("family") ? 2 : 0) + (bTags.includes("kids") ? 1 : 0);
+          return bScore - aScore;
+        });
+      }
+
+      return results;
     },
     enabled: !!parsed?.citySlug && !!parsed?.categorySlug && !showEvents && !isLandmarkPage,
   });
