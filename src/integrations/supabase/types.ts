@@ -381,6 +381,36 @@ export type Database = {
           },
         ]
       }
+      page_quality: {
+        Row: {
+          canonical_slug: string | null
+          content_count: number
+          created_at: string
+          id: string
+          is_published: boolean
+          last_checked_at: string
+          page_slug: string
+        }
+        Insert: {
+          canonical_slug?: string | null
+          content_count?: number
+          created_at?: string
+          id?: string
+          is_published?: boolean
+          last_checked_at?: string
+          page_slug: string
+        }
+        Update: {
+          canonical_slug?: string | null
+          content_count?: number
+          created_at?: string
+          id?: string
+          is_published?: boolean
+          last_checked_at?: string
+          page_slug?: string
+        }
+        Relationships: []
+      }
       page_views: {
         Row: {
           category_id: string | null
@@ -556,7 +586,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      expire_old_events: { Args: never; Returns: number }
     }
     Enums: {
       [_ in never]: never

@@ -5,7 +5,7 @@ import { Layout } from "@/components/Layout";
 import { ListingCard } from "@/components/ListingCard";
 import { EventCard } from "@/components/EventCard";
 import { AdPlaceholder } from "@/components/AdPlaceholder";
-import { MapPin, ChevronRight, Calendar, Filter, ArrowRight } from "lucide-react";
+import { MapPin, ChevronRight, Calendar, Filter, ArrowRight, AlertCircle } from "lucide-react";
 import {
   parseSlug,
   generateTitle,
@@ -23,9 +23,12 @@ import {
   getSiblingPages,
   getCrossClusterLinks,
 } from "@/lib/seo-clusters";
+import {
+  meetsContentThreshold,
+  isThinContent,
+  getCanonicalSlug,
+} from "@/lib/content-quality";
 import { useEffect, useMemo } from "react";
-
-const MIN_CONTENT_THRESHOLD = 0; // Show page even with 0 items but with helpful messaging
 
 const ProgrammaticPage = () => {
   const { "*": rawSlug } = useParams();
@@ -183,6 +186,21 @@ const ProgrammaticPage = () => {
   });
 
   const itemCount = showEvents ? (events?.length || 0) : (listings?.length || 0);
+  const isNeighbourhoodPage = !!parsed?.neighbourhoodSlug;
+  const hasEnoughContent = meetsContentThreshold(itemCount, showEvents, isNeighbourhoodPage);
+  const isThin = isThinContent(itemCount);
+
+  // Canonical URL
+  const canonicalSlug = useMemo(() => {
+    if (!parsed) return null;
+    return getCanonicalSlug(
+      parsed.modifierSlug,
+      parsed.categorySlug,
+      parsed.neighbourhoodSlug,
+      parsed.citySlug,
+      parsed.timeIntent
+    );
+  }, [parsed]);
 
   // SEO content
   const title = category && city
@@ -198,7 +216,7 @@ const ProgrammaticPage = () => {
     : "";
 
   const faqItems = useMemo(() => {
-    if (!category || !city) return [];
+    if (!category || !city || !hasEnoughContent) return [];
     return generateFaqItems(
       modifier?.name?.toLowerCase() || parsed?.modifierSlug || null,
       category.name,
@@ -207,13 +225,35 @@ const ProgrammaticPage = () => {
       cityName,
       parsed?.timeIntent
     );
-  }, [category, city, modifier, parsed, locationName, itemCount, cityName]);
+  }, [category, city, modifier, parsed, locationName, itemCount, cityName, hasEnoughContent]);
 
   useEffect(() => {
     if (title !== "Loading...") {
       document.title = title;
       const metaEl = document.querySelector('meta[name="description"]');
       if (metaEl) metaEl.setAttribute("content", metaDesc);
+
+      // Set canonical link
+      let canonicalEl = document.querySelector('link[rel="canonical"]') as HTMLLinkElement;
+      if (!canonicalEl) {
+        canonicalEl = document.createElement("link");
+        canonicalEl.rel = "canonical";
+        document.head.appendChild(canonicalEl);
+      }
+      canonicalEl.href = `https://bestlocal.co.uk${canonicalSlug || currentUrl}`;
+
+      // Noindex thin pages
+      let robotsEl = document.querySelector('meta[name="robots"]') as HTMLMetaElement;
+      if (!hasEnoughContent && itemCount === 0) {
+        if (!robotsEl) {
+          robotsEl = document.createElement("meta");
+          robotsEl.name = "robots";
+          document.head.appendChild(robotsEl);
+        }
+        robotsEl.content = "noindex, follow";
+      } else if (robotsEl) {
+        robotsEl.remove();
+      }
     }
   }, [title, metaDesc]);
 
@@ -434,8 +474,51 @@ const ProgrammaticPage = () => {
         )}
 
         {/* Intro text */}
-        {introText && (
+        {introText && hasEnoughContent && (
           <p className="text-muted-foreground text-[14px] leading-relaxed max-w-3xl my-6">{introText}</p>
+        )}
+
+        {/* Thin content warning — noindex + helpful redirect */}
+        {!hasEnoughContent && itemCount === 0 && (
+          <div className="my-8 p-6 bg-card border border-border rounded-lg text-center card-shadow">
+            <AlertCircle className="h-6 w-6 text-muted-foreground mx-auto mb-3" />
+            <h2 className="font-display font-semibold text-base text-foreground mb-2">
+              Not enough content yet
+            </h2>
+            <p className="text-[13px] text-muted-foreground mb-4 max-w-md mx-auto leading-relaxed">
+              We don't have enough {showEvents ? "events" : "listings"} for this page yet.
+              Try one of these popular alternatives instead:
+            </p>
+            <div className="flex flex-wrap justify-center gap-2">
+              {siblingPages.slice(0, 5).map((page) => (
+                <Link
+                  key={page.url}
+                  to={page.url}
+                  className="px-3 py-1.5 text-[12px] font-medium bg-secondary text-foreground rounded-full hover:bg-accent hover:text-accent-foreground transition-colors"
+                >
+                  {page.label}
+                </Link>
+              ))}
+              {city && (
+                <Link
+                  to={`/${city.slug}`}
+                  className="px-3 py-1.5 text-[12px] font-medium bg-accent text-accent-foreground rounded-full"
+                >
+                  Explore {city.name}
+                </Link>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* Thin content notice — page exists but borderline */}
+        {isThin && hasEnoughContent && (
+          <div className="my-4 px-4 py-3 bg-secondary rounded-lg flex items-start gap-2">
+            <AlertCircle className="h-4 w-4 text-muted-foreground shrink-0 mt-0.5" />
+            <p className="text-[12px] text-muted-foreground leading-relaxed">
+              We're still growing our {showEvents ? "events" : "listings"} for this area. Check back soon for more — or explore related pages below.
+            </p>
+          </div>
         )}
 
         {/* Events Grid */}
