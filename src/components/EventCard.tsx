@@ -1,6 +1,6 @@
 import { Calendar, MapPin, Clock, Ticket } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
-import { getImageUrl, generateEventAltText, isPlaceholderImage } from "@/lib/image-utils";
+import { getImageUrl, generateEventAltText, isPlaceholderImage, getEventImageByKeywords } from "@/lib/image-utils";
 
 interface EventCardProps {
   title: string;
