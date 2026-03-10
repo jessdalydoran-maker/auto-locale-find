@@ -474,8 +474,51 @@ const ProgrammaticPage = () => {
         )}
 
         {/* Intro text */}
-        {introText && (
+        {introText && hasEnoughContent && (
           <p className="text-muted-foreground text-[14px] leading-relaxed max-w-3xl my-6">{introText}</p>
+        )}
+
+        {/* Thin content warning — noindex + helpful redirect */}
+        {!hasEnoughContent && itemCount === 0 && (
+          <div className="my-8 p-6 bg-card border border-border rounded-lg text-center card-shadow">
+            <AlertCircle className="h-6 w-6 text-muted-foreground mx-auto mb-3" />
+            <h2 className="font-display font-semibold text-base text-foreground mb-2">
+              Not enough content yet
+            </h2>
+            <p className="text-[13px] text-muted-foreground mb-4 max-w-md mx-auto leading-relaxed">
+              We don't have enough {showEvents ? "events" : "listings"} for this page yet.
+              Try one of these popular alternatives instead:
+            </p>
+            <div className="flex flex-wrap justify-center gap-2">
+              {siblingPages.slice(0, 5).map((page) => (
+                <Link
+                  key={page.url}
+                  to={page.url}
+                  className="px-3 py-1.5 text-[12px] font-medium bg-secondary text-foreground rounded-full hover:bg-accent hover:text-accent-foreground transition-colors"
+                >
+                  {page.label}
+                </Link>
+              ))}
+              {city && (
+                <Link
+                  to={`/${city.slug}`}
+                  className="px-3 py-1.5 text-[12px] font-medium bg-accent text-accent-foreground rounded-full"
+                >
+                  Explore {city.name}
+                </Link>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* Thin content notice — page exists but borderline */}
+        {isThin && hasEnoughContent && (
+          <div className="my-4 px-4 py-3 bg-secondary rounded-lg flex items-start gap-2">
+            <AlertCircle className="h-4 w-4 text-muted-foreground shrink-0 mt-0.5" />
+            <p className="text-[12px] text-muted-foreground leading-relaxed">
+              We're still growing our {showEvents ? "events" : "listings"} for this area. Check back soon for more — or explore related pages below.
+            </p>
+          </div>
         )}
 
         {/* Events Grid */}
