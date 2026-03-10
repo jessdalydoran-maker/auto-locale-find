@@ -351,8 +351,8 @@ const ProgrammaticPage = () => {
 
         if (nearbyData) {
           const existingIds = new Set(results.map((r: any) => r.id));
-          const nLat = neighbourhood.latitude;
-          const nLng = neighbourhood.longitude;
+          const nLat = (neighbourhood as any).latitude;
+          const nLng = (neighbourhood as any).longitude;
           const nearby = nearbyData.filter((l: any) => {
             if (existingIds.has(l.id)) return false;
             if (!l.latitude || !l.longitude) return false;
