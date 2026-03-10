@@ -347,14 +347,14 @@ const ProgrammaticPage = () => {
       )}
 
       {/* Hero */}
-      <section className="bg-card border-b border-border py-8 md:py-12">
-        <div className="container mx-auto px-4">
-          <nav className="flex items-center gap-1 text-xs text-muted-foreground mb-3 flex-wrap">
+      <section className="bg-card border-b border-border">
+        <div className="container mx-auto px-4 py-8 md:py-10">
+          <nav className="flex items-center gap-1 text-[11px] text-muted-foreground mb-3 flex-wrap">
             {breadcrumbs.map((crumb, i) => (
               <span key={i} className="flex items-center gap-1">
                 {i > 0 && <ChevronRight className="h-3 w-3" />}
                 {crumb.url ? (
-                  <Link to={crumb.url} className="hover:text-accent transition-colors">{crumb.label}</Link>
+                  <Link to={crumb.url} className="hover:text-foreground transition-colors">{crumb.label}</Link>
                 ) : (
                   <span className="text-foreground">{crumb.label}</span>
                 )}
@@ -363,22 +363,22 @@ const ProgrammaticPage = () => {
           </nav>
 
           {city && (
-            <div className="flex items-center gap-2 text-muted-foreground text-sm mb-2">
-              <MapPin className="h-4 w-4" />
-              <Link to={`/${city.slug}`} className="hover:text-accent transition-colors">
+            <div className="flex items-center gap-2 text-muted-foreground text-[13px] mb-2">
+              <MapPin className="h-3.5 w-3.5" />
+              <Link to={`/${city.slug}`} className="hover:text-foreground transition-colors">
                 {neighbourhood ? `${neighbourhood.name}, ${city.name}` : city.name}
               </Link>
               {parsed?.timeIntent && (
                 <>
-                  <span className="text-border">•</span>
-                  <Calendar className="h-4 w-4" />
+                  <span className="text-border">·</span>
+                  <Calendar className="h-3.5 w-3.5" />
                   <span>{formatTimeIntent(parsed.timeIntent)}</span>
                 </>
               )}
             </div>
           )}
-          <h1 className="font-display font-bold text-2xl md:text-3xl text-foreground">{title}</h1>
-          {metaDesc && <p className="text-muted-foreground text-sm mt-2 max-w-2xl">{metaDesc}</p>}
+          <h1 className="font-display font-bold text-2xl md:text-[2rem] text-foreground tracking-tight">{title}</h1>
+          {metaDesc && <p className="text-muted-foreground text-[14px] mt-2 max-w-2xl leading-relaxed">{metaDesc}</p>}
         </div>
       </section>
 
@@ -435,7 +435,7 @@ const ProgrammaticPage = () => {
 
         {/* Intro text */}
         {introText && (
-          <p className="text-muted-foreground text-sm leading-relaxed max-w-3xl my-6">{introText}</p>
+          <p className="text-muted-foreground text-[14px] leading-relaxed max-w-3xl my-6">{introText}</p>
         )}
 
         {/* Events Grid */}
@@ -662,7 +662,7 @@ const ProgrammaticPage = () => {
                   <Link
                     key={nb.id}
                     to={buildPageUrl(parsed?.modifierSlug || null, parsed?.categorySlug || "things-to-do", nb.slug, city.slug, parsed?.timeIntent)}
-                    className="p-4 bg-muted rounded-lg hover:bg-accent/10 transition-colors group"
+                    className="p-4 bg-card border border-border rounded-lg hover:border-accent/40 transition-colors group card-shadow"
                   >
                     <span className="font-medium text-sm text-foreground group-hover:text-accent transition-colors">{nb.name}</span>
                     <p className="text-xs text-muted-foreground mt-1 line-clamp-2">{nb.description}</p>

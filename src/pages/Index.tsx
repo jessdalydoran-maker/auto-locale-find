@@ -98,26 +98,25 @@ const Index = () => {
   return (
     <Layout>
       {/* Hero */}
-      <section className="bg-card border-b border-border py-14 md:py-20">
-        <div className="container mx-auto px-4 text-center">
-          <h1 className="font-display font-bold text-3xl md:text-5xl text-foreground mb-3 leading-tight">
+      <section className="bg-card border-b border-border">
+        <div className="container mx-auto px-4 py-12 md:py-16 text-center">
+          <h1 className="font-display font-bold text-3xl md:text-[2.75rem] text-foreground mb-3 leading-[1.15] tracking-tight">
             Discover the Best of
             <br />
             <span className="text-accent">Belfast & Northern Ireland</span>
           </h1>
-          <p className="text-muted-foreground text-base md:text-lg max-w-2xl mx-auto mb-8">
+          <p className="text-muted-foreground text-[15px] md:text-base max-w-xl mx-auto mb-8 leading-relaxed">
             Find events, things to do, restaurants, cafes, bars and hidden gems across Belfast and beyond.
           </p>
-          <div className="max-w-xl mx-auto mb-8">
-            <SearchBar large placeholder="Find events, things to do and places to eat..." />
+          <div className="max-w-lg mx-auto mb-8">
+            <SearchBar large placeholder="Search events, restaurants, things to do..." />
           </div>
-          {/* Quick links */}
           <div className="flex flex-wrap justify-center gap-2">
             {QUICK_LINKS.map((link) => (
               <Link
                 key={link.to}
                 to={link.to}
-                className="flex items-center gap-1.5 px-4 py-2 bg-muted text-muted-foreground rounded-full text-sm font-medium hover:bg-accent hover:text-accent-foreground transition-colors"
+                className="flex items-center gap-1.5 px-3.5 py-2 bg-secondary text-muted-foreground rounded-full text-[13px] font-medium hover:text-accent hover:bg-accent/8 transition-colors"
               >
                 <link.icon className="h-3.5 w-3.5" />
                 {link.label}
@@ -131,13 +130,13 @@ const Index = () => {
 
       {/* Popular Belfast Searches */}
       <section className="container mx-auto px-4 py-10">
-        <h2 className="font-display font-semibold text-xl text-foreground mb-5">Popular Belfast Searches</h2>
+        <h2 className="font-display font-semibold text-lg text-foreground mb-4">Popular Belfast Searches</h2>
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2">
           {POPULAR_SEARCHES.map((s) => (
             <Link
               key={s.to}
               to={s.to}
-              className="px-4 py-3 bg-card border border-border rounded-lg text-sm text-foreground hover:border-accent hover:text-accent transition-colors card-shadow hover:card-shadow-hover"
+              className="px-3.5 py-2.5 bg-card border border-border rounded-lg text-[13px] text-foreground hover:border-accent/40 hover:text-accent transition-colors card-shadow"
             >
               {s.label}
             </Link>
@@ -149,12 +148,12 @@ const Index = () => {
       {upcomingEvents && upcomingEvents.length > 0 && (
         <section className="container mx-auto px-4 py-8">
           <div className="flex items-center justify-between mb-5">
-            <h2 className="font-display font-semibold text-xl text-foreground">Upcoming Events</h2>
-            <Link to="/events-belfast" className="text-sm text-accent font-medium flex items-center gap-1 hover:underline">
-              View all <ArrowRight className="h-4 w-4" />
+            <h2 className="font-display font-semibold text-lg text-foreground">Upcoming Events</h2>
+            <Link to="/events-belfast" className="text-[13px] text-accent font-medium flex items-center gap-1 hover:underline">
+              View all <ArrowRight className="h-3.5 w-3.5" />
             </Link>
           </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
             {upcomingEvents.map((event, i) => (
               <EventCard
                 key={event.id}
@@ -185,7 +184,7 @@ const Index = () => {
       {/* Featured Neighbourhoods - Belfast */}
       {belfastNeighbourhoods && belfastNeighbourhoods.length > 0 && (
         <section className="container mx-auto px-4 py-8">
-          <h2 className="font-display font-semibold text-xl text-foreground mb-5">Explore Belfast Neighbourhoods</h2>
+          <h2 className="font-display font-semibold text-lg text-foreground mb-4">Explore Belfast Neighbourhoods</h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
             {belfastNeighbourhoods.map((nb, i) => (
               <NeighbourhoodCard
@@ -206,12 +205,12 @@ const Index = () => {
       {/* Cities */}
       <section className="container mx-auto px-4 py-8">
         <div className="flex items-center justify-between mb-5">
-          <h2 className="font-display font-semibold text-xl text-foreground">Explore Cities</h2>
-          <Link to="/cities" className="text-sm text-accent font-medium flex items-center gap-1 hover:underline">
-            View all <ArrowRight className="h-4 w-4" />
+          <h2 className="font-display font-semibold text-lg text-foreground">Explore Cities</h2>
+          <Link to="/cities" className="text-[13px] text-accent font-medium flex items-center gap-1 hover:underline">
+            View all <ArrowRight className="h-3.5 w-3.5" />
           </Link>
         </div>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           {cities?.slice(0, 6).map((city, i) => (
             <CityCard
               key={city.id}
@@ -229,12 +228,12 @@ const Index = () => {
       {featuredListings && featuredListings.length > 0 && (
         <section className="container mx-auto px-4 py-10">
           <div className="flex items-center justify-between mb-5">
-            <h2 className="font-display font-semibold text-xl text-foreground">Featured Places</h2>
-            <Link to="/best-restaurants-belfast" className="text-sm text-accent font-medium flex items-center gap-1 hover:underline">
-              View all <ArrowRight className="h-4 w-4" />
+            <h2 className="font-display font-semibold text-lg text-foreground">Featured Places</h2>
+            <Link to="/best-restaurants-belfast" className="text-[13px] text-accent font-medium flex items-center gap-1 hover:underline">
+              View all <ArrowRight className="h-3.5 w-3.5" />
             </Link>
           </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             {featuredListings.map((listing, i) => (
               <ListingCard
                 key={listing.id}
@@ -263,14 +262,14 @@ const Index = () => {
 
       {/* SEO Internal Links */}
       <section className="container mx-auto px-4 py-10 border-t border-border">
-        <h2 className="font-display font-semibold text-lg text-foreground mb-4">More Searches</h2>
-        <div className="flex flex-wrap gap-2">
+        <h2 className="font-display font-semibold text-base text-foreground mb-4">More Searches</h2>
+        <div className="flex flex-wrap gap-1.5">
           {cities?.slice(0, 4).flatMap((city) =>
             (categories || []).slice(0, 5).map((cat) => (
               <Link
                 key={`${city.slug}-${cat.slug}`}
                 to={`/best-${cat.slug}-${city.slug}`}
-                className="text-xs px-3 py-1.5 bg-card border border-border text-muted-foreground rounded-full hover:border-accent hover:text-accent transition-colors"
+                className="text-xs px-3 py-1.5 bg-card border border-border text-muted-foreground rounded-full hover:border-accent/40 hover:text-accent transition-colors"
               >
                 Best {cat.name} {city.name}
               </Link>
@@ -280,7 +279,7 @@ const Index = () => {
             <Link
               key={combo}
               to={`/${combo}-belfast`}
-              className="text-xs px-3 py-1.5 bg-card border border-border text-muted-foreground rounded-full hover:border-accent hover:text-accent transition-colors"
+              className="text-xs px-3 py-1.5 bg-card border border-border text-muted-foreground rounded-full hover:border-accent/40 hover:text-accent transition-colors"
             >
               {combo.split("-").map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(" ")} Belfast
             </Link>
@@ -288,20 +287,20 @@ const Index = () => {
         </div>
       </section>
 
-      {/* Newsletter placeholder */}
+      {/* Newsletter */}
       <section className="container mx-auto px-4 py-10">
-        <div className="bg-card border border-border rounded-xl p-8 text-center card-shadow">
-          <h2 className="font-display font-semibold text-xl text-foreground mb-2">Stay in the Loop</h2>
-          <p className="text-muted-foreground text-sm mb-6 max-w-md mx-auto">
+        <div className="bg-card border border-border rounded-xl p-8 md:p-10 text-center card-shadow">
+          <h2 className="font-display font-semibold text-lg text-foreground mb-2">Stay in the Loop</h2>
+          <p className="text-muted-foreground text-[13px] mb-6 max-w-md mx-auto leading-relaxed">
             Get the best events, things to do and places to eat delivered to your inbox every week.
           </p>
-          <div className="flex gap-2 max-w-md mx-auto">
+          <div className="flex gap-2 max-w-sm mx-auto">
             <input
               type="email"
               placeholder="your@email.com"
-              className="flex-1 px-4 py-2.5 bg-background border border-border rounded-lg text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-accent"
+              className="flex-1 px-4 py-2.5 bg-background border border-border rounded-lg text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring"
             />
-            <button className="px-6 py-2.5 bg-accent text-accent-foreground rounded-lg text-sm font-medium hover:bg-accent/90 transition-colors">
+            <button className="px-5 py-2.5 bg-accent text-accent-foreground rounded-lg text-sm font-medium hover:bg-accent/90 transition-colors">
               Subscribe
             </button>
           </div>

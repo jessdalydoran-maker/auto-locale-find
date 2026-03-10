@@ -6,23 +6,23 @@
 
 @layer base {
   :root {
-    --background: 0 0% 97%;
-    --foreground: 220 15% 16%;
+    --background: 210 20% 98%;
+    --foreground: 220 20% 14%;
 
     --card: 0 0% 100%;
-    --card-foreground: 220 15% 16%;
+    --card-foreground: 220 20% 14%;
 
     --popover: 0 0% 100%;
-    --popover-foreground: 220 15% 16%;
+    --popover-foreground: 220 20% 14%;
 
-    --primary: 220 15% 16%;
+    --primary: 220 20% 14%;
     --primary-foreground: 0 0% 100%;
 
-    --secondary: 220 10% 94%;
-    --secondary-foreground: 220 15% 16%;
+    --secondary: 216 12% 95%;
+    --secondary-foreground: 220 20% 14%;
 
-    --muted: 220 10% 94%;
-    --muted-foreground: 220 8% 50%;
+    --muted: 216 12% 95%;
+    --muted-foreground: 220 10% 46%;
 
     --accent: 217 91% 53%;
     --accent-foreground: 0 0% 100%;
@@ -34,17 +34,17 @@
     --input: 220 13% 91%;
     --ring: 217 91% 53%;
 
-    --radius: 0.5rem;
+    --radius: 0.625rem;
 
-    --card-shadow: 0 1px 3px 0 hsl(220 15% 16% / 0.04), 0 1px 2px -1px hsl(220 15% 16% / 0.03);
-    --card-shadow-hover: 0 4px 12px -2px hsl(220 15% 16% / 0.08), 0 2px 4px -2px hsl(220 15% 16% / 0.04);
+    --card-shadow: 0 1px 2px 0 hsl(220 20% 14% / 0.03), 0 1px 3px -1px hsl(220 20% 14% / 0.04);
+    --card-shadow-hover: 0 4px 16px -4px hsl(220 20% 14% / 0.08), 0 2px 6px -2px hsl(220 20% 14% / 0.04);
 
     --sidebar-background: 0 0% 100%;
-    --sidebar-foreground: 220 15% 16%;
-    --sidebar-primary: 220 15% 16%;
+    --sidebar-foreground: 220 20% 14%;
+    --sidebar-primary: 220 20% 14%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 220 10% 94%;
-    --sidebar-accent-foreground: 220 15% 16%;
+    --sidebar-accent: 216 12% 95%;
+    --sidebar-accent-foreground: 220 20% 14%;
     --sidebar-border: 220 13% 91%;
     --sidebar-ring: 217 91% 53%;
   }
@@ -58,10 +58,18 @@
   body {
     @apply bg-background text-foreground antialiased;
     font-family: 'DM Sans', system-ui, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
   }
 
   h1, h2, h3, h4, h5, h6 {
     font-family: 'Space Grotesk', system-ui, sans-serif;
+    letter-spacing: -0.01em;
+  }
+
+  /* Improve text rendering */
+  p, span, a, li {
+    text-rendering: optimizeLegibility;
   }
 }
 
