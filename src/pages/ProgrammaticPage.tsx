@@ -577,11 +577,46 @@ const ProgrammaticPage = () => {
           </div>
         )}
 
+        {/* Weekend Events Section (for things-to-do + time intent pages) */}
+        {isWeekendPage && events && events.length > 0 && (
+          <div className="my-8">
+            <h2 className="font-display font-semibold text-xl text-foreground mb-6">
+              <Calendar className="inline h-5 w-5 mr-2 text-accent" />
+              Events {formatTimeIntent(parsed?.timeIntent || null)} in {locationName}
+            </h2>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              {events.map((event, i) => (
+                <EventCard
+                  key={event.id}
+                  title={event.title}
+                  slug={event.slug}
+                  shortDescription={event.short_description}
+                  dateStart={event.date_start}
+                  dateEnd={event.date_end}
+                  timeStart={event.time_start}
+                  venueName={event.venue_name}
+                  venueAddress={event.venue_address}
+                  imageUrl={event.image_url}
+                  imageSource={(event as any).image_source}
+                  imageAlt={(event as any).image_alt}
+                  cityName={(event.cities as any)?.name}
+                  isFree={event.is_free}
+                  isFamilyFriendly={event.is_family_friendly}
+                  ticketUrl={event.ticket_url}
+                  price={event.price}
+                  tags={event.tags || []}
+                  index={i}
+                />
+              ))}
+            </div>
+          </div>
+        )}
+
         {/* Listings Grid */}
         {!showEvents && (
           <div className="my-8">
             <h2 className="font-display font-semibold text-xl text-foreground mb-6">
-              Top {itemCount > 0 ? itemCount : ""} {modifier?.name || ""} {category?.name || "Places"} in {locationName}
+              {isWeekendPage ? `Popular Places ${formatTimeIntent(parsed?.timeIntent || null)}` : `Top ${itemCount > 0 ? itemCount : ""} ${modifier?.name || ""} ${category?.name || "Places"}`} in {locationName}
             </h2>
             {listings && listings.length > 0 ? (
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">

@@ -95,6 +95,74 @@ const Index = () => {
     },
   });
 
+  // Trending This Weekend: events + popular listings for Belfast
+  const { data: weekendItems } = useQuery({
+    queryKey: ["weekend-trending"],
+    queryFn: async () => {
+      const now = new Date();
+      const dayOfWeek = now.getDay();
+      const friday = new Date(now);
+      if (dayOfWeek === 5) friday.setDate(now.getDate());
+      else if (dayOfWeek === 6) friday.setDate(now.getDate() - 1);
+      else if (dayOfWeek === 0) friday.setDate(now.getDate() - 2);
+      else friday.setDate(now.getDate() + ((5 - dayOfWeek + 7) % 7));
+      const sunday = new Date(friday);
+      sunday.setDate(friday.getDate() + 2);
+      const friStr = friday.toISOString().split("T")[0];
+      const sunStr = sunday.toISOString().split("T")[0];
+
+      // Fetch weekend events
+      const { data: events } = await supabase
+        .from("events")
+        .select("id, title, slug, short_description, date_start, image_url, image_source, image_alt, is_free, venue_name, cities!inner(slug, name), category_id")
+        .eq("status", "active")
+        .gte("date_start", friStr)
+        .lte("date_start", sunStr)
+        .order("date_start", { ascending: true })
+        .limit(4);
+
+      // Fetch popular listings to supplement
+      const { data: listings } = await supabase
+        .from("listings")
+        .select("id, name, slug, short_description, rating, image_url, image_source, image_alt, image_status, address, cities!inner(slug, name), categories!inner(slug, name)")
+        .eq("is_approved", true)
+        .order("rating", { ascending: false })
+        .limit(4);
+
+      // Combine into a unified "weekend card" list
+      const items: Array<{
+        id: string; title: string; slug: string; description: string;
+        imageUrl: string | null; imageSource: string | null; imageAlt: string | null;
+        category: string; citySlug: string; type: "event" | "listing"; link: string;
+        badge?: string;
+      }> = [];
+
+      for (const e of (events || [])) {
+        items.push({
+          id: e.id, title: e.title, slug: e.slug,
+          description: e.short_description || "",
+          imageUrl: e.image_url, imageSource: e.image_source as string | null, imageAlt: e.image_alt as string | null,
+          category: "Event", citySlug: (e.cities as any)?.slug || "belfast",
+          type: "event", link: `/${(e.cities as any)?.slug || "belfast"}/${e.slug}`,
+          badge: e.is_free ? "Free" : undefined,
+        });
+      }
+
+      for (const l of (listings || [])) {
+        items.push({
+          id: l.id, title: l.name, slug: l.slug,
+          description: l.short_description || "",
+          imageUrl: l.image_url, imageSource: l.image_source as string | null, imageAlt: l.image_alt as string | null,
+          category: (l.categories as any)?.name || "Place",
+          citySlug: (l.cities as any)?.slug || "belfast",
+          type: "listing", link: `/${(l.cities as any)?.slug || "belfast"}/${l.slug}`,
+        });
+      }
+
+      return items.slice(0, 8);
+    },
+  });
+
   return (
     <Layout>
       {/* Hero */}
