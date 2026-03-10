@@ -95,6 +95,7 @@ export type Database = {
           latitude: number | null
           longitude: number | null
           name: string
+          neighbourhood_id: string | null
           phone: string | null
           price_level: string | null
           rating: number | null
@@ -118,6 +119,7 @@ export type Database = {
           latitude?: number | null
           longitude?: number | null
           name: string
+          neighbourhood_id?: string | null
           phone?: string | null
           price_level?: string | null
           rating?: number | null
@@ -141,6 +143,7 @@ export type Database = {
           latitude?: number | null
           longitude?: number | null
           name?: string
+          neighbourhood_id?: string | null
           phone?: string | null
           price_level?: string | null
           rating?: number | null
@@ -160,6 +163,84 @@ export type Database = {
           },
           {
             foreignKeyName: "listings_city_id_fkey"
+            columns: ["city_id"]
+            isOneToOne: false
+            referencedRelation: "cities"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "listings_neighbourhood_id_fkey"
+            columns: ["neighbourhood_id"]
+            isOneToOne: false
+            referencedRelation: "neighbourhoods"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      modifiers: {
+        Row: {
+          created_at: string
+          description_template: string | null
+          id: string
+          is_active: boolean
+          name: string
+          slug: string
+        }
+        Insert: {
+          created_at?: string
+          description_template?: string | null
+          id?: string
+          is_active?: boolean
+          name: string
+          slug: string
+        }
+        Update: {
+          created_at?: string
+          description_template?: string | null
+          id?: string
+          is_active?: boolean
+          name?: string
+          slug?: string
+        }
+        Relationships: []
+      }
+      neighbourhoods: {
+        Row: {
+          city_id: string
+          created_at: string
+          description: string | null
+          id: string
+          is_active: boolean
+          latitude: number | null
+          longitude: number | null
+          name: string
+          slug: string
+        }
+        Insert: {
+          city_id: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          latitude?: number | null
+          longitude?: number | null
+          name: string
+          slug: string
+        }
+        Update: {
+          city_id?: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          latitude?: number | null
+          longitude?: number | null
+          name?: string
+          slug?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "neighbourhoods_city_id_fkey"
             columns: ["city_id"]
             isOneToOne: false
             referencedRelation: "cities"
@@ -208,6 +289,83 @@ export type Database = {
             columns: ["city_id"]
             isOneToOne: false
             referencedRelation: "cities"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      programmatic_pages: {
+        Row: {
+          category_id: string | null
+          city_id: string | null
+          created_at: string
+          id: string
+          intro_text: string | null
+          is_active: boolean
+          listing_count: number
+          meta_description: string | null
+          modifier_id: string | null
+          neighbourhood_id: string | null
+          slug: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          category_id?: string | null
+          city_id?: string | null
+          created_at?: string
+          id?: string
+          intro_text?: string | null
+          is_active?: boolean
+          listing_count?: number
+          meta_description?: string | null
+          modifier_id?: string | null
+          neighbourhood_id?: string | null
+          slug: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          category_id?: string | null
+          city_id?: string | null
+          created_at?: string
+          id?: string
+          intro_text?: string | null
+          is_active?: boolean
+          listing_count?: number
+          meta_description?: string | null
+          modifier_id?: string | null
+          neighbourhood_id?: string | null
+          slug?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "programmatic_pages_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "categories"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "programmatic_pages_city_id_fkey"
+            columns: ["city_id"]
+            isOneToOne: false
+            referencedRelation: "cities"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "programmatic_pages_modifier_id_fkey"
+            columns: ["modifier_id"]
+            isOneToOne: false
+            referencedRelation: "modifiers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "programmatic_pages_neighbourhood_id_fkey"
+            columns: ["neighbourhood_id"]
+            isOneToOne: false
+            referencedRelation: "neighbourhoods"
             referencedColumns: ["id"]
           },
         ]

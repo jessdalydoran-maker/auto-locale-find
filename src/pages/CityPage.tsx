@@ -8,22 +8,24 @@ import { AdPlaceholder } from "@/components/AdPlaceholder";
 import { MapPin } from "lucide-react";
 
 const CityPage = () => {
-  const { citySlug } = useParams<{ citySlug: string }>();
+  const { citySlug, "*": wildcard } = useParams();
+  // Support both /:citySlug and /* routing
+  const resolvedCitySlug = citySlug || wildcard || "";
   const [searchParams] = useSearchParams();
   const categoryFilter = searchParams.get("category");
 
   const { data: city } = useQuery({
-    queryKey: ["city", citySlug],
+    queryKey: ["city", resolvedCitySlug],
     queryFn: async () => {
       const { data, error } = await supabase
         .from("cities")
         .select("*")
-        .eq("slug", citySlug!)
+        .eq("slug", resolvedCitySlug)
         .single();
       if (error) throw error;
       return data;
     },
-    enabled: !!citySlug,
+    enabled: !!resolvedCitySlug,
   });
 
   const { data: categories } = useQuery({
@@ -36,12 +38,12 @@ const CityPage = () => {
   });
 
   const { data: listings } = useQuery({
-    queryKey: ["city-listings", citySlug, categoryFilter],
+    queryKey: ["city-listings", resolvedCitySlug, categoryFilter],
     queryFn: async () => {
       let query = supabase
         .from("listings")
         .select("*, cities!inner(slug, name), categories!inner(slug, name)")
-        .eq("cities.slug", citySlug!);
+        .eq("cities.slug", resolvedCitySlug);
 
       if (categoryFilter) {
         query = query.eq("categories.slug", categoryFilter);
@@ -53,7 +55,7 @@ const CityPage = () => {
       if (error) throw error;
       return data;
     },
-    enabled: !!citySlug,
+    enabled: !!resolvedCitySlug,
   });
 
   if (!city) return <Layout><div className="container mx-auto px-4 py-20 text-center text-muted-foreground">Loading...</div></Layout>;
@@ -91,7 +93,7 @@ const CityPage = () => {
         {/* Category filters */}
         <div className="flex flex-wrap gap-2 my-6">
           <Link
-            to={`/${citySlug}`}
+            to={`/${resolvedCitySlug}`}
             className={`px-4 py-2 rounded-full text-sm font-medium transition-colors ${
               !categoryFilter
                 ? "bg-accent text-accent-foreground"
@@ -103,7 +105,7 @@ const CityPage = () => {
           {categories?.map((cat) => (
             <Link
               key={cat.id}
-              to={`/${citySlug}?category=${cat.slug}`}
+              to={`/${resolvedCitySlug}?category=${cat.slug}`}
               className={`px-4 py-2 rounded-full text-sm font-medium transition-colors ${
                 categoryFilter === cat.slug
                   ? "bg-accent text-accent-foreground"
@@ -122,7 +124,7 @@ const CityPage = () => {
               key={listing.id}
               name={listing.name}
               slug={listing.slug}
-              citySlug={citySlug!}
+              citySlug={resolvedCitySlug}
               shortDescription={listing.short_description || ""}
               rating={listing.rating}
               reviewCount={listing.review_count || 0}
@@ -153,7 +155,7 @@ const CityPage = () => {
             {categories?.map((cat) => (
               <Link
                 key={cat.id}
-                to={`/best-${cat.slug}-${citySlug}`}
+                to={`/best-${cat.slug}-${resolvedCitySlug}`}
                 className="text-xs px-3 py-1.5 bg-muted text-muted-foreground rounded-full hover:bg-accent hover:text-accent-foreground transition-colors"
               >
                 Best {cat.name} {city.name}
