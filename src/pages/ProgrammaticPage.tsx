@@ -416,7 +416,7 @@ const ProgrammaticPage = () => {
 
       let results = data || [];
 
-      // For live-music, also include bars with music-related names/descriptions
+      // For live-music, filter to actual music venues (not all bars)
       if (parsed?.categorySlug === "live-music") {
         results = results.filter((l: any) => {
           const catSlug = (l.categories as any)?.slug || "";
@@ -427,16 +427,17 @@ const ProgrammaticPage = () => {
           // Direct category match
           if (["live-music", "nightlife"].includes(catSlug)) return true;
 
-          // Bars that have music signals
+          // Bars that have live music signals (not all bars)
           if (catSlug === "bars") {
-            if (name.includes("music") || name.includes("empire") || name.includes("limelight") ||
+            // Known live music bars
+            if (name.includes("empire") || name.includes("limelight") ||
                 name.includes("front page") || name.includes("sunflower") || name.includes("voodoo") ||
                 name.includes("filthy") || name.includes("mandela") || name.includes("lavery") ||
-                name.includes("errigle") || name.includes("botanic") || name.includes("harp")) return true;
-            if (desc.includes("music") || desc.includes("live") || desc.includes("gig") || desc.includes("band")) return true;
+                name.includes("errigle") || name.includes("harp") || name.includes("duke of york") ||
+                name.includes("dirty onion") || name.includes("menagerie")) return true;
+            if (desc.includes("live music") || desc.includes("live band") || desc.includes("gig") || desc.includes("acoustic")) return true;
             if (tags.includes("live-music") || tags.includes("music")) return true;
-            // Include all bars as potential music venues (many NI bars host live music)
-            return true;
+            return false;
           }
 
           return false;
@@ -505,9 +506,39 @@ const ProgrammaticPage = () => {
     enabled: !!parsed?.citySlug && shouldFetchEvents,
   });
 
-  // Apply family/date-night filtering + priority sorting to events
+  // Exclusion terms for live music pages
+  const LIVE_MUSIC_EXCLUDE_TERMS = ["class", "classes", "course", "courses", "workshop", "workshops", "lesson", "lessons", "recording", "dj set", "dj night", "tutorial"];
+
+  // Apply family/date-night/live-music filtering + priority sorting to events
   const events = useMemo(() => {
     if (!rawEvents) return rawEvents;
+
+    // LIVE MUSIC filtering — only real performances
+    if (parsed?.categorySlug === "live-music") {
+      return rawEvents.filter(event => {
+        const tags: string[] = event.tags || [];
+        const title = event.title.toLowerCase();
+        const desc = (event.short_description || event.description || "").toLowerCase();
+        const combined = title + " " + desc;
+
+        // Exclude non-performance content
+        if (LIVE_MUSIC_EXCLUDE_TERMS.some(t => combined.includes(t))) return false;
+        if (tags.includes("workshop") || tags.includes("workshops")) return false;
+
+        // Include if has music performance tags
+        if (tags.some(t => ["live-music", "music", "concert", "gig", "band", "acoustic", "jazz"].includes(t))) return true;
+
+        // Include if title suggests live performance
+        if (title.includes("live") || title.includes("concert") || title.includes("gig") ||
+            title.includes("band") || title.includes("acoustic") || title.includes("session") ||
+            title.includes("singer") || title.includes("songwriter")) return true;
+
+        // Include general music events (not classes/workshops which are already excluded above)
+        if (tags.includes("music") || title.includes("music")) return true;
+
+        return false;
+      });
+    }
 
     // DATE NIGHT filtering
     if (isDateNightPage) {
