@@ -432,9 +432,52 @@ const ProgrammaticPage = () => {
     enabled: !!parsed?.citySlug && shouldFetchEvents,
   });
 
-  // Apply family filtering + priority sorting to events
+  // Apply family/date-night filtering + priority sorting to events
   const events = useMemo(() => {
     if (!rawEvents) return rawEvents;
+
+    // DATE NIGHT filtering
+    if (isDateNightPage) {
+      const DATE_NIGHT_PRIORITY: Record<string, number> = {
+        "theatre": 10, "comedy": 9, "live-music": 8, "cinema": 8, "film": 7,
+        "date-night": 10, "jazz": 7, "cabaret": 7, "music": 6, "art": 5,
+        "exhibitions": 4, "nightlife": 3, "cocktails": 3,
+      };
+
+      const filtered = rawEvents.filter(event => {
+        const tags: string[] = event.tags || [];
+        const title = event.title.toLowerCase();
+
+        // Include if has date-night-relevant tags
+        if (tags.some(t => DATE_NIGHT_EVENT_TAGS.includes(t))) return true;
+
+        // Include evening events (time_start >= 17:00)
+        if (event.time_start) {
+          const hour = parseInt(event.time_start.split(":")[0]);
+          if (hour >= 17) return true;
+        }
+
+        // Include if title suggests date-night content
+        if (title.includes("comedy") || title.includes("theatre") || title.includes("concert") ||
+            title.includes("jazz") || title.includes("wine") || title.includes("cocktail") ||
+            title.includes("cinema") || title.includes("film") || title.includes("cabaret")) return true;
+
+        // Exclude kids/family-only events
+        if (tags.some(t => DATE_NIGHT_EXCLUDED_TAGS.includes(t)) && !tags.some(t => DATE_NIGHT_EVENT_TAGS.includes(t))) return false;
+
+        return false;
+      });
+
+      return filtered.sort((a, b) => {
+        const aTags: string[] = a.tags || [];
+        const bTags: string[] = b.tags || [];
+        const aScore = aTags.reduce((s, t) => s + (DATE_NIGHT_PRIORITY[t] || 0), 0);
+        const bScore = bTags.reduce((s, t) => s + (DATE_NIGHT_PRIORITY[t] || 0), 0);
+        if (bScore !== aScore) return bScore - aScore;
+        return a.date_start.localeCompare(b.date_start);
+      });
+    }
+
     if (!isFamilyPage) return rawEvents;
     
     // Helper: detect professional sports fixtures by title pattern
@@ -469,11 +512,8 @@ const ProgrammaticPage = () => {
     const EXCLUDED_TAGS_SET = new Set(["nightlife", "late-night", "cocktails", "adults-only"]);
     const filtered = rawEvents.filter(event => {
       const tags: string[] = event.tags || [];
-      // Must have at least one family signal
       if (!hasFamilySignal(event)) return false;
-      // Always exclude nightlife/bars/late-night
       if (tags.some(t => EXCLUDED_TAGS_SET.has(t))) return false;
-      // Exclude professional sports unless genuinely kids-oriented
       if (isProfessionalSport(event) && !isGenuinelyFamily(event)) return false;
       return true;
     });
@@ -489,7 +529,7 @@ const ProgrammaticPage = () => {
       if (bScore !== aScore) return bScore - aScore;
       return a.date_start.localeCompare(b.date_start);
     });
-  }, [rawEvents, isFamilyPage]);
+  }, [rawEvents, isFamilyPage, isDateNightPage]);
 
   // Group events by town/council area for NI-wide pages
   const eventsByCity = useMemo(() => {
