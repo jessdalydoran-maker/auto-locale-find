@@ -130,6 +130,12 @@ const CityPage = () => {
               rating={listing.rating}
               reviewCount={listing.review_count || 0}
               imageUrl={listing.image_url}
+              imageSource={(listing as any).image_source}
+              imageAlt={(listing as any).image_alt}
+              imageStatus={(listing as any).image_status}
+              categorySlug={(listing.categories as any)?.slug}
+              categoryName={(listing.categories as any)?.name}
+              cityName={(listing.cities as any)?.name}
               address={listing.address}
               priceLevel={listing.price_level}
               googleMapsLink={listing.google_maps_link}
