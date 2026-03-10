@@ -786,7 +786,7 @@ const ProgrammaticPage = () => {
                   {page.label}
                 </Link>
               ))}
-              {city && (
+              {city && !isNIWide && (
                 <Link
                   to={`/${city.slug}`}
                   className="px-3 py-1.5 text-[12px] font-medium bg-accent text-accent-foreground rounded-full"
