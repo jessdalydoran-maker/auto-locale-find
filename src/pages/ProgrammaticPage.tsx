@@ -459,6 +459,10 @@ const ProgrammaticPage = () => {
                     venueName={event.venue_name}
                     venueAddress={event.venue_address}
                     imageUrl={event.image_url}
+                    imageSource={(event as any).image_source}
+                    imageAlt={(event as any).image_alt}
+                    categorySlug={parsed?.categorySlug}
+                    cityName={city?.name}
                     isFree={event.is_free}
                     isFamilyFriendly={event.is_family_friendly}
                     ticketUrl={event.ticket_url}
