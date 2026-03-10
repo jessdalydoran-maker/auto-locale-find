@@ -46,8 +46,12 @@ export const EventCard = ({
   tags,
   index = 0,
 }: EventCardProps) => {
-  const resolvedImage = getImageUrl(imageUrl, imageSource, categorySlug || "events", null, imageStatus);
-  const usingPlaceholder = isPlaceholderImage(resolvedImage) || imageStatus !== "verified";
+  // Try keyword-based image first, then fall back to category placeholder
+  const keywordImage = getEventImageByKeywords(title, tags);
+  const resolvedImage = keywordImage && (!imageUrl || imageStatus !== "verified")
+    ? keywordImage
+    : getImageUrl(imageUrl, imageSource, categorySlug || "events", null, imageStatus);
+  const usingPlaceholder = isPlaceholderImage(resolvedImage) || (imageStatus !== "verified" && !keywordImage);
   const altText = imageAlt && !usingPlaceholder
     ? imageAlt
     : generateEventAltText(title, venueName, cityName, usingPlaceholder);
