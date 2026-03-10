@@ -317,7 +317,9 @@ const ProgrammaticPage = () => {
     enabled: !!parsed?.citySlug && shouldFetchEvents,
   });
 
-  const itemCount = (showEvents ? (events?.length || 0) : (listings?.length || 0)) + (isWeekendPage ? (events?.length || 0) : 0);
+  const eventCount = events?.length || 0;
+  const listingCount = listings?.length || 0;
+  const itemCount = (showEvents ? eventCount : listingCount) + (shouldFetchEvents && !showEvents ? eventCount : 0);
   const isNeighbourhoodPage = !!parsed?.neighbourhoodSlug;
   const hasEnoughContent = meetsContentThreshold(itemCount, showEvents, isNeighbourhoodPage);
   const isThin = isThinContent(itemCount);
