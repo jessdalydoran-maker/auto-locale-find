@@ -435,7 +435,7 @@ const ProgrammaticPage = () => {
 
         {/* Intro text */}
         {introText && (
-          <p className="text-muted-foreground text-sm leading-relaxed max-w-3xl my-6">{introText}</p>
+          <p className="text-muted-foreground text-[14px] leading-relaxed max-w-3xl my-6">{introText}</p>
         )}
 
         {/* Events Grid */}
