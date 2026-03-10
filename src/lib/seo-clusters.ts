@@ -65,6 +65,29 @@ export function getCityClusters(citySlug: string, cityName: string): Cluster[] {
 }
 
 /**
+ * Get landmark cluster for a city.
+ */
+export function getLandmarkCluster(
+  citySlug: string,
+  cityName: string,
+  landmarks: { name: string; slug: string }[]
+): Cluster {
+  const pages: ClusterPage[] = [];
+  for (const lm of landmarks) {
+    pages.push(
+      { url: `/things-to-do-near-${lm.slug}-${citySlug}`, label: `Near ${lm.name}`, description: `Things to do near ${lm.name}` },
+      { url: `/restaurants-near-${lm.slug}-${citySlug}`, label: `Eat Near ${lm.name}`, description: `Restaurants near ${lm.name}` },
+      { url: `/bars-near-${lm.slug}-${citySlug}`, label: `Drink Near ${lm.name}`, description: `Bars near ${lm.name}` },
+    );
+  }
+  return {
+    id: "landmarks",
+    name: `Near ${cityName} Landmarks`,
+    pages,
+  };
+}
+
+/**
  * Get neighbourhood cluster for a city.
  */
 export function getNeighbourhoodCluster(
