@@ -659,9 +659,13 @@ const ProgrammaticPage = () => {
           {city && (
             <div className="flex items-center gap-2 text-muted-foreground text-[13px] mb-2">
               <MapPin className="h-3.5 w-3.5" />
-              <Link to={`/${city.slug}`} className="hover:text-foreground transition-colors">
-                {neighbourhood ? `${neighbourhood.name}, ${city.name}` : city.name}
-              </Link>
+              {isNIWide ? (
+                <span>Northern Ireland</span>
+              ) : (
+                <Link to={`/${city.slug}`} className="hover:text-foreground transition-colors">
+                  {neighbourhood ? `${neighbourhood.name}, ${city.name}` : city.name}
+                </Link>
+              )}
               {parsed?.timeIntent && (
                 <>
                   <span className="text-border">·</span>
