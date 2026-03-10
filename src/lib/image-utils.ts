@@ -1,14 +1,19 @@
 /**
  * Image utilities for venue-specific photo matching,
  * category-based fallbacks, alt text generation, and WebP support.
+ *
+ * RULES:
+ * - Only display an image if it is verified (image_status = 'verified')
+ *   or manually set by admin (image_source = 'manual').
+ * - All other images use the category placeholder.
+ * - It is better to show a placeholder than the wrong venue.
  */
 
 /**
- * Category-specific fallback images from Unsplash.
- * Each uses a curated, relevant photo — not random stock.
- * Format parameter ensures WebP delivery.
+ * Category-specific placeholder images.
+ * Neutral, high-quality stock that represents the category — not a specific venue.
  */
-const CATEGORY_FALLBACKS: Record<string, string> = {
+export const CATEGORY_PLACEHOLDERS: Record<string, string> = {
   // Food & Drink
   "restaurants": "https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=600&fm=webp&q=80",
   "cafes": "https://images.unsplash.com/photo-1501339847302-ac426a4a7cbb?w=600&fm=webp&q=80",
@@ -16,6 +21,8 @@ const CATEGORY_FALLBACKS: Record<string, string> = {
   "bars": "https://images.unsplash.com/photo-1572116469696-31de0f17cc34?w=600&fm=webp&q=80",
   "cocktail-bars": "https://images.unsplash.com/photo-1551024709-8f23befc6f87?w=600&fm=webp&q=80",
   "nightlife": "https://images.unsplash.com/photo-1566417713940-fe7c737a9ef2?w=600&fm=webp&q=80",
+  "coffee-shops": "https://images.unsplash.com/photo-1442512595331-e89e73853f31?w=600&fm=webp&q=80",
+  "italian": "https://images.unsplash.com/photo-1551183053-bf91a1d81141?w=600&fm=webp&q=80",
 
   // Activities
   "things-to-do": "https://images.unsplash.com/photo-1533105079780-92b9be482077?w=600&fm=webp&q=80",
@@ -30,6 +37,7 @@ const CATEGORY_FALLBACKS: Record<string, string> = {
   "family-activities": "https://images.unsplash.com/photo-1596464716127-f2a82984de30?w=600&fm=webp&q=80",
   "date-night": "https://images.unsplash.com/photo-1529543544282-ea8407407d89?w=600&fm=webp&q=80",
   "hidden-gems": "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=600&fm=webp&q=80",
+  "gyms": "https://images.unsplash.com/photo-1534438327276-14e5300c3a48?w=600&fm=webp&q=80",
 
   // Events
   "events": "https://images.unsplash.com/photo-1492684223066-81342ee5ff30?w=600&fm=webp&q=80",
@@ -39,87 +47,80 @@ const CATEGORY_FALLBACKS: Record<string, string> = {
   "comedy": "https://images.unsplash.com/photo-1585699324551-f6c309eedeca?w=600&fm=webp&q=80",
   "markets": "https://images.unsplash.com/photo-1488459716781-31db52582fe9?w=600&fm=webp&q=80",
   "festivals": "https://images.unsplash.com/photo-1533174072545-7a4b6ad7a6c3?w=600&fm=webp&q=80",
-
-  // City fallbacks
-  "belfast": "https://images.unsplash.com/photo-1572883454114-efb8ff4e08d3?w=600&fm=webp&q=80",
-  "london": "https://images.unsplash.com/photo-1513635269975-59663e0ac1ad?w=600&fm=webp&q=80",
-  "manchester": "https://images.unsplash.com/photo-1515586838455-8f8f940d6853?w=600&fm=webp&q=80",
-  "edinburgh": "https://images.unsplash.com/photo-1506377585622-bedcbb027afc?w=600&fm=webp&q=80",
-  "glasgow": "https://images.unsplash.com/photo-1558618666-fcd25c85f82e?w=600&fm=webp&q=80",
-  "derry": "https://images.unsplash.com/photo-1590089415225-401ed6f9db8e?w=600&fm=webp&q=80",
 };
 
-const DEFAULT_FALLBACK = "https://images.unsplash.com/photo-1533105079780-92b9be482077?w=600&fm=webp&q=80";
+const DEFAULT_PLACEHOLDER = "https://images.unsplash.com/photo-1533105079780-92b9be482077?w=600&fm=webp&q=80";
+
+/** Trusted image sources that bypass verification */
+const TRUSTED_SOURCES = new Set(["google_places", "manual", "official"]);
 
 /**
- * Get the best image URL for a listing or event.
- * Priority:
- *   1. Venue-specific image (from place_id / direct URL)
- *   2. Category-specific fallback
- *   3. Generic fallback
+ * Get the image URL for a listing or event.
  *
- * Appends WebP format param to Unsplash URLs.
+ * Only returns the venue-specific image if:
+ *   - image_status is 'verified', OR
+ *   - image_source is a trusted source (google_places, manual, official)
+ *
+ * Otherwise returns the category placeholder.
  */
 export function getImageUrl(
   imageUrl: string | null | undefined,
   imageSource: string | null | undefined,
   categorySlug?: string | null,
+  citySlug?: string | null,
+  imageStatus?: string | null
+): string {
+  // Only use venue image if verified or from a trusted source
+  const isVerified = imageStatus === "verified";
+  const isTrustedSource = imageSource ? TRUSTED_SOURCES.has(imageSource) : false;
+
+  if (imageUrl && (isVerified || isTrustedSource)) {
+    return ensureWebP(imageUrl);
+  }
+
+  // Everything else: use category placeholder
+  return getCategoryPlaceholder(categorySlug, citySlug);
+}
+
+/**
+ * Get the category placeholder image.
+ */
+export function getCategoryPlaceholder(
+  categorySlug?: string | null,
   citySlug?: string | null
 ): string {
-  // 1. Use venue-specific image if available
-  if (imageUrl && imageSource !== "fallback") {
-    return ensureWebP(imageUrl);
+  if (categorySlug && CATEGORY_PLACEHOLDERS[categorySlug]) {
+    return CATEGORY_PLACEHOLDERS[categorySlug];
   }
-
-  // 2. If we have an image URL but it's marked as fallback, still use it
-  //    (admin may have manually set a good image)
-  if (imageUrl) {
-    return ensureWebP(imageUrl);
-  }
-
-  // 3. Category-specific fallback
-  if (categorySlug && CATEGORY_FALLBACKS[categorySlug]) {
-    return CATEGORY_FALLBACKS[categorySlug];
-  }
-
-  // 4. City-specific fallback
-  if (citySlug && CATEGORY_FALLBACKS[citySlug]) {
-    return CATEGORY_FALLBACKS[citySlug];
-  }
-
-  // 5. Generic
-  return DEFAULT_FALLBACK;
+  return DEFAULT_PLACEHOLDER;
 }
 
 /**
- * Get a category-specific fallback image.
+ * Check if an image is a category placeholder (not venue-specific).
  */
-export function getCategoryFallbackImage(categorySlug: string): string {
-  return CATEGORY_FALLBACKS[categorySlug] || DEFAULT_FALLBACK;
-}
-
-/**
- * Get a city-specific fallback image.
- */
-export function getCityFallbackImage(citySlug: string): string {
-  return CATEGORY_FALLBACKS[citySlug] || DEFAULT_FALLBACK;
+export function isPlaceholderImage(imageUrl: string | null | undefined): boolean {
+  if (!imageUrl) return true;
+  return Object.values(CATEGORY_PLACEHOLDERS).some((p) => imageUrl.includes(p.split("?")[0]));
 }
 
 /**
  * Ensure Unsplash URLs use WebP format.
  */
 function ensureWebP(url: string): string {
-  if (!url) return DEFAULT_FALLBACK;
+  if (!url) return DEFAULT_PLACEHOLDER;
 
-  // Unsplash URLs: add/replace fm=webp
   if (url.includes("unsplash.com")) {
-    const u = new URL(url);
-    u.searchParams.set("fm", "webp");
-    u.searchParams.set("q", "80");
-    if (!u.searchParams.has("w")) {
-      u.searchParams.set("w", "600");
+    try {
+      const u = new URL(url);
+      u.searchParams.set("fm", "webp");
+      u.searchParams.set("q", "80");
+      if (!u.searchParams.has("w")) {
+        u.searchParams.set("w", "600");
+      }
+      return u.toString();
+    } catch {
+      return url;
     }
-    return u.toString();
   }
 
   return url;
@@ -127,13 +128,23 @@ function ensureWebP(url: string): string {
 
 /**
  * Generate SEO-optimised alt text for a listing image.
+ * For placeholders, uses neutral category description — never a specific venue name.
  */
 export function generateListingAltText(
   venueName: string,
   categoryName?: string | null,
   neighbourhood?: string | null,
-  cityName?: string | null
+  cityName?: string | null,
+  isPlaceholder?: boolean
 ): string {
+  if (isPlaceholder) {
+    const parts = [];
+    if (categoryName) parts.push(categoryName);
+    if (neighbourhood) parts.push(`in ${neighbourhood}`);
+    if (cityName) parts.push(cityName);
+    return parts.length > 0 ? parts.join(" — ") : "Venue image coming soon";
+  }
+
   const parts = [venueName];
   if (categoryName) parts.push(categoryName.toLowerCase());
   if (neighbourhood) parts.push(`in ${neighbourhood}`);
@@ -148,8 +159,15 @@ export function generateListingAltText(
 export function generateEventAltText(
   eventTitle: string,
   venueName?: string | null,
-  cityName?: string | null
+  cityName?: string | null,
+  isPlaceholder?: boolean
 ): string {
+  if (isPlaceholder) {
+    const parts = ["Event"];
+    if (cityName) parts.push(`in ${cityName}`);
+    return parts.join(" ");
+  }
+
   const parts = [eventTitle];
   if (venueName) parts.push(`at ${venueName}`);
   if (cityName) parts.push(`in ${cityName}`);
@@ -169,5 +187,15 @@ export function generateCityAltText(cityName: string): string {
 export type ImageSource =
   | "google_places"   // From Google Places Photo API via place_id
   | "manual"          // Manually uploaded by admin
-  | "scrape"          // Scraped from venue website
-  | "fallback";       // Category/generic fallback
+  | "official"        // From venue's official source
+  | "scrape"          // Scraped from venue website (needs review)
+  | "unsplash"        // From Unsplash (generic, needs review)
+  | "fallback";       // Category/generic placeholder
+
+/**
+ * Image verification statuses.
+ */
+export type ImageStatus =
+  | "verified"       // Confirmed to be the correct venue image
+  | "needs_review"   // Not yet verified — shows placeholder
+  | "placeholder";   // No venue image available — using category placeholder

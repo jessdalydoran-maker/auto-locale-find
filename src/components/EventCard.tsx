@@ -1,6 +1,6 @@
 import { Calendar, MapPin, Clock, Ticket } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
-import { getImageUrl, generateEventAltText } from "@/lib/image-utils";
+import { getImageUrl, generateEventAltText, isPlaceholderImage } from "@/lib/image-utils";
 
 interface EventCardProps {
   title: string;
@@ -14,6 +14,7 @@ interface EventCardProps {
   imageUrl: string | null;
   imageSource?: string | null;
   imageAlt?: string | null;
+  imageStatus?: string | null;
   categorySlug?: string | null;
   cityName?: string | null;
   isFree: boolean;
@@ -35,6 +36,7 @@ export const EventCard = ({
   imageUrl,
   imageSource,
   imageAlt,
+  imageStatus,
   categorySlug,
   cityName,
   isFree,
@@ -44,8 +46,11 @@ export const EventCard = ({
   tags,
   index = 0,
 }: EventCardProps) => {
-  const resolvedImage = getImageUrl(imageUrl, imageSource, categorySlug || "events");
-  const altText = imageAlt || generateEventAltText(title, venueName, cityName);
+  const resolvedImage = getImageUrl(imageUrl, imageSource, categorySlug || "events", null, imageStatus);
+  const usingPlaceholder = isPlaceholderImage(resolvedImage) || imageStatus !== "verified";
+  const altText = imageAlt && !usingPlaceholder
+    ? imageAlt
+    : generateEventAltText(title, venueName, cityName, usingPlaceholder);
 
   const formatDate = (dateStr: string) => {
     const d = new Date(dateStr + "T00:00:00");

@@ -544,6 +544,7 @@ const ProgrammaticPage = () => {
                     imageUrl={event.image_url}
                     imageSource={(event as any).image_source}
                     imageAlt={(event as any).image_alt}
+                    imageStatus={(event as any).image_status}
                     categorySlug={parsed?.categorySlug}
                     cityName={city?.name}
                     isFree={event.is_free}
@@ -587,7 +588,7 @@ const ProgrammaticPage = () => {
                     <span className="absolute -top-2 -left-2 z-10 w-7 h-7 bg-accent text-accent-foreground rounded-full flex items-center justify-center text-xs font-bold card-shadow">
                       {i + 1}
                     </span>
-                    <ListingCard
+                     <ListingCard
                       name={listing.name}
                       slug={listing.slug}
                       citySlug={parsed?.citySlug || ""}
@@ -597,6 +598,7 @@ const ProgrammaticPage = () => {
                       imageUrl={listing.image_url}
                       imageSource={(listing as any).image_source}
                       imageAlt={(listing as any).image_alt}
+                      imageStatus={(listing as any).image_status}
                       categorySlug={(listing.categories as any)?.slug}
                       categoryName={(listing.categories as any)?.name}
                       neighbourhoodName={neighbourhood?.name}
