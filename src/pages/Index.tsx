@@ -213,6 +213,59 @@ const Index = () => {
         </div>
       </section>
 
+      {/* Trending This Weekend */}
+      {weekendItems && weekendItems.length > 0 && (
+        <section className="container mx-auto px-4 py-8">
+          <div className="flex items-center justify-between mb-5">
+            <h2 className="font-display font-semibold text-lg text-foreground flex items-center gap-2">
+              <TrendingUp className="h-5 w-5 text-accent" />
+              Trending This Weekend in Belfast
+            </h2>
+            <Link to="/things-to-do-belfast-this-weekend" className="text-[13px] text-accent font-medium flex items-center gap-1 hover:underline">
+              See all <ArrowRight className="h-3.5 w-3.5" />
+            </Link>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            {weekendItems.map((item, i) => (
+              <Link
+                key={item.id}
+                to={item.link}
+                className="group bg-card rounded-lg border border-border overflow-hidden card-shadow hover:card-shadow-hover transition-all duration-200 animate-fade-in"
+                style={{ animationDelay: `${i * 60}ms` }}
+              >
+                <div className="relative aspect-[16/10] overflow-hidden">
+                  <img
+                    src={item.imageUrl || getCategoryPlaceholder(item.category.toLowerCase())}
+                    alt={item.imageAlt || `${item.title} — ${item.category} in Belfast`}
+                    className="w-full h-full object-cover group-hover:scale-[1.03] transition-transform duration-300"
+                    loading="lazy"
+                    decoding="async"
+                    width={400}
+                    height={250}
+                  />
+                  <span className="absolute top-2 left-2 bg-card/90 backdrop-blur-sm text-foreground text-[10px] font-semibold px-2 py-0.5 rounded">
+                    {item.category}
+                  </span>
+                  {item.badge && (
+                    <span className="absolute top-2 right-2 bg-accent text-accent-foreground text-[10px] font-semibold px-2 py-0.5 rounded">
+                      {item.badge}
+                    </span>
+                  )}
+                </div>
+                <div className="p-3">
+                  <h3 className="font-display font-semibold text-sm text-foreground line-clamp-1 group-hover:text-accent transition-colors">
+                    {item.title}
+                  </h3>
+                  <p className="text-xs text-muted-foreground line-clamp-2 mt-1 leading-relaxed">
+                    {item.description}
+                  </p>
+                </div>
+              </Link>
+            ))}
+          </div>
+        </section>
+      )}
+
       {/* Upcoming Events */}
       {upcomingEvents && upcomingEvents.length > 0 && (
         <section className="container mx-auto px-4 py-8">
