@@ -103,7 +103,13 @@ const ProgrammaticPage = () => {
   }, [slug, cities, neighbourhoods]);
 
   // Resolve entities
-  const city = useMemo(() => cities?.find((c) => c.slug === parsed?.citySlug), [cities, parsed]);
+  // For NI-wide pages, create a virtual city object so all downstream logic works
+  const city = useMemo(() => {
+    if (parsed?.citySlug === "northern-ireland") {
+      return { id: "ni-wide", name: "Northern Ireland", slug: "northern-ireland" } as any;
+    }
+    return cities?.find((c) => c.slug === parsed?.citySlug);
+  }, [cities, parsed]);
   const category = useMemo(() => allCategories?.find((c) => c.slug === parsed?.categorySlug), [allCategories, parsed]);
   const modifier = useMemo(() => modifiers?.find((m) => m.slug === parsed?.modifierSlug), [modifiers, parsed]);
   const neighbourhood = useMemo(
