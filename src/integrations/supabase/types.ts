@@ -14,6 +14,78 @@ export type Database = {
   }
   public: {
     Tables: {
+      automation_logs: {
+        Row: {
+          completed_at: string | null
+          details: Json | null
+          duplicates_merged: number | null
+          error_message: string | null
+          events_expired: number | null
+          id: string
+          listings_added: number | null
+          listings_archived: number | null
+          listings_updated: number | null
+          pages_published: number | null
+          pages_unpublished: number | null
+          run_type: string
+          started_at: string
+          status: string
+        }
+        Insert: {
+          completed_at?: string | null
+          details?: Json | null
+          duplicates_merged?: number | null
+          error_message?: string | null
+          events_expired?: number | null
+          id?: string
+          listings_added?: number | null
+          listings_archived?: number | null
+          listings_updated?: number | null
+          pages_published?: number | null
+          pages_unpublished?: number | null
+          run_type?: string
+          started_at?: string
+          status?: string
+        }
+        Update: {
+          completed_at?: string | null
+          details?: Json | null
+          duplicates_merged?: number | null
+          error_message?: string | null
+          events_expired?: number | null
+          id?: string
+          listings_added?: number | null
+          listings_archived?: number | null
+          listings_updated?: number | null
+          pages_published?: number | null
+          pages_unpublished?: number | null
+          run_type?: string
+          started_at?: string
+          status?: string
+        }
+        Relationships: []
+      }
+      automation_settings: {
+        Row: {
+          id: string
+          key: string
+          updated_at: string
+          value: string
+        }
+        Insert: {
+          id?: string
+          key: string
+          updated_at?: string
+          value: string
+        }
+        Update: {
+          id?: string
+          key?: string
+          updated_at?: string
+          value?: string
+        }
+        Relationships: []
+      }
       categories: {
         Row: {
           created_at: string
@@ -217,6 +289,7 @@ export type Database = {
           image_source: string | null
           image_url: string | null
           is_approved: boolean
+          is_archived: boolean
           is_featured: boolean
           latitude: number | null
           longitude: number | null
@@ -244,6 +317,7 @@ export type Database = {
           image_source?: string | null
           image_url?: string | null
           is_approved?: boolean
+          is_archived?: boolean
           is_featured?: boolean
           latitude?: number | null
           longitude?: number | null
@@ -271,6 +345,7 @@ export type Database = {
           image_source?: string | null
           image_url?: string | null
           is_approved?: boolean
+          is_archived?: boolean
           is_featured?: boolean
           latitude?: number | null
           longitude?: number | null
