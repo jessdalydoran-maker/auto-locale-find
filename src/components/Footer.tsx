@@ -33,28 +33,28 @@ const FOOTER_QUICK_LINKS = [
 
 export const Footer = () => {
   return (
-    <footer className="bg-card border-t border-border py-10 mt-12">
-      <div className="container mx-auto px-4">
+    <footer className="bg-card border-t border-border mt-12">
+      <div className="container mx-auto px-4 py-10">
         <div className="grid grid-cols-2 md:grid-cols-5 gap-8">
           <div className="col-span-2 md:col-span-1">
             <div className="flex items-center gap-2 mb-3">
-              <div className="w-7 h-7 rounded-md bg-accent flex items-center justify-center">
-                <span className="font-display font-bold text-accent-foreground text-xs">BL</span>
+              <div className="w-7 h-7 rounded-lg bg-foreground flex items-center justify-center">
+                <span className="font-display font-bold text-primary-foreground text-[10px] tracking-tight">BL</span>
               </div>
-              <span className="font-display font-bold text-base text-foreground">BestLocal</span>
+              <span className="font-display font-bold text-[15px] text-foreground">BestLocal</span>
             </div>
-            <p className="text-sm text-muted-foreground leading-relaxed">
+            <p className="text-[13px] text-muted-foreground leading-relaxed">
               Discover events, things to do, restaurants and hidden gems across Belfast, Northern Ireland and the UK.
             </p>
           </div>
           <div>
-            <h4 className="font-display font-semibold text-sm text-foreground mb-3">Cities</h4>
+            <h4 className="font-display font-semibold text-[13px] text-foreground mb-3">Cities</h4>
             <nav className="flex flex-col gap-1.5">
               {FOOTER_CITIES.map((city) => (
                 <Link
                   key={city.slug}
                   to={`/${city.slug}`}
-                  className="text-sm text-muted-foreground hover:text-accent transition-colors"
+                  className="text-[13px] text-muted-foreground hover:text-foreground transition-colors"
                 >
                   {city.name}
                 </Link>
@@ -62,13 +62,13 @@ export const Footer = () => {
             </nav>
           </div>
           <div>
-            <h4 className="font-display font-semibold text-sm text-foreground mb-3">Categories</h4>
+            <h4 className="font-display font-semibold text-[13px] text-foreground mb-3">Categories</h4>
             <nav className="flex flex-col gap-1.5">
               {FOOTER_CATEGORIES.map((cat) => (
                 <Link
                   key={cat.to}
                   to={cat.to}
-                  className="text-sm text-muted-foreground hover:text-accent transition-colors"
+                  className="text-[13px] text-muted-foreground hover:text-foreground transition-colors"
                 >
                   {cat.name}
                 </Link>
@@ -76,13 +76,13 @@ export const Footer = () => {
             </nav>
           </div>
           <div>
-            <h4 className="font-display font-semibold text-sm text-foreground mb-3">Quick Links</h4>
+            <h4 className="font-display font-semibold text-[13px] text-foreground mb-3">Quick Links</h4>
             <nav className="flex flex-col gap-1.5">
               {FOOTER_QUICK_LINKS.map((link) => (
                 <Link
                   key={link.to}
                   to={link.to}
-                  className="text-sm text-muted-foreground hover:text-accent transition-colors"
+                  className="text-[13px] text-muted-foreground hover:text-foreground transition-colors"
                 >
                   {link.name}
                 </Link>
@@ -90,19 +90,18 @@ export const Footer = () => {
             </nav>
           </div>
           <div>
-            <h4 className="font-display font-semibold text-sm text-foreground mb-3">About</h4>
+            <h4 className="font-display font-semibold text-[13px] text-foreground mb-3">About</h4>
             <nav className="flex flex-col gap-1.5">
-              <span className="text-sm text-muted-foreground">Contact</span>
-              <span className="text-sm text-muted-foreground">Privacy Policy</span>
-              <span className="text-sm text-muted-foreground">Terms of Service</span>
-              <Link to="/admin" className="text-sm text-muted-foreground hover:text-accent transition-colors">
+              <span className="text-[13px] text-muted-foreground">Contact</span>
+              <span className="text-[13px] text-muted-foreground">Privacy Policy</span>
+              <span className="text-[13px] text-muted-foreground">Terms of Service</span>
+              <Link to="/admin" className="text-[13px] text-muted-foreground hover:text-foreground transition-colors">
                 Admin
               </Link>
             </nav>
           </div>
         </div>
 
-        {/* SEO footer links */}
         <div className="border-t border-border mt-8 pt-6">
           <div className="flex flex-wrap gap-x-4 gap-y-1 mb-4">
             {[
@@ -120,7 +119,7 @@ export const Footer = () => {
               <Link
                 key={text}
                 to={`/${text.toLowerCase().replace(/['']/g, "").replace(/\s+/g, "-")}`}
-                className="text-xs text-muted-foreground hover:text-accent transition-colors"
+                className="text-xs text-muted-foreground hover:text-foreground transition-colors"
               >
                 {text}
               </Link>
