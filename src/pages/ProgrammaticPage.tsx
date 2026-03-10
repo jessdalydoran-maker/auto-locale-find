@@ -252,11 +252,11 @@ const ProgrammaticPage = () => {
 
   // SEO content
   const title = category && city
-    ? generateTitle(modifier?.name?.toLowerCase() || parsed?.modifierSlug || null, category.name, locationName, cityName, parsed?.timeIntent)
+    ? generateTitle(modifier?.name?.toLowerCase() || parsed?.modifierSlug || null, category.name, locationName, cityName, parsed?.timeIntent, parsed?.nearLandmark)
     : "Loading...";
 
   const metaDesc = category && city
-    ? generateMetaDescription(modifier?.name?.toLowerCase() || parsed?.modifierSlug || null, category.name, locationName, cityName, parsed?.timeIntent)
+    ? generateMetaDescription(modifier?.name?.toLowerCase() || parsed?.modifierSlug || null, category.name, locationName, cityName, parsed?.timeIntent, parsed?.nearLandmark)
     : "";
 
   const introText = category && city
