@@ -49,7 +49,7 @@ export const CATEGORY_PLACEHOLDERS: Record<string, string> = {
   "festivals": "https://images.unsplash.com/photo-1533174072545-7a4b6ad7a6c3?w=800&h=500&fit=crop&fm=webp&q=80",
 };
 
-const DEFAULT_PLACEHOLDER = "https://images.unsplash.com/photo-1533105079780-92b9be482077?w=600&fm=webp&q=80";
+const DEFAULT_PLACEHOLDER = "https://images.unsplash.com/photo-1501594907352-04cda38ebc29?w=800&h=500&fit=crop&fm=webp&q=80";
 
 /** Trusted image sources that bypass verification */
 const TRUSTED_SOURCES = new Set(["google_places", "manual", "official"]);
