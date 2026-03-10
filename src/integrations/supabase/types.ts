@@ -50,6 +50,7 @@ export type Database = {
           created_at: string
           description: string | null
           id: string
+          image_alt: string | null
           image_url: string | null
           latitude: number | null
           longitude: number | null
@@ -61,6 +62,7 @@ export type Database = {
           created_at?: string
           description?: string | null
           id?: string
+          image_alt?: string | null
           image_url?: string | null
           latitude?: number | null
           longitude?: number | null
@@ -72,6 +74,7 @@ export type Database = {
           created_at?: string
           description?: string | null
           id?: string
+          image_alt?: string | null
           image_url?: string | null
           latitude?: number | null
           longitude?: number | null
@@ -89,6 +92,8 @@ export type Database = {
           date_start: string
           description: string | null
           id: string
+          image_alt: string | null
+          image_source: string | null
           image_url: string | null
           is_family_friendly: boolean
           is_free: boolean
@@ -119,6 +124,8 @@ export type Database = {
           date_start: string
           description?: string | null
           id?: string
+          image_alt?: string | null
+          image_source?: string | null
           image_url?: string | null
           is_family_friendly?: boolean
           is_free?: boolean
@@ -149,6 +156,8 @@ export type Database = {
           date_start?: string
           description?: string | null
           id?: string
+          image_alt?: string | null
+          image_source?: string | null
           image_url?: string | null
           is_family_friendly?: boolean
           is_free?: boolean
@@ -204,6 +213,8 @@ export type Database = {
           description: string | null
           google_maps_link: string | null
           id: string
+          image_alt: string | null
+          image_source: string | null
           image_url: string | null
           is_approved: boolean
           is_featured: boolean
@@ -212,6 +223,7 @@ export type Database = {
           name: string
           neighbourhood_id: string | null
           phone: string | null
+          place_id: string | null
           price_level: string | null
           rating: number | null
           review_count: number | null
@@ -228,6 +240,8 @@ export type Database = {
           description?: string | null
           google_maps_link?: string | null
           id?: string
+          image_alt?: string | null
+          image_source?: string | null
           image_url?: string | null
           is_approved?: boolean
           is_featured?: boolean
@@ -236,6 +250,7 @@ export type Database = {
           name: string
           neighbourhood_id?: string | null
           phone?: string | null
+          place_id?: string | null
           price_level?: string | null
           rating?: number | null
           review_count?: number | null
@@ -252,6 +267,8 @@ export type Database = {
           description?: string | null
           google_maps_link?: string | null
           id?: string
+          image_alt?: string | null
+          image_source?: string | null
           image_url?: string | null
           is_approved?: boolean
           is_featured?: boolean
@@ -260,6 +277,7 @@ export type Database = {
           name?: string
           neighbourhood_id?: string | null
           phone?: string | null
+          place_id?: string | null
           price_level?: string | null
           rating?: number | null
           review_count?: number | null
