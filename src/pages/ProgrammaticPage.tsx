@@ -1144,9 +1144,11 @@ const ProgrammaticPage = () => {
             <h2 className="font-display font-semibold text-xl text-foreground mb-6">
               {isLandmarkPage
                 ? `${category?.name || "Places"} Near ${landmark?.name}`
-                : isWeekendPage
-                  ? `Popular Places ${formatTimeIntent(parsed?.timeIntent || null)}`
-                  : `Top ${modifier?.name || ""} ${category?.name || "Places"}`
+                : isDateNightPage
+                  ? "Bars, Restaurants & Venues"
+                  : isWeekendPage
+                    ? `Popular Places ${formatTimeIntent(parsed?.timeIntent || null)}`
+                    : `Top ${modifier?.name || ""} ${category?.name || "Places"}`
               } {locationFilter ? `in ${niCities.find(c => c.slug === locationFilter)?.name || ""}` : isNIWide ? "Across Northern Ireland" : `in ${isLandmarkPage ? city?.name || "" : locationName}`}
             </h2>
             {listings && listings.length > 0 ? (
