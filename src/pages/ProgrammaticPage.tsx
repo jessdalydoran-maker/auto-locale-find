@@ -135,8 +135,17 @@ const ProgrammaticPage = () => {
     if (cityNbs.length > 0) {
       cityClusters.push(getNeighbourhoodCluster(city.slug, city.name, cityNbs));
     }
+    // Add landmark cluster
+    if (landmarks && landmarks.length > 0) {
+      const cityLandmarks = landmarks
+        .filter((l) => l.city_id === city.id)
+        .map((l) => ({ name: l.name, slug: l.slug }));
+      if (cityLandmarks.length > 0) {
+        cityClusters.push(getLandmarkCluster(city.slug, city.name, cityLandmarks));
+      }
+    }
     return cityClusters;
-  }, [city, neighbourhoods]);
+  }, [city, neighbourhoods, landmarks]);
 
   const siblingPages = useMemo(() => getSiblingPages(currentUrl, clusters), [currentUrl, clusters]);
   const crossClusterLinks = useMemo(() => getCrossClusterLinks(currentUrl, clusters), [currentUrl, clusters]);
