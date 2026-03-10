@@ -868,8 +868,12 @@ const ProgrammaticPage = () => {
             ) : (
               <div className="text-center py-16 bg-muted/50 rounded-lg">
                 <Calendar className="h-8 w-8 text-muted-foreground mx-auto mb-3" />
-                <p className="text-muted-foreground text-sm font-medium">No events found for this search yet</p>
-                <p className="text-muted-foreground text-xs mt-1 mb-4">We're adding new events all the time — check back soon!</p>
+                <p className="text-muted-foreground text-sm font-medium">
+                  {isFamilyPage ? "We're curating more family-friendly events for this area." : "No events found for this search yet"}
+                </p>
+                <p className="text-muted-foreground text-xs mt-1 mb-4">
+                  {isFamilyPage ? "Only genuinely family-suitable events are shown here." : "We're adding new events all the time — check back soon!"}
+                </p>
                 {siblingPages.length > 0 && (
                   <div className="flex flex-wrap justify-center gap-2">
                     {siblingPages.slice(0, 4).map((page) => (
