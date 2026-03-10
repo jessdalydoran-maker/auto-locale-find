@@ -258,17 +258,18 @@ const ProgrammaticPage = () => {
           results = familyData;
         }
 
-        // Hard filter — only keep listings that are explicitly family-friendly
+        // STRICT filter — only keep listings explicitly tagged family/kids
         results = results.filter((l: any) => {
           const tags: string[] = (l as any).audience_tags || [];
           const catSlug = (l.categories as any)?.slug || "";
           const isFamilyTagged = tags.includes("family") || tags.includes("kids") || (l as any).family_friendly === true || (l as any).kids_friendly === true;
           
+          // Hard exclude
           if (FAMILY_EXCLUDED_CATEGORIES.includes(catSlug)) return false;
           if (tags.some((t: string) => FAMILY_EXCLUDED_TAGS.includes(t))) return false;
-          if (isFamilyTagged) return true;
-          if (FAMILY_FALLBACK_CATEGORIES.includes(catSlug)) return true;
-          return false;
+          
+          // ONLY show explicitly family-tagged listings — no generic fallbacks
+          return isFamilyTagged;
         });
 
         // Priority sort — family+kids first, then family, then kids, then fallback categories
