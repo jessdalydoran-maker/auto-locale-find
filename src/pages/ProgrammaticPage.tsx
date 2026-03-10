@@ -620,7 +620,8 @@ const ProgrammaticPage = () => {
 
   const eventCount = events?.length || 0;
   const listingCount = listings?.length || 0;
-  const itemCount = (showEvents ? eventCount : listingCount) + (shouldFetchEvents && !showEvents ? eventCount : 0);
+  const venueCount = venueListings?.length || 0;
+  const itemCount = (showEvents ? eventCount + venueCount : listingCount) + (shouldFetchEvents && !showEvents ? eventCount : 0);
   const isNeighbourhoodPage = !!parsed?.neighbourhoodSlug;
   const hasEnoughContent = meetsContentThreshold(itemCount, showEvents, isNeighbourhoodPage);
   const isThin = isThinContent(itemCount);
