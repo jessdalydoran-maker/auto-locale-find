@@ -181,8 +181,10 @@ const ProgrammaticPage = () => {
 
   // Categories to exclude for family pages
   const FAMILY_EXCLUDED_CATEGORIES = ["bars", "cocktail-bars", "nightlife", "late-night"];
-  // Categories that are acceptable fallbacks for family pages
-  const FAMILY_FALLBACK_CATEGORIES = ["attractions", "parks", "museums", "markets", "tours", "restaurants", "cafes", "cinemas", "activity-centres"];
+  // Tags that disqualify a listing from family pages
+  const FAMILY_EXCLUDED_TAGS = ["nightlife", "late-night", "cocktails", "romantic", "adults-only"];
+  // Categories that are acceptable fallbacks for family pages (NO restaurants/cafes unless family-tagged)
+  const FAMILY_FALLBACK_CATEGORIES = ["attractions", "things-to-do", "parks", "museums", "markets", "tours", "cinemas", "activity-centres", "leisure-centres", "zoos", "science-centres", "outdoor-activities", "indoor-play"];
 
   // Fetch regular listings (non-landmark pages)
   const { data: regularListings } = useQuery({
