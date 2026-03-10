@@ -51,6 +51,17 @@ const PlaceDetailPage = () => {
   const category = listing?.categories as any;
   const neighbourhood = listing?.neighbourhoods as any;
 
+  // Compute image before hooks/effects
+  const resolvedImage = listing
+    ? getImageUrl(listing.image_url, listing.image_source, category?.slug, city?.slug, listing.image_status)
+    : "";
+  const usingPlaceholder = !listing || isPlaceholderImage(resolvedImage) || listing.image_status !== "verified";
+  const altText = listing
+    ? (listing.image_alt && !usingPlaceholder
+        ? listing.image_alt
+        : generateListingAltText(listing.name, category?.name, neighbourhood?.name, city?.name, usingPlaceholder))
+    : "";
+
   // SEO
   useEffect(() => {
     if (!listing) return;
@@ -108,7 +119,7 @@ const PlaceDetailPage = () => {
     return () => {
       scriptEl?.remove();
     };
-  }, [listing]);
+  }, [listing, resolvedImage]);
 
   if (isLoading) {
     return (
@@ -125,12 +136,6 @@ const PlaceDetailPage = () => {
   }
 
   if (!listing) return <NotFound />;
-
-  const resolvedImage = getImageUrl(listing.image_url, listing.image_source, category?.slug, city?.slug, listing.image_status);
-  const usingPlaceholder = isPlaceholderImage(resolvedImage) || listing.image_status !== "verified";
-  const altText = listing.image_alt && !usingPlaceholder
-    ? listing.image_alt
-    : generateListingAltText(listing.name, category?.name, neighbourhood?.name, city?.name, usingPlaceholder);
 
   const citySlug = city?.slug || "";
   const cityName = city?.name || "";
