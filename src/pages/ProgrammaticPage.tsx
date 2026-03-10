@@ -304,8 +304,15 @@ const ProgrammaticPage = () => {
         query = query.eq("cities.slug", parsed!.citySlug);
       }
 
-      if (parsed!.categorySlug !== "things-to-do" && parsed!.categorySlug !== "indoor-activities" && !showEvents) {
-        query = query.eq("categories.slug", parsed!.categorySlug);
+      // Category-specific filtering
+      const isThingsToDoPage = parsed!.categorySlug === "things-to-do" || parsed!.categorySlug === "indoor-activities";
+      if (!isThingsToDoPage && !showEvents) {
+        // For cocktail bars, also include bars with cocktail/speakeasy/mixology tags
+        if (parsed!.categorySlug === "cocktail-bars") {
+          // Don't filter by category in query — we'll filter client-side to include tagged venues
+        } else {
+          query = query.eq("categories.slug", parsed!.categorySlug);
+        }
       }
 
       if (parsed?.neighbourhoodSlug && neighbourhood) {
@@ -318,6 +325,54 @@ const ProgrammaticPage = () => {
 
       const { data, error } = await query;
       if (error) throw error;
+
+      let results = data || [];
+
+      // For cocktail bars: include cocktail-bars category + bars with cocktail tags
+      if (parsed!.categorySlug === "cocktail-bars") {
+        results = results.filter((l: any) => {
+          const catSlug = (l.categories as any)?.slug || "";
+          const tags: string[] = l.audience_tags || [];
+          if (catSlug === "cocktail-bars") return true;
+          if (catSlug === "bars" && (tags.includes("cocktails") || tags.includes("speakeasy") || tags.includes("mixology"))) return true;
+          return false;
+        });
+      }
+
+      // For neighbourhood pages with few results, also fetch nearby by coordinates
+      if (parsed?.neighbourhoodSlug && neighbourhood && results.length < 5 && neighbourhood.latitude && neighbourhood.longitude) {
+        const { data: nearbyData } = await supabase
+          .from("listings")
+          .select("*, cities!inner(slug, name), categories!inner(slug, name)")
+          .eq("is_approved", true)
+          .eq("cities.slug", parsed!.citySlug)
+          .order("rating", { ascending: false })
+          .limit(30);
+
+        if (nearbyData) {
+          const existingIds = new Set(results.map((r: any) => r.id));
+          const nLat = neighbourhood.latitude;
+          const nLng = neighbourhood.longitude;
+          const nearby = nearbyData.filter((l: any) => {
+            if (existingIds.has(l.id)) return false;
+            if (!l.latitude || !l.longitude) return false;
+            // Category filter
+            if (!isThingsToDoPage && !showEvents && parsed!.categorySlug !== "cocktail-bars") {
+              if ((l.categories as any)?.slug !== parsed!.categorySlug) return false;
+            }
+            if (parsed!.categorySlug === "cocktail-bars") {
+              const catSlug = (l.categories as any)?.slug || "";
+              const tags: string[] = l.audience_tags || [];
+              if (catSlug !== "cocktail-bars" && !(catSlug === "bars" && (tags.includes("cocktails") || tags.includes("speakeasy")))) return false;
+            }
+            // ~1km radius using simple approximation
+            const dLat = Math.abs(l.latitude - nLat) * 111;
+            const dLng = Math.abs(l.longitude - nLng) * 111 * Math.cos(nLat * Math.PI / 180);
+            return Math.sqrt(dLat * dLat + dLng * dLng) <= 1.0;
+          });
+          results = [...results, ...nearby];
+        }
+      }
 
       let results = data || [];
 
