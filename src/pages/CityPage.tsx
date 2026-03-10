@@ -15,17 +15,17 @@ const CityPage = () => {
   const categoryFilter = searchParams.get("category");
 
   const { data: city } = useQuery({
-    queryKey: ["city", citySlug],
+    queryKey: ["city", resolvedCitySlug],
     queryFn: async () => {
       const { data, error } = await supabase
         .from("cities")
         .select("*")
-        .eq("slug", citySlug!)
+        .eq("slug", resolvedCitySlug)
         .single();
       if (error) throw error;
       return data;
     },
-    enabled: !!citySlug,
+    enabled: !!resolvedCitySlug,
   });
 
   const { data: categories } = useQuery({
