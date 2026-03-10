@@ -266,6 +266,18 @@ const AdminPage = () => {
                         <><TrendingUp className="h-4 w-4 mr-2" /> Run Search Harvester</>
                       )}
                     </Button>
+                    <Button
+                      onClick={runEventIngestion}
+                      disabled={isIngesting}
+                      variant="outline"
+                      className="w-full"
+                    >
+                      {isIngesting ? (
+                        <><RefreshCw className="h-4 w-4 mr-2 animate-spin" /> Ingesting Events...</>
+                      ) : (
+                        <><Calendar className="h-4 w-4 mr-2" /> Run Event Ingestion</>
+                      )}
+                    </Button>
                     <p className="text-xs text-muted-foreground text-center">
                       {settingsMap.get("last_manual_run")
                         ? `Last manual run: ${new Date(settingsMap.get("last_manual_run")!).toLocaleString()}`
