@@ -416,7 +416,7 @@ const ProgrammaticPage = () => {
 
       let results = data || [];
 
-      // For live-music, also include bars with music-related names/descriptions
+      // For live-music, filter to actual music venues (not all bars)
       if (parsed?.categorySlug === "live-music") {
         results = results.filter((l: any) => {
           const catSlug = (l.categories as any)?.slug || "";
@@ -427,16 +427,17 @@ const ProgrammaticPage = () => {
           // Direct category match
           if (["live-music", "nightlife"].includes(catSlug)) return true;
 
-          // Bars that have music signals
+          // Bars that have live music signals (not all bars)
           if (catSlug === "bars") {
-            if (name.includes("music") || name.includes("empire") || name.includes("limelight") ||
+            // Known live music bars
+            if (name.includes("empire") || name.includes("limelight") ||
                 name.includes("front page") || name.includes("sunflower") || name.includes("voodoo") ||
                 name.includes("filthy") || name.includes("mandela") || name.includes("lavery") ||
-                name.includes("errigle") || name.includes("botanic") || name.includes("harp")) return true;
-            if (desc.includes("music") || desc.includes("live") || desc.includes("gig") || desc.includes("band")) return true;
+                name.includes("errigle") || name.includes("harp") || name.includes("duke of york") ||
+                name.includes("dirty onion") || name.includes("menagerie")) return true;
+            if (desc.includes("live music") || desc.includes("live band") || desc.includes("gig") || desc.includes("acoustic")) return true;
             if (tags.includes("live-music") || tags.includes("music")) return true;
-            // Include all bars as potential music venues (many NI bars host live music)
-            return true;
+            return false;
           }
 
           return false;
