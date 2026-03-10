@@ -168,7 +168,7 @@ const SearchPage = () => {
         {hasResults && (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
             {listings!.map((listing, i) => (
-              <ListingCard
+            <ListingCard
                 key={listing.id}
                 name={listing.name}
                 slug={listing.slug}
@@ -177,6 +177,12 @@ const SearchPage = () => {
                 rating={listing.rating}
                 reviewCount={listing.review_count || 0}
                 imageUrl={listing.image_url}
+                imageSource={(listing as any).image_source}
+                imageStatus={(listing as any).image_status}
+                imageAlt={(listing as any).image_alt}
+                categorySlug={(listing.categories as any)?.slug}
+                categoryName={(listing.categories as any)?.name}
+                cityName={(listing.cities as any)?.name}
                 address={listing.address}
                 priceLevel={listing.price_level}
                 googleMapsLink={listing.google_maps_link}

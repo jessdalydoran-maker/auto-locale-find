@@ -14,39 +14,39 @@
  * Neutral, high-quality stock that represents the category — not a specific venue.
  */
 export const CATEGORY_PLACEHOLDERS: Record<string, string> = {
-  // Food & Drink
-  "restaurants": "https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=600&fm=webp&q=80",
-  "cafes": "https://images.unsplash.com/photo-1501339847302-ac426a4a7cbb?w=600&fm=webp&q=80",
-  "brunch": "https://images.unsplash.com/photo-1504754524776-8f4f37790ca0?w=600&fm=webp&q=80",
-  "bars": "https://images.unsplash.com/photo-1572116469696-31de0f17cc34?w=600&fm=webp&q=80",
-  "cocktail-bars": "https://images.unsplash.com/photo-1551024709-8f23befc6f87?w=600&fm=webp&q=80",
-  "nightlife": "https://images.unsplash.com/photo-1566417713940-fe7c737a9ef2?w=600&fm=webp&q=80",
-  "coffee-shops": "https://images.unsplash.com/photo-1442512595331-e89e73853f31?w=600&fm=webp&q=80",
-  "italian": "https://images.unsplash.com/photo-1551183053-bf91a1d81141?w=600&fm=webp&q=80",
+  // Food & Drink — high-quality dining/food photography
+  "restaurants": "https://images.unsplash.com/photo-1414235077428-338989a2e8c0?w=800&h=500&fit=crop&fm=webp&q=80",
+  "cafes": "https://images.unsplash.com/photo-1495474472287-4d71bcdd2085?w=800&h=500&fit=crop&fm=webp&q=80",
+  "brunch": "https://images.unsplash.com/photo-1525351484163-7529414344d8?w=800&h=500&fit=crop&fm=webp&q=80",
+  "bars": "https://images.unsplash.com/photo-1470337458703-46ad1756a187?w=800&h=500&fit=crop&fm=webp&q=80",
+  "cocktail-bars": "https://images.unsplash.com/photo-1514362545857-3bc16c4c7d1b?w=800&h=500&fit=crop&fm=webp&q=80",
+  "nightlife": "https://images.unsplash.com/photo-1516450360452-9312f5e86fc7?w=800&h=500&fit=crop&fm=webp&q=80",
+  "coffee-shops": "https://images.unsplash.com/photo-1509042239860-f550ce710b93?w=800&h=500&fit=crop&fm=webp&q=80",
+  "italian": "https://images.unsplash.com/photo-1498579150354-977475b7ea0b?w=800&h=500&fit=crop&fm=webp&q=80",
 
-  // Activities
-  "things-to-do": "https://images.unsplash.com/photo-1533105079780-92b9be482077?w=600&fm=webp&q=80",
-  "attractions": "https://images.unsplash.com/photo-1569949381669-ecf31ae8f613?w=600&fm=webp&q=80",
-  "museums": "https://images.unsplash.com/photo-1554907984-15263bfd63bd?w=600&fm=webp&q=80",
-  "tours": "https://images.unsplash.com/photo-1476304884326-cd2c88572c5f?w=600&fm=webp&q=80",
-  "parks": "https://images.unsplash.com/photo-1519331379826-f10be5486c6f?w=600&fm=webp&q=80",
-  "cinemas": "https://images.unsplash.com/photo-1489599849927-2ee91cede3ba?w=600&fm=webp&q=80",
-  "escape-rooms": "https://images.unsplash.com/photo-1509281373149-e957c6296406?w=600&fm=webp&q=80",
-  "sports": "https://images.unsplash.com/photo-1461896836934-bd45ba1a603c?w=600&fm=webp&q=80",
-  "indoor-activities": "https://images.unsplash.com/photo-1545558014-8692077e9b5c?w=600&fm=webp&q=80",
-  "family-activities": "https://images.unsplash.com/photo-1596464716127-f2a82984de30?w=600&fm=webp&q=80",
-  "date-night": "https://images.unsplash.com/photo-1529543544282-ea8407407d89?w=600&fm=webp&q=80",
-  "hidden-gems": "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=600&fm=webp&q=80",
-  "gyms": "https://images.unsplash.com/photo-1534438327276-14e5300c3a48?w=600&fm=webp&q=80",
+  // Activities & Attractions
+  "things-to-do": "https://images.unsplash.com/photo-1501594907352-04cda38ebc29?w=800&h=500&fit=crop&fm=webp&q=80",
+  "attractions": "https://images.unsplash.com/photo-1506744038136-46273834b3fb?w=800&h=500&fit=crop&fm=webp&q=80",
+  "museums": "https://images.unsplash.com/photo-1565060299509-453c4f3bc905?w=800&h=500&fit=crop&fm=webp&q=80",
+  "tours": "https://images.unsplash.com/photo-1469854523086-cc02fe5d8800?w=800&h=500&fit=crop&fm=webp&q=80",
+  "parks": "https://images.unsplash.com/photo-1441974231531-c6227db76b6e?w=800&h=500&fit=crop&fm=webp&q=80",
+  "cinemas": "https://images.unsplash.com/photo-1489599849927-2ee91cede3ba?w=800&h=500&fit=crop&fm=webp&q=80",
+  "escape-rooms": "https://images.unsplash.com/photo-1528605248644-14dd04022da1?w=800&h=500&fit=crop&fm=webp&q=80",
+  "sports": "https://images.unsplash.com/photo-1461896836934-bd45ba1a603c?w=800&h=500&fit=crop&fm=webp&q=80",
+  "indoor-activities": "https://images.unsplash.com/photo-1545558014-8692077e9b5c?w=800&h=500&fit=crop&fm=webp&q=80",
+  "family-activities": "https://images.unsplash.com/photo-1472162072942-cd5147eb3902?w=800&h=500&fit=crop&fm=webp&q=80",
+  "date-night": "https://images.unsplash.com/photo-1529543544282-ea8407407d89?w=800&h=500&fit=crop&fm=webp&q=80",
+  "hidden-gems": "https://images.unsplash.com/photo-1476514525535-07fb3b4ae5f1?w=800&h=500&fit=crop&fm=webp&q=80",
+  "gyms": "https://images.unsplash.com/photo-1534438327276-14e5300c3a48?w=800&h=500&fit=crop&fm=webp&q=80",
 
   // Events
-  "events": "https://images.unsplash.com/photo-1492684223066-81342ee5ff30?w=600&fm=webp&q=80",
-  "live-music": "https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=600&fm=webp&q=80",
-  "theatre": "https://images.unsplash.com/photo-1503095396549-807759245b35?w=600&fm=webp&q=80",
-  "exhibitions": "https://images.unsplash.com/photo-1531058020387-3be344556be6?w=600&fm=webp&q=80",
-  "comedy": "https://images.unsplash.com/photo-1585699324551-f6c309eedeca?w=600&fm=webp&q=80",
-  "markets": "https://images.unsplash.com/photo-1488459716781-31db52582fe9?w=600&fm=webp&q=80",
-  "festivals": "https://images.unsplash.com/photo-1533174072545-7a4b6ad7a6c3?w=600&fm=webp&q=80",
+  "events": "https://images.unsplash.com/photo-1540575467063-178a50c2df87?w=800&h=500&fit=crop&fm=webp&q=80",
+  "live-music": "https://images.unsplash.com/photo-1501386761578-eac5c94b800a?w=800&h=500&fit=crop&fm=webp&q=80",
+  "theatre": "https://images.unsplash.com/photo-1503095396549-807759245b35?w=800&h=500&fit=crop&fm=webp&q=80",
+  "exhibitions": "https://images.unsplash.com/photo-1531058020387-3be344556be6?w=800&h=500&fit=crop&fm=webp&q=80",
+  "comedy": "https://images.unsplash.com/photo-1585699324551-f6c309eedeca?w=800&h=500&fit=crop&fm=webp&q=80",
+  "markets": "https://images.unsplash.com/photo-1555396273-367ea4eb4db5?w=800&h=500&fit=crop&fm=webp&q=80",
+  "festivals": "https://images.unsplash.com/photo-1533174072545-7a4b6ad7a6c3?w=800&h=500&fit=crop&fm=webp&q=80",
 };
 
 const DEFAULT_PLACEHOLDER = "https://images.unsplash.com/photo-1533105079780-92b9be482077?w=600&fm=webp&q=80";
