@@ -279,6 +279,53 @@ export type Database = {
           },
         ]
       }
+      landmarks: {
+        Row: {
+          city_id: string
+          created_at: string
+          description: string | null
+          id: string
+          is_active: boolean
+          latitude: number
+          longitude: number
+          name: string
+          radius_km: number
+          slug: string
+        }
+        Insert: {
+          city_id: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          latitude: number
+          longitude: number
+          name: string
+          radius_km?: number
+          slug: string
+        }
+        Update: {
+          city_id?: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          latitude?: number
+          longitude?: number
+          name?: string
+          radius_km?: number
+          slug?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "landmarks_city_id_fkey"
+            columns: ["city_id"]
+            isOneToOne: false
+            referencedRelation: "cities"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       listings: {
         Row: {
           address: string | null
@@ -668,6 +715,50 @@ export type Database = {
     }
     Functions: {
       expire_old_events: { Args: never; Returns: number }
+      nearby_listings: {
+        Args: {
+          p_category_slug?: string
+          p_lat: number
+          p_limit?: number
+          p_lng: number
+          p_radius_km?: number
+        }
+        Returns: {
+          address: string | null
+          category_id: string
+          city_id: string
+          created_at: string
+          description: string | null
+          google_maps_link: string | null
+          id: string
+          image_alt: string | null
+          image_source: string | null
+          image_status: string
+          image_url: string | null
+          is_approved: boolean
+          is_archived: boolean
+          is_featured: boolean
+          latitude: number | null
+          longitude: number | null
+          name: string
+          neighbourhood_id: string | null
+          phone: string | null
+          place_id: string | null
+          price_level: string | null
+          rating: number | null
+          review_count: number | null
+          short_description: string | null
+          slug: string
+          updated_at: string
+          website: string | null
+        }[]
+        SetofOptions: {
+          from: "*"
+          to: "listings"
+          isOneToOne: false
+          isSetofReturn: true
+        }
+      }
     }
     Enums: {
       [_ in never]: never
