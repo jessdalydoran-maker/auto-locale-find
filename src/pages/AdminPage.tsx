@@ -447,7 +447,7 @@ const AdminPage = () => {
                               <button
                                 className="text-[9px] px-1.5 py-0.5 rounded border border-border text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
                                 onClick={async () => {
-                                  const AVAILABLE_TAGS = ["family", "kids", "couples", "groups", "indoor", "outdoor", "nightlife", "romantic"];
+                                  const AVAILABLE_TAGS = ["family", "kids", "couples", "groups", "indoor", "outdoor", "nightlife", "romantic", "late-night", "adults-only"];
                                   const currentTags: string[] = (listing as any).audience_tags || [];
                                   const remaining = AVAILABLE_TAGS.filter(t => !currentTags.includes(t));
                                   if (remaining.length === 0) { toast.info("All tags already applied"); return; }
