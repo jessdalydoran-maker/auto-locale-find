@@ -305,9 +305,9 @@ const Index = () => {
           <div className="flex items-center justify-between mb-5">
             <h2 className="font-display font-semibold text-lg text-foreground flex items-center gap-2">
               <TrendingUp className="h-5 w-5 text-accent" />
-              Trending This Weekend in Belfast
+              Trending This Weekend
             </h2>
-            <Link to="/things-to-do-belfast-this-weekend" className="text-[13px] text-accent font-medium flex items-center gap-1 hover:underline">
+            <Link to="/things-to-do-this-weekend" className="text-[13px] text-accent font-medium flex items-center gap-1 hover:underline">
               See all <ArrowRight className="h-3.5 w-3.5" />
             </Link>
           </div>
