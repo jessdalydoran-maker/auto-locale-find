@@ -160,7 +160,7 @@ const Index = () => {
           imageUrl: l.image_url, imageSource: l.image_source as string | null, imageAlt: l.image_alt as string | null,
           category: (l.categories as any)?.name || "Place",
           citySlug: (l.cities as any)?.slug || "belfast",
-          type: "listing", link: `/${(l.cities as any)?.slug || "belfast"}/${l.slug}`,
+          type: "listing", link: `/place/${l.slug}`,
         });
       }
 
