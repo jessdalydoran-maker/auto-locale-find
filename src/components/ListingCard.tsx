@@ -51,37 +51,41 @@ export const ListingCard = ({
     ? imageAlt
     : generateListingAltText(name, categoryName, neighbourhoodName, cityName, usingPlaceholder);
 
+  const detailUrl = `/place/${slug}`;
+
   return (
     <div
       className="group bg-card rounded-lg border border-border overflow-hidden card-shadow hover:card-shadow-hover transition-all duration-200 animate-fade-in"
       style={{ animationDelay: `${index * 60}ms` }}
     >
-      <div className="relative aspect-[16/10] overflow-hidden">
-        <img
-          src={resolvedImage}
-          alt={altText}
-          className="w-full h-full object-cover group-hover:scale-[1.03] transition-transform duration-300"
-          loading="lazy"
-          decoding="async"
-          width={600}
-          height={375}
-        />
-        {isFeatured && (
-          <span className="absolute top-2.5 left-2.5 bg-accent text-accent-foreground text-[10px] font-semibold px-2 py-0.5 rounded">
-            Featured
-          </span>
-        )}
-        {priceLevel && (
-          <span className="absolute top-2.5 right-2.5 bg-card/90 backdrop-blur-sm text-foreground text-xs font-medium px-2 py-0.5 rounded">
-            {priceLevel}
-          </span>
-        )}
-      </div>
+      <Link to={detailUrl} className="block">
+        <div className="relative aspect-[16/10] overflow-hidden">
+          <img
+            src={resolvedImage}
+            alt={altText}
+            className="w-full h-full object-cover group-hover:scale-[1.03] transition-transform duration-300"
+            loading="lazy"
+            decoding="async"
+            width={600}
+            height={375}
+          />
+          {isFeatured && (
+            <span className="absolute top-2.5 left-2.5 bg-accent text-accent-foreground text-[10px] font-semibold px-2 py-0.5 rounded">
+              Featured
+            </span>
+          )}
+          {priceLevel && (
+            <span className="absolute top-2.5 right-2.5 bg-card/90 backdrop-blur-sm text-foreground text-xs font-medium px-2 py-0.5 rounded">
+              {priceLevel}
+            </span>
+          )}
+        </div>
+      </Link>
 
       <div className="p-3.5">
         <div className="flex items-start justify-between gap-2 mb-1.5">
           <Link
-            to={`/${citySlug}/${slug}`}
+            to={detailUrl}
             className="font-display font-semibold text-sm text-foreground hover:text-accent transition-colors line-clamp-1"
           >
             {name}

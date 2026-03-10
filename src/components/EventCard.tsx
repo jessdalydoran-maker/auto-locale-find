@@ -1,3 +1,4 @@
+import { Link } from "react-router-dom";
 import { Calendar, MapPin, Clock, Ticket } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { getImageUrl, generateEventAltText, isPlaceholderImage, getEventImageByKeywords } from "@/lib/image-utils";
@@ -46,7 +47,6 @@ export const EventCard = ({
   tags,
   index = 0,
 }: EventCardProps) => {
-  // Try keyword-based image first, then fall back to category placeholder
   const keywordImage = getEventImageByKeywords(title, tags);
   const resolvedImage = keywordImage && (!imageUrl || imageStatus !== "verified")
     ? keywordImage
@@ -55,6 +55,8 @@ export const EventCard = ({
   const altText = imageAlt && !usingPlaceholder
     ? imageAlt
     : generateEventAltText(title, venueName, cityName, usingPlaceholder);
+
+  const detailUrl = `/event/${slug}`;
 
   const formatDate = (dateStr: string) => {
     const d = new Date(dateStr + "T00:00:00");
@@ -74,39 +76,43 @@ export const EventCard = ({
       className="group bg-card rounded-lg border border-border overflow-hidden card-shadow hover:card-shadow-hover transition-all duration-200 animate-fade-in"
       style={{ animationDelay: `${index * 60}ms` }}
     >
-      <div className="relative aspect-[16/10] overflow-hidden">
-        <img
-          src={resolvedImage}
-          alt={altText}
-          className="w-full h-full object-cover group-hover:scale-[1.03] transition-transform duration-300"
-          loading="lazy"
-          decoding="async"
-          width={600}
-          height={375}
-        />
-        {/* Date badge */}
-        <div className="absolute top-2.5 left-2.5 bg-card/95 backdrop-blur-sm rounded-md px-2.5 py-1.5 text-center">
-          <span className="block text-xs font-bold text-accent leading-tight">
-            {new Date(dateStart + "T00:00:00").toLocaleDateString("en-GB", { day: "numeric" })}
-          </span>
-          <span className="block text-[10px] font-medium text-muted-foreground uppercase">
-            {new Date(dateStart + "T00:00:00").toLocaleDateString("en-GB", { month: "short" })}
-          </span>
+      <Link to={detailUrl} className="block">
+        <div className="relative aspect-[16/10] overflow-hidden">
+          <img
+            src={resolvedImage}
+            alt={altText}
+            className="w-full h-full object-cover group-hover:scale-[1.03] transition-transform duration-300"
+            loading="lazy"
+            decoding="async"
+            width={600}
+            height={375}
+          />
+          {/* Date badge */}
+          <div className="absolute top-2.5 left-2.5 bg-card/95 backdrop-blur-sm rounded-md px-2.5 py-1.5 text-center">
+            <span className="block text-xs font-bold text-accent leading-tight">
+              {new Date(dateStart + "T00:00:00").toLocaleDateString("en-GB", { day: "numeric" })}
+            </span>
+            <span className="block text-[10px] font-medium text-muted-foreground uppercase">
+              {new Date(dateStart + "T00:00:00").toLocaleDateString("en-GB", { month: "short" })}
+            </span>
+          </div>
+          <div className="absolute top-2.5 right-2.5 flex gap-1">
+            {isFree && (
+              <Badge className="bg-emerald-600 text-emerald-50 text-[10px] border-0">Free</Badge>
+            )}
+            {isFamilyFriendly && (
+              <Badge variant="secondary" className="text-[10px]">Family</Badge>
+            )}
+          </div>
         </div>
-        <div className="absolute top-2.5 right-2.5 flex gap-1">
-          {isFree && (
-            <Badge className="bg-emerald-600 text-emerald-50 text-[10px] border-0">Free</Badge>
-          )}
-          {isFamilyFriendly && (
-            <Badge variant="secondary" className="text-[10px]">Family</Badge>
-          )}
-        </div>
-      </div>
+      </Link>
 
       <div className="p-3.5">
-        <h3 className="font-display font-semibold text-sm text-foreground mb-1.5 line-clamp-2 group-hover:text-accent transition-colors">
-          {title}
-        </h3>
+        <Link to={detailUrl}>
+          <h3 className="font-display font-semibold text-sm text-foreground mb-1.5 line-clamp-2 group-hover:text-accent transition-colors">
+            {title}
+          </h3>
+        </Link>
 
         {shortDescription && (
           <p className="text-xs text-muted-foreground mb-2.5 line-clamp-2 leading-relaxed">{shortDescription}</p>
