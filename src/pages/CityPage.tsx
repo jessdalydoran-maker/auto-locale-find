@@ -93,7 +93,7 @@ const CityPage = () => {
         {/* Category filters */}
         <div className="flex flex-wrap gap-2 my-6">
           <Link
-            to={`/${citySlug}`}
+            to={`/${resolvedCitySlug}`}
             className={`px-4 py-2 rounded-full text-sm font-medium transition-colors ${
               !categoryFilter
                 ? "bg-accent text-accent-foreground"
