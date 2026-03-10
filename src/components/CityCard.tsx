@@ -1,16 +1,21 @@
 import { Link } from "react-router-dom";
 import { MapPin } from "lucide-react";
+import { getImageUrl, generateCityAltText } from "@/lib/image-utils";
 
 interface CityCardProps {
   name: string;
   slug: string;
   imageUrl: string | null;
+  imageAlt?: string | null;
   description: string | null;
   listingCount?: number;
   index?: number;
 }
 
-export const CityCard = ({ name, slug, imageUrl, description, listingCount, index = 0 }: CityCardProps) => {
+export const CityCard = ({ name, slug, imageUrl, imageAlt, description, listingCount, index = 0 }: CityCardProps) => {
+  const resolvedImage = getImageUrl(imageUrl, "manual", undefined, slug);
+  const altText = imageAlt || generateCityAltText(name);
+
   return (
     <Link
       to={`/${slug}`}
@@ -19,10 +24,13 @@ export const CityCard = ({ name, slug, imageUrl, description, listingCount, inde
     >
       <div className="relative aspect-[16/9] overflow-hidden">
         <img
-          src={imageUrl || "https://images.unsplash.com/photo-1513635269975-59663e0ac1ad?w=600"}
-          alt={name}
+          src={resolvedImage}
+          alt={altText}
           className="w-full h-full object-cover group-hover:scale-[1.03] transition-transform duration-300"
           loading="lazy"
+          decoding="async"
+          width={600}
+          height={338}
         />
       </div>
       <div className="p-3.5">

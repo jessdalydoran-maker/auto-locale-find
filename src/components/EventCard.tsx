@@ -1,6 +1,6 @@
-import { Link } from "react-router-dom";
 import { Calendar, MapPin, Clock, Ticket } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import { getImageUrl, generateEventAltText } from "@/lib/image-utils";
 
 interface EventCardProps {
   title: string;
@@ -12,6 +12,10 @@ interface EventCardProps {
   venueName: string | null;
   venueAddress: string | null;
   imageUrl: string | null;
+  imageSource?: string | null;
+  imageAlt?: string | null;
+  categorySlug?: string | null;
+  cityName?: string | null;
   isFree: boolean;
   isFamilyFriendly: boolean;
   ticketUrl: string | null;
@@ -29,6 +33,10 @@ export const EventCard = ({
   timeStart,
   venueName,
   imageUrl,
+  imageSource,
+  imageAlt,
+  categorySlug,
+  cityName,
   isFree,
   isFamilyFriendly,
   ticketUrl,
@@ -36,6 +44,9 @@ export const EventCard = ({
   tags,
   index = 0,
 }: EventCardProps) => {
+  const resolvedImage = getImageUrl(imageUrl, imageSource, categorySlug || "events");
+  const altText = imageAlt || generateEventAltText(title, venueName, cityName);
+
   const formatDate = (dateStr: string) => {
     const d = new Date(dateStr + "T00:00:00");
     return d.toLocaleDateString("en-GB", { weekday: "short", day: "numeric", month: "short" });
@@ -56,10 +67,13 @@ export const EventCard = ({
     >
       <div className="relative aspect-[16/10] overflow-hidden">
         <img
-          src={imageUrl || "https://images.unsplash.com/photo-1492684223066-81342ee5ff30?w=600"}
-          alt={title}
+          src={resolvedImage}
+          alt={altText}
           className="w-full h-full object-cover group-hover:scale-[1.03] transition-transform duration-300"
           loading="lazy"
+          decoding="async"
+          width={600}
+          height={375}
         />
         {/* Date badge */}
         <div className="absolute top-2.5 left-2.5 bg-card/95 backdrop-blur-sm rounded-md px-2.5 py-1.5 text-center">
@@ -72,7 +86,7 @@ export const EventCard = ({
         </div>
         <div className="absolute top-2.5 right-2.5 flex gap-1">
           {isFree && (
-            <Badge className="bg-green-600 text-white text-[10px] border-0">Free</Badge>
+            <Badge className="bg-emerald-600 text-emerald-50 text-[10px] border-0">Free</Badge>
           )}
           {isFamilyFriendly && (
             <Badge variant="secondary" className="text-[10px]">Family</Badge>
@@ -115,7 +129,7 @@ export const EventCard = ({
           {price && !isFree ? (
             <span className="text-xs font-medium text-foreground">{price}</span>
           ) : isFree ? (
-            <span className="text-xs font-medium text-green-600">Free Entry</span>
+            <span className="text-xs font-medium text-emerald-600">Free Entry</span>
           ) : (
             <span />
           )}
