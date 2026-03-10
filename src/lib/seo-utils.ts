@@ -348,12 +348,23 @@ export function getTimeIntentDateRange(timeIntent: string | null): { start: stri
       return { start: today, end: endOfWeek.toISOString().split("T")[0] };
     }
     case "this-weekend": {
-      const saturday = new Date(now);
-      const daysUntilSat = (6 - now.getDay() + 7) % 7;
-      saturday.setDate(now.getDate() + (daysUntilSat === 0 && now.getDay() === 6 ? 0 : daysUntilSat));
-      const sunday = new Date(saturday);
-      sunday.setDate(saturday.getDate() + 1);
-      return { start: saturday.toISOString().split("T")[0], end: sunday.toISOString().split("T")[0] };
+      // Friday evening → Sunday evening
+      const dayOfWeek = now.getDay(); // 0=Sun, 5=Fri, 6=Sat
+      const friday = new Date(now);
+      const daysUntilFri = (5 - dayOfWeek + 7) % 7;
+      // If it's already Fri/Sat/Sun, use this weekend
+      if (dayOfWeek === 5) {
+        friday.setDate(now.getDate());
+      } else if (dayOfWeek === 6) {
+        friday.setDate(now.getDate() - 1);
+      } else if (dayOfWeek === 0) {
+        friday.setDate(now.getDate() - 2);
+      } else {
+        friday.setDate(now.getDate() + daysUntilFri);
+      }
+      const sunday = new Date(friday);
+      sunday.setDate(friday.getDate() + 2);
+      return { start: friday.toISOString().split("T")[0], end: sunday.toISOString().split("T")[0] };
     }
     case "rainy-day":
       return null; // Not time-based

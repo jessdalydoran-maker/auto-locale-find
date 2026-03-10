@@ -101,6 +101,8 @@ const ProgrammaticPage = () => {
   const locationName = neighbourhood?.name || city?.name || "";
   const cityName = neighbourhood ? city?.name : undefined;
   const showEvents = parsed ? isEventCategory(parsed.categorySlug) : false;
+  // "things-to-do" with a time intent should show BOTH events and listings
+  const isWeekendPage = parsed?.categorySlug === "things-to-do" && !!parsed?.timeIntent;
   const dateRange = parsed ? getTimeIntentDateRange(parsed.timeIntent || null) : null;
   const currentUrl = "/" + slug;
 
@@ -151,7 +153,7 @@ const ProgrammaticPage = () => {
     enabled: !!parsed?.citySlug && !!parsed?.categorySlug && !showEvents,
   });
 
-  // Fetch events
+  // Fetch events (for event pages OR weekend/time-intent "things to do" pages)
   const { data: events } = useQuery({
     queryKey: ["prog-events", parsed?.categorySlug, parsed?.citySlug, parsed?.neighbourhoodSlug, parsed?.timeIntent, parsed?.modifierSlug],
     queryFn: async () => {
@@ -182,10 +184,10 @@ const ProgrammaticPage = () => {
       if (error) throw error;
       return data;
     },
-    enabled: !!parsed?.citySlug && showEvents,
+    enabled: !!parsed?.citySlug && (showEvents || isWeekendPage),
   });
 
-  const itemCount = showEvents ? (events?.length || 0) : (listings?.length || 0);
+  const itemCount = (showEvents ? (events?.length || 0) : (listings?.length || 0)) + (isWeekendPage ? (events?.length || 0) : 0);
   const isNeighbourhoodPage = !!parsed?.neighbourhoodSlug;
   const hasEnoughContent = meetsContentThreshold(itemCount, showEvents, isNeighbourhoodPage);
   const isThin = isThinContent(itemCount);
@@ -575,11 +577,46 @@ const ProgrammaticPage = () => {
           </div>
         )}
 
+        {/* Weekend Events Section (for things-to-do + time intent pages) */}
+        {isWeekendPage && events && events.length > 0 && (
+          <div className="my-8">
+            <h2 className="font-display font-semibold text-xl text-foreground mb-6">
+              <Calendar className="inline h-5 w-5 mr-2 text-accent" />
+              Events {formatTimeIntent(parsed?.timeIntent || null)} in {locationName}
+            </h2>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              {events.map((event, i) => (
+                <EventCard
+                  key={event.id}
+                  title={event.title}
+                  slug={event.slug}
+                  shortDescription={event.short_description}
+                  dateStart={event.date_start}
+                  dateEnd={event.date_end}
+                  timeStart={event.time_start}
+                  venueName={event.venue_name}
+                  venueAddress={event.venue_address}
+                  imageUrl={event.image_url}
+                  imageSource={(event as any).image_source}
+                  imageAlt={(event as any).image_alt}
+                  cityName={(event.cities as any)?.name}
+                  isFree={event.is_free}
+                  isFamilyFriendly={event.is_family_friendly}
+                  ticketUrl={event.ticket_url}
+                  price={event.price}
+                  tags={event.tags || []}
+                  index={i}
+                />
+              ))}
+            </div>
+          </div>
+        )}
+
         {/* Listings Grid */}
         {!showEvents && (
           <div className="my-8">
             <h2 className="font-display font-semibold text-xl text-foreground mb-6">
-              Top {itemCount > 0 ? itemCount : ""} {modifier?.name || ""} {category?.name || "Places"} in {locationName}
+              {isWeekendPage ? `Popular Places ${formatTimeIntent(parsed?.timeIntent || null)}` : `Top ${itemCount > 0 ? itemCount : ""} ${modifier?.name || ""} ${category?.name || "Places"}`} in {locationName}
             </h2>
             {listings && listings.length > 0 ? (
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">

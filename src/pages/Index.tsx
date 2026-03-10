@@ -7,7 +7,8 @@ import { ListingCard } from "@/components/ListingCard";
 import { EventCard } from "@/components/EventCard";
 import { NeighbourhoodCard } from "@/components/NeighbourhoodCard";
 import { AdPlaceholder } from "@/components/AdPlaceholder";
-import { ArrowRight, Calendar, Utensils, MapPin, Star, Sparkles, Heart } from "lucide-react";
+import { ArrowRight, Calendar, Utensils, MapPin, Star, Sparkles, Heart, TrendingUp } from "lucide-react";
+import { getImageUrl, getCategoryPlaceholder } from "@/lib/image-utils";
 import { Link } from "react-router-dom";
 
 const QUICK_LINKS = [
@@ -95,6 +96,74 @@ const Index = () => {
     },
   });
 
+  // Trending This Weekend: events + popular listings for Belfast
+  const { data: weekendItems } = useQuery({
+    queryKey: ["weekend-trending"],
+    queryFn: async () => {
+      const now = new Date();
+      const dayOfWeek = now.getDay();
+      const friday = new Date(now);
+      if (dayOfWeek === 5) friday.setDate(now.getDate());
+      else if (dayOfWeek === 6) friday.setDate(now.getDate() - 1);
+      else if (dayOfWeek === 0) friday.setDate(now.getDate() - 2);
+      else friday.setDate(now.getDate() + ((5 - dayOfWeek + 7) % 7));
+      const sunday = new Date(friday);
+      sunday.setDate(friday.getDate() + 2);
+      const friStr = friday.toISOString().split("T")[0];
+      const sunStr = sunday.toISOString().split("T")[0];
+
+      // Fetch weekend events
+      const { data: events } = await supabase
+        .from("events")
+        .select("id, title, slug, short_description, date_start, image_url, image_source, image_alt, is_free, venue_name, cities!inner(slug, name), category_id")
+        .eq("status", "active")
+        .gte("date_start", friStr)
+        .lte("date_start", sunStr)
+        .order("date_start", { ascending: true })
+        .limit(4);
+
+      // Fetch popular listings to supplement
+      const { data: listings } = await supabase
+        .from("listings")
+        .select("id, name, slug, short_description, rating, image_url, image_source, image_alt, image_status, address, cities!inner(slug, name), categories!inner(slug, name)")
+        .eq("is_approved", true)
+        .order("rating", { ascending: false })
+        .limit(4);
+
+      // Combine into a unified "weekend card" list
+      const items: Array<{
+        id: string; title: string; slug: string; description: string;
+        imageUrl: string | null; imageSource: string | null; imageAlt: string | null;
+        category: string; citySlug: string; type: "event" | "listing"; link: string;
+        badge?: string;
+      }> = [];
+
+      for (const e of (events || [])) {
+        items.push({
+          id: e.id, title: e.title, slug: e.slug,
+          description: e.short_description || "",
+          imageUrl: e.image_url, imageSource: e.image_source as string | null, imageAlt: e.image_alt as string | null,
+          category: "Event", citySlug: (e.cities as any)?.slug || "belfast",
+          type: "event", link: `/${(e.cities as any)?.slug || "belfast"}/${e.slug}`,
+          badge: e.is_free ? "Free" : undefined,
+        });
+      }
+
+      for (const l of (listings || [])) {
+        items.push({
+          id: l.id, title: l.name, slug: l.slug,
+          description: l.short_description || "",
+          imageUrl: l.image_url, imageSource: l.image_source as string | null, imageAlt: l.image_alt as string | null,
+          category: (l.categories as any)?.name || "Place",
+          citySlug: (l.cities as any)?.slug || "belfast",
+          type: "listing", link: `/${(l.cities as any)?.slug || "belfast"}/${l.slug}`,
+        });
+      }
+
+      return items.slice(0, 8);
+    },
+  });
+
   return (
     <Layout>
       {/* Hero */}
@@ -143,6 +212,59 @@ const Index = () => {
           ))}
         </div>
       </section>
+
+      {/* Trending This Weekend */}
+      {weekendItems && weekendItems.length > 0 && (
+        <section className="container mx-auto px-4 py-8">
+          <div className="flex items-center justify-between mb-5">
+            <h2 className="font-display font-semibold text-lg text-foreground flex items-center gap-2">
+              <TrendingUp className="h-5 w-5 text-accent" />
+              Trending This Weekend in Belfast
+            </h2>
+            <Link to="/things-to-do-belfast-this-weekend" className="text-[13px] text-accent font-medium flex items-center gap-1 hover:underline">
+              See all <ArrowRight className="h-3.5 w-3.5" />
+            </Link>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            {weekendItems.map((item, i) => (
+              <Link
+                key={item.id}
+                to={item.link}
+                className="group bg-card rounded-lg border border-border overflow-hidden card-shadow hover:card-shadow-hover transition-all duration-200 animate-fade-in"
+                style={{ animationDelay: `${i * 60}ms` }}
+              >
+                <div className="relative aspect-[16/10] overflow-hidden">
+                  <img
+                    src={item.imageUrl || getCategoryPlaceholder(item.category.toLowerCase())}
+                    alt={item.imageAlt || `${item.title} — ${item.category} in Belfast`}
+                    className="w-full h-full object-cover group-hover:scale-[1.03] transition-transform duration-300"
+                    loading="lazy"
+                    decoding="async"
+                    width={400}
+                    height={250}
+                  />
+                  <span className="absolute top-2 left-2 bg-card/90 backdrop-blur-sm text-foreground text-[10px] font-semibold px-2 py-0.5 rounded">
+                    {item.category}
+                  </span>
+                  {item.badge && (
+                    <span className="absolute top-2 right-2 bg-accent text-accent-foreground text-[10px] font-semibold px-2 py-0.5 rounded">
+                      {item.badge}
+                    </span>
+                  )}
+                </div>
+                <div className="p-3">
+                  <h3 className="font-display font-semibold text-sm text-foreground line-clamp-1 group-hover:text-accent transition-colors">
+                    {item.title}
+                  </h3>
+                  <p className="text-xs text-muted-foreground line-clamp-2 mt-1 leading-relaxed">
+                    {item.description}
+                  </p>
+                </div>
+              </Link>
+            ))}
+          </div>
+        </section>
+      )}
 
       {/* Upcoming Events */}
       {upcomingEvents && upcomingEvents.length > 0 && (
