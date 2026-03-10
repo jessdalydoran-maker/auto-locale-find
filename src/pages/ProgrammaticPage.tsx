@@ -374,8 +374,6 @@ const ProgrammaticPage = () => {
         }
       }
 
-      let results = data || [];
-
       if (isFamilyPage) {
         let familyQuery = supabase
           .from("listings")
