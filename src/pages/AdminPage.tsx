@@ -550,6 +550,38 @@ const AdminPage = () => {
                               >
                                 {listing.is_featured ? "★ Featured" : "☆ Feature"}
                               </Button>
+                              <Button
+                                size="sm"
+                                variant={(listing as any).family_friendly ? "default" : "outline"}
+                                className="text-[10px] h-6 px-2"
+                                onClick={async () => {
+                                  const current = (listing as any).family_friendly || false;
+                                  await supabase
+                                    .from("listings")
+                                    .update({ family_friendly: !current } as any)
+                                    .eq("id", listing.id);
+                                  queryClient.invalidateQueries({ queryKey: ["admin-listings"] });
+                                  toast.success(`${listing.name} ${current ? "unmarked" : "marked"} family-friendly`);
+                                }}
+                              >
+                                {(listing as any).family_friendly ? "👨‍👩‍👧 Family ✓" : "👨‍👩‍👧 Family"}
+                              </Button>
+                              <Button
+                                size="sm"
+                                variant={(listing as any).kids_friendly ? "default" : "outline"}
+                                className="text-[10px] h-6 px-2"
+                                onClick={async () => {
+                                  const current = (listing as any).kids_friendly || false;
+                                  await supabase
+                                    .from("listings")
+                                    .update({ kids_friendly: !current } as any)
+                                    .eq("id", listing.id);
+                                  queryClient.invalidateQueries({ queryKey: ["admin-listings"] });
+                                  toast.success(`${listing.name} ${current ? "unmarked" : "marked"} kids-friendly`);
+                                }}
+                              >
+                                {(listing as any).kids_friendly ? "🧒 Kids ✓" : "🧒 Kids"}
+                              </Button>
                             </div>
                           </td>
                         </tr>
