@@ -49,6 +49,90 @@ export const CATEGORY_PLACEHOLDERS: Record<string, string> = {
   "festivals": "https://images.unsplash.com/photo-1533174072545-7a4b6ad7a6c3?w=800&h=500&fit=crop&fm=webp&q=80",
 };
 
+/**
+ * Keyword-to-image mapping for events.
+ * Matches words in the event title/tags to a contextually appropriate image.
+ */
+const EVENT_KEYWORD_IMAGES: Array<{ keywords: string[]; image: string }> = [
+  {
+    keywords: ["trad", "traditional", "irish music", "fiddle", "folk session", "céilí", "ceili"],
+    image: "https://images.unsplash.com/photo-1524230572899-a752b3835840?w=800&h=500&fit=crop&fm=webp&q=80", // pub/fiddle music
+  },
+  {
+    keywords: ["quiz", "pub quiz", "trivia"],
+    image: "https://images.unsplash.com/photo-1606761568499-6d2451b23c66?w=800&h=500&fit=crop&fm=webp&q=80",
+  },
+  {
+    keywords: ["dj", "club night", "dance", "techno", "electronic", "rave"],
+    image: "https://images.unsplash.com/photo-1571266028243-e4733b0f0bb0?w=800&h=500&fit=crop&fm=webp&q=80",
+  },
+  {
+    keywords: ["open mic", "open-mic", "acoustic", "singer-songwriter", "songwriter"],
+    image: "https://images.unsplash.com/photo-1516450360452-9312f5e86fc7?w=800&h=500&fit=crop&fm=webp&q=80",
+  },
+  {
+    keywords: ["comedy", "stand-up", "standup", "comedian", "laugh"],
+    image: "https://images.unsplash.com/photo-1585699324551-f6c309eedeca?w=800&h=500&fit=crop&fm=webp&q=80",
+  },
+  {
+    keywords: ["art", "exhibition", "gallery", "painting", "sculpture"],
+    image: "https://images.unsplash.com/photo-1531058020387-3be344556be6?w=800&h=500&fit=crop&fm=webp&q=80",
+  },
+  {
+    keywords: ["theatre", "theater", "play", "drama", "musical", "pantomime"],
+    image: "https://images.unsplash.com/photo-1503095396549-807759245b35?w=800&h=500&fit=crop&fm=webp&q=80",
+  },
+  {
+    keywords: ["food", "supper club", "tasting", "food market", "street food"],
+    image: "https://images.unsplash.com/photo-1414235077428-338989a2e8c0?w=800&h=500&fit=crop&fm=webp&q=80",
+  },
+  {
+    keywords: ["market", "craft", "vintage", "flea"],
+    image: "https://images.unsplash.com/photo-1555396273-367ea4eb4db5?w=800&h=500&fit=crop&fm=webp&q=80",
+  },
+  {
+    keywords: ["run", "marathon", "5k", "10k", "parkrun", "race", "cycling"],
+    image: "https://images.unsplash.com/photo-1461896836934-bd45ba1a603c?w=800&h=500&fit=crop&fm=webp&q=80",
+  },
+  {
+    keywords: ["workshop", "class", "craft workshop", "pottery", "yoga", "wellness"],
+    image: "https://images.unsplash.com/photo-1545558014-8692077e9b5c?w=800&h=500&fit=crop&fm=webp&q=80",
+  },
+  {
+    keywords: ["festival", "carnival", "parade", "celebration"],
+    image: "https://images.unsplash.com/photo-1533174072545-7a4b6ad7a6c3?w=800&h=500&fit=crop&fm=webp&q=80",
+  },
+  {
+    keywords: ["cinema", "film", "movie", "screening"],
+    image: "https://images.unsplash.com/photo-1489599849927-2ee91cede3ba?w=800&h=500&fit=crop&fm=webp&q=80",
+  },
+  {
+    keywords: ["kids", "children", "family", "storytime", "petting"],
+    image: "https://images.unsplash.com/photo-1472162072942-cd5147eb3902?w=800&h=500&fit=crop&fm=webp&q=80",
+  },
+  {
+    keywords: ["gig", "concert", "band", "rock", "indie", "punk", "metal"],
+    image: "https://images.unsplash.com/photo-1501386761578-eac5c94b800a?w=800&h=500&fit=crop&fm=webp&q=80",
+  },
+];
+
+/**
+ * Get a contextually relevant placeholder image for an event based on its title and tags.
+ */
+export function getEventImageByKeywords(
+  title: string,
+  tags?: string[] | null
+): string | null {
+  const searchText = [title, ...(tags || [])].join(" ").toLowerCase();
+
+  for (const entry of EVENT_KEYWORD_IMAGES) {
+    if (entry.keywords.some((kw) => searchText.includes(kw))) {
+      return entry.image;
+    }
+  }
+  return null;
+}
+
 const DEFAULT_PLACEHOLDER = "https://images.unsplash.com/photo-1501594907352-04cda38ebc29?w=800&h=500&fit=crop&fm=webp&q=80";
 
 /** Trusted image sources that bypass verification */
