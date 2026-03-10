@@ -197,6 +197,8 @@ const ProgrammaticPage = () => {
 
   // Determine if this is a family-oriented page
   const isFamilyPage = parsed?.modifierSlug === "family";
+  // Determine if this is a date-night page
+  const isDateNightPage = parsed?.modifierSlug === "date-night" || parsed?.modifierSlug === "romantic";
 
   // Categories to exclude for family pages
   const FAMILY_EXCLUDED_CATEGORIES = ["bars", "cocktail-bars", "nightlife", "late-night", "pubs"];
@@ -204,10 +206,88 @@ const ProgrammaticPage = () => {
   // Only allow fallback categories that are inherently family-suitable (not restaurants/cafes/generic)
   const FAMILY_FALLBACK_CATEGORIES = ["parks", "museums", "zoos", "science-centres", "indoor-play", "leisure-centres", "activity-centres"];
 
+  // Date night relevant categories and tags
+  const DATE_NIGHT_CATEGORIES = ["bars", "cocktail-bars", "restaurants", "nightlife", "pubs", "wine-bars"];
+  const DATE_NIGHT_EVENT_TAGS = ["theatre", "comedy", "live-music", "cinema", "film", "date-night", "jazz", "cabaret", "music", "art", "exhibitions", "nightlife", "cocktails"];
+  const DATE_NIGHT_EXCLUDED_TAGS = ["kids", "family", "workshop", "workshops", "craft"];
+
   // Fetch regular listings (non-landmark pages)
   const { data: regularListings } = useQuery({
-    queryKey: ["prog-listings", parsed?.categorySlug, parsed?.citySlug, parsed?.neighbourhoodSlug, parsed?.modifierSlug, locationFilter],
+    queryKey: ["prog-listings", parsed?.categorySlug, parsed?.citySlug, parsed?.neighbourhoodSlug, parsed?.modifierSlug, locationFilter, isDateNightPage],
     queryFn: async () => {
+      const fetchLimit = (isFamilyPage || isDateNightPage) && isNIWide ? 200 : 30;
+
+      // For date-night pages, fetch broadly across all categories then filter client-side
+      if (isDateNightPage) {
+        let dnQuery = supabase
+          .from("listings")
+          .select("*, cities!inner(slug, name), categories!inner(slug, name)")
+          .eq("is_approved", true)
+          .order("rating", { ascending: false })
+          .limit(fetchLimit);
+
+        if (isNIWide) {
+          if (locationFilter) {
+            dnQuery = dnQuery.eq("cities.slug", locationFilter);
+          }
+        } else {
+          dnQuery = dnQuery.eq("cities.slug", parsed!.citySlug);
+        }
+
+        if (parsed?.neighbourhoodSlug && neighbourhood) {
+          dnQuery = dnQuery.eq("neighbourhood_id", neighbourhood.id);
+        }
+
+        const { data: dnData, error: dnErr } = await dnQuery;
+        if (dnErr) throw dnErr;
+
+        let results = dnData || [];
+
+        // Filter for date-night-relevant listings
+        results = results.filter((l: any) => {
+          const catSlug = (l.categories as any)?.slug || "";
+          const tags: string[] = l.audience_tags || [];
+          const name = l.name?.toLowerCase() || "";
+
+          // Include if category matches date night categories
+          if (DATE_NIGHT_CATEGORIES.includes(catSlug)) return true;
+
+          // Include if tagged date-night or romantic
+          if (tags.includes("date-night") || tags.includes("romantic") || tags.includes("cocktails") || tags.includes("wine")) return true;
+
+          // Include restaurants (evening dining, not fast food/cafes)
+          if (catSlug === "restaurants" || catSlug === "fine-dining") {
+            // Exclude fast food signals
+            if (name.includes("mcdonald") || name.includes("kfc") || name.includes("subway") || name.includes("chip")) return false;
+            return true;
+          }
+
+          // Include venues with relevant names
+          if (name.includes("cocktail") || name.includes("wine bar") || name.includes("jazz") || name.includes("lounge")) return true;
+
+          // Exclude kids/family-only
+          if (tags.includes("kids") || tags.includes("family")) return false;
+
+          return false;
+        });
+
+        // Priority sort for date night
+        const DATE_NIGHT_CATEGORY_PRIORITY: Record<string, number> = {
+          "cocktail-bars": 10, "wine-bars": 9, "bars": 7, "nightlife": 6,
+          "restaurants": 5, "fine-dining": 8, "pubs": 3,
+        };
+
+        results.sort((a: any, b: any) => {
+          const aCat = (a.categories as any)?.slug || "";
+          const bCat = (b.categories as any)?.slug || "";
+          const aScore = (DATE_NIGHT_CATEGORY_PRIORITY[aCat] || 0) + ((a.rating || 0) * 0.5);
+          const bScore = (DATE_NIGHT_CATEGORY_PRIORITY[bCat] || 0) + ((b.rating || 0) * 0.5);
+          return bScore - aScore;
+        });
+
+        return results.slice(0, 40);
+      }
+
       let query = supabase
         .from("listings")
         .select("*, cities!inner(slug, name), categories!inner(slug, name)")
@@ -220,7 +300,6 @@ const ProgrammaticPage = () => {
         if (locationFilter) {
           query = query.eq("cities.slug", locationFilter);
         }
-        // No city filter = all NI cities
       } else {
         query = query.eq("cities.slug", parsed!.citySlug);
       }
@@ -243,7 +322,6 @@ const ProgrammaticPage = () => {
       let results = data || [];
 
       if (isFamilyPage) {
-        // For family NI-wide, re-fetch across all categories without city restriction
         let familyQuery = supabase
           .from("listings")
           .select("*, cities!inner(slug, name), categories!inner(slug, name)")
@@ -264,21 +342,15 @@ const ProgrammaticPage = () => {
           results = familyData;
         }
 
-        // STRICT filter — only keep listings explicitly tagged family/kids
         results = results.filter((l: any) => {
           const tags: string[] = (l as any).audience_tags || [];
           const catSlug = (l.categories as any)?.slug || "";
           const isFamilyTagged = tags.includes("family") || tags.includes("kids") || (l as any).family_friendly === true || (l as any).kids_friendly === true;
-          
-          // Hard exclude
           if (FAMILY_EXCLUDED_CATEGORIES.includes(catSlug)) return false;
           if (tags.some((t: string) => FAMILY_EXCLUDED_TAGS.includes(t))) return false;
-          
-          // ONLY show explicitly family-tagged listings — no generic fallbacks
           return isFamilyTagged;
         });
 
-        // Priority sort — family+kids first, then family, then kids, then fallback categories
         results.sort((a: any, b: any) => {
           const aTags: string[] = a.audience_tags || [];
           const bTags: string[] = b.audience_tags || [];
@@ -303,8 +375,8 @@ const ProgrammaticPage = () => {
 
   const listings = isLandmarkPage ? nearbyListings : regularListings;
 
-  // Fetch events (for event pages, weekend pages, AND family/free event pages)
-  const shouldFetchEvents = showEvents || isWeekendPage || 
+  // Fetch events (for event pages, weekend pages, family/free/date-night pages)
+  const shouldFetchEvents = showEvents || isWeekendPage || isDateNightPage ||
     (parsed?.modifierSlug === "family" && parsed?.categorySlug === "things-to-do") ||
     (parsed?.modifierSlug === "free" && parsed?.categorySlug === "things-to-do");
 
@@ -360,9 +432,52 @@ const ProgrammaticPage = () => {
     enabled: !!parsed?.citySlug && shouldFetchEvents,
   });
 
-  // Apply family filtering + priority sorting to events
+  // Apply family/date-night filtering + priority sorting to events
   const events = useMemo(() => {
     if (!rawEvents) return rawEvents;
+
+    // DATE NIGHT filtering
+    if (isDateNightPage) {
+      const DATE_NIGHT_PRIORITY: Record<string, number> = {
+        "theatre": 10, "comedy": 9, "live-music": 8, "cinema": 8, "film": 7,
+        "date-night": 10, "jazz": 7, "cabaret": 7, "music": 6, "art": 5,
+        "exhibitions": 4, "nightlife": 3, "cocktails": 3,
+      };
+
+      const filtered = rawEvents.filter(event => {
+        const tags: string[] = event.tags || [];
+        const title = event.title.toLowerCase();
+
+        // Include if has date-night-relevant tags
+        if (tags.some(t => DATE_NIGHT_EVENT_TAGS.includes(t))) return true;
+
+        // Include evening events (time_start >= 17:00)
+        if (event.time_start) {
+          const hour = parseInt(event.time_start.split(":")[0]);
+          if (hour >= 17) return true;
+        }
+
+        // Include if title suggests date-night content
+        if (title.includes("comedy") || title.includes("theatre") || title.includes("concert") ||
+            title.includes("jazz") || title.includes("wine") || title.includes("cocktail") ||
+            title.includes("cinema") || title.includes("film") || title.includes("cabaret")) return true;
+
+        // Exclude kids/family-only events
+        if (tags.some(t => DATE_NIGHT_EXCLUDED_TAGS.includes(t)) && !tags.some(t => DATE_NIGHT_EVENT_TAGS.includes(t))) return false;
+
+        return false;
+      });
+
+      return filtered.sort((a, b) => {
+        const aTags: string[] = a.tags || [];
+        const bTags: string[] = b.tags || [];
+        const aScore = aTags.reduce((s, t) => s + (DATE_NIGHT_PRIORITY[t] || 0), 0);
+        const bScore = bTags.reduce((s, t) => s + (DATE_NIGHT_PRIORITY[t] || 0), 0);
+        if (bScore !== aScore) return bScore - aScore;
+        return a.date_start.localeCompare(b.date_start);
+      });
+    }
+
     if (!isFamilyPage) return rawEvents;
     
     // Helper: detect professional sports fixtures by title pattern
@@ -397,11 +512,8 @@ const ProgrammaticPage = () => {
     const EXCLUDED_TAGS_SET = new Set(["nightlife", "late-night", "cocktails", "adults-only"]);
     const filtered = rawEvents.filter(event => {
       const tags: string[] = event.tags || [];
-      // Must have at least one family signal
       if (!hasFamilySignal(event)) return false;
-      // Always exclude nightlife/bars/late-night
       if (tags.some(t => EXCLUDED_TAGS_SET.has(t))) return false;
-      // Exclude professional sports unless genuinely kids-oriented
       if (isProfessionalSport(event) && !isGenuinelyFamily(event)) return false;
       return true;
     });
@@ -417,7 +529,7 @@ const ProgrammaticPage = () => {
       if (bScore !== aScore) return bScore - aScore;
       return a.date_start.localeCompare(b.date_start);
     });
-  }, [rawEvents, isFamilyPage]);
+  }, [rawEvents, isFamilyPage, isDateNightPage]);
 
   // Group events by town/council area for NI-wide pages
   const eventsByCity = useMemo(() => {
@@ -917,7 +1029,7 @@ const ProgrammaticPage = () => {
           <div className="my-8">
             <h2 className="font-display font-semibold text-xl text-foreground mb-6">
               <Calendar className="inline h-5 w-5 mr-2 text-accent" />
-              {isFamilyPage ? "Family Events" : parsed?.modifierSlug === "free" ? "Free Events" : "Events"} {parsed?.timeIntent ? formatTimeIntent(parsed.timeIntent) : ""} {locationFilter ? `in ${niCities.find(c => c.slug === locationFilter)?.name || ""}` : isNIWide ? "Across Northern Ireland" : `in ${locationName}`}
+              {isDateNightPage ? "Evening Events & Shows" : isFamilyPage ? "Family Events" : parsed?.modifierSlug === "free" ? "Free Events" : "Events"} {parsed?.timeIntent ? formatTimeIntent(parsed.timeIntent) : ""} {locationFilter ? `in ${niCities.find(c => c.slug === locationFilter)?.name || ""}` : isNIWide ? "Across Northern Ireland" : `in ${locationName}`}
             </h2>
             {eventsByCity && !locationFilter ? (
               <div className="space-y-8">
@@ -1032,9 +1144,11 @@ const ProgrammaticPage = () => {
             <h2 className="font-display font-semibold text-xl text-foreground mb-6">
               {isLandmarkPage
                 ? `${category?.name || "Places"} Near ${landmark?.name}`
-                : isWeekendPage
-                  ? `Popular Places ${formatTimeIntent(parsed?.timeIntent || null)}`
-                  : `Top ${modifier?.name || ""} ${category?.name || "Places"}`
+                : isDateNightPage
+                  ? "Bars, Restaurants & Venues"
+                  : isWeekendPage
+                    ? `Popular Places ${formatTimeIntent(parsed?.timeIntent || null)}`
+                    : `Top ${modifier?.name || ""} ${category?.name || "Places"}`
               } {locationFilter ? `in ${niCities.find(c => c.slug === locationFilter)?.name || ""}` : isNIWide ? "Across Northern Ireland" : `in ${isLandmarkPage ? city?.name || "" : locationName}`}
             </h2>
             {listings && listings.length > 0 ? (
