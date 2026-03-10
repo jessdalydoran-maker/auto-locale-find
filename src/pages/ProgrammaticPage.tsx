@@ -30,7 +30,7 @@ import {
   isThinContent,
   getCanonicalSlug,
 } from "@/lib/content-quality";
-import { useEffect, useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 const ProgrammaticPage = () => {
   const { "*": rawSlug } = useParams();
@@ -118,12 +118,25 @@ const ProgrammaticPage = () => {
   }, [parsed, landmarks]);
 
   const isLandmarkPage = !!parsed?.nearLandmark && !!landmark;
-  const locationName = isLandmarkPage ? landmark!.name : (neighbourhood?.name || city?.name || "");
+  const isNIWide = parsed?.citySlug === "northern-ireland";
+  const locationName = isLandmarkPage ? landmark!.name : isNIWide ? "Northern Ireland" : (neighbourhood?.name || city?.name || "");
   const cityName = (neighbourhood || isLandmarkPage) ? city?.name : undefined;
   const showEvents = parsed ? isEventCategory(parsed.categorySlug) : false;
   const isWeekendPage = parsed?.categorySlug === "things-to-do" && !!parsed?.timeIntent;
   const dateRange = parsed ? getTimeIntentDateRange(parsed.timeIntent || null) : null;
   const currentUrl = "/" + slug;
+
+  // Location filter state for NI-wide pages
+  const [locationFilter, setLocationFilter] = useState<string | null>(null);
+
+  // NI cities for location filter
+  const niCities = useMemo(() => {
+    if (!cities) return [];
+    const NI_SLUGS = ["belfast", "derry", "lisburn", "antrim", "bangor", "newry", "armagh", 
+      "newtownabbey", "ballymena", "coleraine", "cookstown", "craigavon", "enniskillen", 
+      "omagh", "strabane", "downpatrick", "banbridge", "causeway-coast", "county-down"];
+    return cities.filter(c => NI_SLUGS.includes(c.slug)).sort((a, b) => a.name.localeCompare(b.name));
+  }, [cities]);
 
   // Clusters
   const clusters = useMemo(() => {
@@ -188,15 +201,24 @@ const ProgrammaticPage = () => {
 
   // Fetch regular listings (non-landmark pages)
   const { data: regularListings } = useQuery({
-    queryKey: ["prog-listings", parsed?.categorySlug, parsed?.citySlug, parsed?.neighbourhoodSlug, parsed?.modifierSlug],
+    queryKey: ["prog-listings", parsed?.categorySlug, parsed?.citySlug, parsed?.neighbourhoodSlug, parsed?.modifierSlug, locationFilter],
     queryFn: async () => {
       let query = supabase
         .from("listings")
         .select("*, cities!inner(slug, name), categories!inner(slug, name)")
-        .eq("cities.slug", parsed!.citySlug)
         .eq("is_approved", true)
         .order("rating", { ascending: false })
-        .limit(30);
+        .limit(isFamilyPage && isNIWide ? 100 : 30);
+
+      // For NI-wide pages, don't filter by city unless locationFilter is set
+      if (isNIWide) {
+        if (locationFilter) {
+          query = query.eq("cities.slug", locationFilter);
+        }
+        // No city filter = all NI cities
+      } else {
+        query = query.eq("cities.slug", parsed!.citySlug);
+      }
 
       if (parsed!.categorySlug !== "things-to-do" && parsed!.categorySlug !== "indoor-activities" && !showEvents) {
         query = query.eq("categories.slug", parsed!.categorySlug);
@@ -216,42 +238,41 @@ const ProgrammaticPage = () => {
       let results = data || [];
 
       if (isFamilyPage) {
-        // STRICT family filter: only show listings that are explicitly family-suitable
-        // Step 1: Get all listings for this city (the query above may already have audience_tags filter for non-family modifier pages)
-        // We need to re-fetch without category restriction to get family-tagged listings across all categories
-        const { data: familyData } = await supabase
+        // For family NI-wide, re-fetch across all categories without city restriction
+        let familyQuery = supabase
           .from("listings")
           .select("*, cities!inner(slug, name), categories!inner(slug, name)")
-          .eq("cities.slug", parsed!.citySlug)
           .eq("is_approved", true)
           .order("rating", { ascending: false })
-          .limit(100);
+          .limit(200);
 
+        if (isNIWide) {
+          if (locationFilter) {
+            familyQuery = familyQuery.eq("cities.slug", locationFilter);
+          }
+        } else {
+          familyQuery = familyQuery.eq("cities.slug", parsed!.citySlug);
+        }
+
+        const { data: familyData } = await familyQuery;
         if (familyData) {
           results = familyData;
         }
 
-        // Step 2: Hard filter — only keep listings that are explicitly family-friendly
+        // Hard filter — only keep listings that are explicitly family-friendly
         results = results.filter((l: any) => {
           const tags: string[] = (l as any).audience_tags || [];
           const catSlug = (l.categories as any)?.slug || "";
           const isFamilyTagged = tags.includes("family") || tags.includes("kids") || (l as any).family_friendly === true || (l as any).kids_friendly === true;
           
-          // Exclude nightlife/bars/cocktails regardless
           if (FAMILY_EXCLUDED_CATEGORIES.includes(catSlug)) return false;
           if (tags.some((t: string) => FAMILY_EXCLUDED_TAGS.includes(t))) return false;
-          
-          // If explicitly family-tagged, include it
           if (isFamilyTagged) return true;
-          
-          // If it's a clearly suitable category (museum, park, attraction, etc.), allow as fallback
           if (FAMILY_FALLBACK_CATEGORIES.includes(catSlug)) return true;
-          
-          // Generic restaurants/cafes/bars without family tag: EXCLUDE
           return false;
         });
 
-        // Step 3: Priority sort — family+kids first, then family, then kids, then fallback categories
+        // Priority sort — family+kids first, then family, then kids, then fallback categories
         results.sort((a: any, b: any) => {
           const aTags: string[] = a.audience_tags || [];
           const bTags: string[] = b.audience_tags || [];
@@ -266,8 +287,7 @@ const ProgrammaticPage = () => {
           return bScore - aScore;
         });
 
-        // Limit to reasonable count
-        results = results.slice(0, 20);
+        results = results.slice(0, 30);
       }
 
       return results;
@@ -282,11 +302,17 @@ const ProgrammaticPage = () => {
     (parsed?.modifierSlug === "family" && parsed?.categorySlug === "things-to-do") ||
     (parsed?.modifierSlug === "free" && parsed?.categorySlug === "things-to-do");
 
-  // NI-wide pages show events from all NI cities
-  const isNIWide = parsed?.citySlug === "northern-ireland";
+  // Family event tag priority scoring
+  const FAMILY_EVENT_PRIORITY_TAGS: Record<string, number> = {
+    "workshop": 10, "workshops": 10, "kids": 9, "family": 8,
+    "theatre": 7, "dance": 7, "literature": 7,
+    "festival": 6, "outdoor": 5, "art": 5, "exhibitions": 5,
+    "music": 4, "community": 4, "heritage": 3, "market": 3,
+  };
+  const FAMILY_EVENT_DEPRIORITY_TAGS = ["sport", "boxing", "nightlife", "concerts"];
 
-  const { data: events } = useQuery({
-    queryKey: ["prog-events", parsed?.categorySlug, parsed?.citySlug, parsed?.neighbourhoodSlug, parsed?.timeIntent, parsed?.modifierSlug],
+  const { data: rawEvents } = useQuery({
+    queryKey: ["prog-events", parsed?.categorySlug, parsed?.citySlug, parsed?.neighbourhoodSlug, parsed?.timeIntent, parsed?.modifierSlug, locationFilter],
     queryFn: async () => {
       const today = new Date().toISOString().split("T")[0];
       let query = supabase
@@ -295,10 +321,14 @@ const ProgrammaticPage = () => {
         .eq("status", "active")
         .gte("date_start", today)
         .order("date_start", { ascending: true })
-        .limit(50);
+        .limit(80);
 
-      // For NI-wide pages, don't filter by city — show all events
-      if (!isNIWide) {
+      // For NI-wide pages, optionally filter by selected location
+      if (isNIWide) {
+        if (locationFilter) {
+          query = query.eq("cities.slug", locationFilter);
+        }
+      } else {
         query = query.eq("cities.slug", parsed!.citySlug);
       }
 
@@ -323,6 +353,44 @@ const ProgrammaticPage = () => {
     },
     enabled: !!parsed?.citySlug && shouldFetchEvents,
   });
+
+  // Apply family priority sorting to events
+  const events = useMemo(() => {
+    if (!rawEvents) return rawEvents;
+    if (!isFamilyPage) return rawEvents;
+    
+    return [...rawEvents].sort((a, b) => {
+      const aTags: string[] = a.tags || [];
+      const bTags: string[] = b.tags || [];
+      
+      // Deprioritise sports unless explicitly family-tagged
+      const aIsSport = aTags.some(t => FAMILY_EVENT_DEPRIORITY_TAGS.includes(t)) && !a.is_family_friendly;
+      const bIsSport = bTags.some(t => FAMILY_EVENT_DEPRIORITY_TAGS.includes(t)) && !b.is_family_friendly;
+      if (aIsSport && !bIsSport) return 1;
+      if (!aIsSport && bIsSport) return -1;
+      
+      // Score by family priority tags
+      const aScore = aTags.reduce((s, t) => s + (FAMILY_EVENT_PRIORITY_TAGS[t] || 0), 0);
+      const bScore = bTags.reduce((s, t) => s + (FAMILY_EVENT_PRIORITY_TAGS[t] || 0), 0);
+      if (bScore !== aScore) return bScore - aScore;
+      
+      // Same score: sort by date
+      return a.date_start.localeCompare(b.date_start);
+    });
+  }, [rawEvents, isFamilyPage]);
+
+  // Group events by city for NI-wide pages
+  const eventsByCity = useMemo(() => {
+    if (!events || !isNIWide || locationFilter) return null;
+    const grouped: Record<string, typeof events> = {};
+    for (const event of events) {
+      const cityName = (event.cities as any)?.name || "Unknown";
+      if (!grouped[cityName]) grouped[cityName] = [];
+      grouped[cityName].push(event);
+    }
+    // Sort cities: those with most events first
+    return Object.entries(grouped).sort((a, b) => b[1].length - a[1].length);
+  }, [events, isNIWide, locationFilter]);
 
   const eventCount = events?.length || 0;
   const listingCount = listings?.length || 0;
@@ -614,7 +682,36 @@ const ProgrammaticPage = () => {
           </div>
         )}
 
-        {/* Intro text */}
+        {/* Location filter for NI-wide pages */}
+        {isNIWide && niCities.length > 0 && (
+          <div className="flex items-center gap-2 my-4 flex-wrap">
+            <MapPin className="h-4 w-4 text-muted-foreground" />
+            <button
+              onClick={() => setLocationFilter(null)}
+              className={`px-3 py-1.5 text-xs font-medium rounded-full transition-colors ${
+                !locationFilter
+                  ? "bg-accent text-accent-foreground"
+                  : "bg-muted text-muted-foreground hover:bg-accent hover:text-accent-foreground"
+              }`}
+            >
+              All Northern Ireland
+            </button>
+            {niCities.map((c) => (
+              <button
+                key={c.slug}
+                onClick={() => setLocationFilter(locationFilter === c.slug ? null : c.slug)}
+                className={`px-3 py-1.5 text-xs font-medium rounded-full transition-colors ${
+                  locationFilter === c.slug
+                    ? "bg-accent text-accent-foreground"
+                    : "bg-muted text-muted-foreground hover:bg-accent hover:text-accent-foreground"
+                }`}
+              >
+                {c.name}
+              </button>
+            ))}
+          </div>
+        )}
+
         {introText && hasEnoughContent && (
           <p className="text-muted-foreground text-[14px] leading-relaxed max-w-3xl my-6">{introText}</p>
         )}
@@ -666,37 +763,81 @@ const ProgrammaticPage = () => {
         {showEvents && (
           <div className="my-8">
             <h2 className="font-display font-semibold text-xl text-foreground mb-6">
-              {modifier?.name || ""} {category?.name || "Events"} in {locationName}
+              {modifier?.name || ""} {category?.name || "Events"} {locationFilter ? `in ${niCities.find(c => c.slug === locationFilter)?.name || ""}` : `Across ${locationName}`}
               {parsed?.timeIntent ? ` ${formatTimeIntent(parsed.timeIntent)}` : ""}
             </h2>
             {events && events.length > 0 ? (
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                {events.map((event, i) => (
-                  <EventCard
-                    key={event.id}
-                    title={event.title}
-                    slug={event.slug}
-                    shortDescription={event.short_description}
-                    dateStart={event.date_start}
-                    dateEnd={event.date_end}
-                    timeStart={event.time_start}
-                    venueName={event.venue_name}
-                    venueAddress={event.venue_address}
-                    imageUrl={event.image_url}
-                    imageSource={(event as any).image_source}
-                    imageAlt={(event as any).image_alt}
-                    imageStatus={(event as any).image_status}
-                    categorySlug={parsed?.categorySlug}
-                    cityName={city?.name}
-                    isFree={event.is_free}
-                    isFamilyFriendly={event.is_family_friendly}
-                    ticketUrl={event.ticket_url}
-                    price={event.price}
-                    tags={event.tags || []}
-                    index={i}
-                  />
-                ))}
-              </div>
+              <>
+                {/* Grouped by city for NI-wide pages without location filter */}
+                {eventsByCity && !locationFilter ? (
+                  <div className="space-y-8">
+                    {eventsByCity.map(([cityGroupName, cityEvents]) => (
+                      <div key={cityGroupName}>
+                        <h3 className="font-display font-semibold text-lg text-foreground mb-4 flex items-center gap-2">
+                          <MapPin className="h-4 w-4 text-accent" />
+                          {cityGroupName}
+                          <span className="text-xs text-muted-foreground font-normal">({cityEvents.length} event{cityEvents.length !== 1 ? "s" : ""})</span>
+                        </h3>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                          {cityEvents.map((event, i) => (
+                            <EventCard
+                              key={event.id}
+                              title={event.title}
+                              slug={event.slug}
+                              shortDescription={event.short_description}
+                              dateStart={event.date_start}
+                              dateEnd={event.date_end}
+                              timeStart={event.time_start}
+                              venueName={event.venue_name}
+                              venueAddress={event.venue_address}
+                              imageUrl={event.image_url}
+                              imageSource={(event as any).image_source}
+                              imageAlt={(event as any).image_alt}
+                              imageStatus={(event as any).image_status}
+                              categorySlug={parsed?.categorySlug}
+                              cityName={cityGroupName}
+                              isFree={event.is_free}
+                              isFamilyFriendly={event.is_family_friendly}
+                              ticketUrl={event.ticket_url}
+                              price={event.price}
+                              tags={event.tags || []}
+                              index={i}
+                            />
+                          ))}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                    {events.map((event, i) => (
+                      <EventCard
+                        key={event.id}
+                        title={event.title}
+                        slug={event.slug}
+                        shortDescription={event.short_description}
+                        dateStart={event.date_start}
+                        dateEnd={event.date_end}
+                        timeStart={event.time_start}
+                        venueName={event.venue_name}
+                        venueAddress={event.venue_address}
+                        imageUrl={event.image_url}
+                        imageSource={(event as any).image_source}
+                        imageAlt={(event as any).image_alt}
+                        imageStatus={(event as any).image_status}
+                        categorySlug={parsed?.categorySlug}
+                        cityName={(event.cities as any)?.name || city?.name}
+                        isFree={event.is_free}
+                        isFamilyFriendly={event.is_family_friendly}
+                        ticketUrl={event.ticket_url}
+                        price={event.price}
+                        tags={event.tags || []}
+                        index={i}
+                      />
+                    ))}
+                  </div>
+                )}
+              </>
             ) : (
               <div className="text-center py-16 bg-muted/50 rounded-lg">
                 <Calendar className="h-8 w-8 text-muted-foreground mx-auto mb-3" />
@@ -721,34 +862,73 @@ const ProgrammaticPage = () => {
           <div className="my-8">
             <h2 className="font-display font-semibold text-xl text-foreground mb-6">
               <Calendar className="inline h-5 w-5 mr-2 text-accent" />
-              {isFamilyPage ? "Family Events" : parsed?.modifierSlug === "free" ? "Free Events" : "Events"} {parsed?.timeIntent ? formatTimeIntent(parsed.timeIntent) : ""} in {locationName}
+              {isFamilyPage ? "Family Events" : parsed?.modifierSlug === "free" ? "Free Events" : "Events"} {parsed?.timeIntent ? formatTimeIntent(parsed.timeIntent) : ""} {locationFilter ? `in ${niCities.find(c => c.slug === locationFilter)?.name || ""}` : isNIWide ? "Across Northern Ireland" : `in ${locationName}`}
             </h2>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-              {events.map((event, i) => (
-                <EventCard
-                  key={event.id}
-                  title={event.title}
-                  slug={event.slug}
-                  shortDescription={event.short_description}
-                  dateStart={event.date_start}
-                  dateEnd={event.date_end}
-                  timeStart={event.time_start}
-                  venueName={event.venue_name}
-                  venueAddress={event.venue_address}
-                  imageUrl={event.image_url}
-                   imageSource={(event as any).image_source}
-                   imageAlt={(event as any).image_alt}
-                   imageStatus={(event as any).image_status}
-                   cityName={(event.cities as any)?.name}
-                  isFree={event.is_free}
-                  isFamilyFriendly={event.is_family_friendly}
-                  ticketUrl={event.ticket_url}
-                  price={event.price}
-                  tags={event.tags || []}
-                  index={i}
-                />
-              ))}
-            </div>
+            {eventsByCity && !locationFilter ? (
+              <div className="space-y-8">
+                {eventsByCity.map(([cityGroupName, cityEvents]) => (
+                  <div key={cityGroupName}>
+                    <h3 className="font-display font-semibold text-base text-foreground mb-3 flex items-center gap-2">
+                      <MapPin className="h-3.5 w-3.5 text-accent" />
+                      {cityGroupName}
+                    </h3>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                      {cityEvents.map((event, i) => (
+                        <EventCard
+                          key={event.id}
+                          title={event.title}
+                          slug={event.slug}
+                          shortDescription={event.short_description}
+                          dateStart={event.date_start}
+                          dateEnd={event.date_end}
+                          timeStart={event.time_start}
+                          venueName={event.venue_name}
+                          venueAddress={event.venue_address}
+                          imageUrl={event.image_url}
+                          imageSource={(event as any).image_source}
+                          imageAlt={(event as any).image_alt}
+                          imageStatus={(event as any).image_status}
+                          cityName={cityGroupName}
+                          isFree={event.is_free}
+                          isFamilyFriendly={event.is_family_friendly}
+                          ticketUrl={event.ticket_url}
+                          price={event.price}
+                          tags={event.tags || []}
+                          index={i}
+                        />
+                      ))}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                {events.map((event, i) => (
+                  <EventCard
+                    key={event.id}
+                    title={event.title}
+                    slug={event.slug}
+                    shortDescription={event.short_description}
+                    dateStart={event.date_start}
+                    dateEnd={event.date_end}
+                    timeStart={event.time_start}
+                    venueName={event.venue_name}
+                    venueAddress={event.venue_address}
+                    imageUrl={event.image_url}
+                    imageSource={(event as any).image_source}
+                    imageAlt={(event as any).image_alt}
+                    imageStatus={(event as any).image_status}
+                    cityName={(event.cities as any)?.name}
+                    isFree={event.is_free}
+                    isFamilyFriendly={event.is_family_friendly}
+                    ticketUrl={event.ticket_url}
+                    price={event.price}
+                    tags={event.tags || []}
+                    index={i}
+                  />
+                ))}
+              </div>
+            )}
           </div>
         )}
 
@@ -799,46 +979,102 @@ const ProgrammaticPage = () => {
                 ? `${category?.name || "Places"} Near ${landmark?.name}`
                 : isWeekendPage
                   ? `Popular Places ${formatTimeIntent(parsed?.timeIntent || null)}`
-                  : `Top ${itemCount > 0 ? itemCount : ""} ${modifier?.name || ""} ${category?.name || "Places"}`
-              } in {isLandmarkPage ? city?.name || "" : locationName}
+                  : `Top ${modifier?.name || ""} ${category?.name || "Places"}`
+              } {locationFilter ? `in ${niCities.find(c => c.slug === locationFilter)?.name || ""}` : isNIWide ? "Across Northern Ireland" : `in ${isLandmarkPage ? city?.name || "" : locationName}`}
             </h2>
             {listings && listings.length > 0 ? (
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                {listings.map((listing, i) => (
-                  <div key={listing.id} className="relative">
-                    <span className="absolute -top-2 -left-2 z-10 w-7 h-7 bg-accent text-accent-foreground rounded-full flex items-center justify-center text-xs font-bold card-shadow">
-                      {i + 1}
-                    </span>
-                     <ListingCard
-                      name={listing.name}
-                      slug={listing.slug}
-                      citySlug={parsed?.citySlug || ""}
-                      shortDescription={listing.short_description || ""}
-                      rating={listing.rating}
-                      reviewCount={listing.review_count || 0}
-                      imageUrl={listing.image_url}
-                      imageSource={(listing as any).image_source}
-                      imageAlt={(listing as any).image_alt}
-                      imageStatus={(listing as any).image_status}
-                      categorySlug={(listing.categories as any)?.slug}
-                      categoryName={(listing.categories as any)?.name}
-                      neighbourhoodName={neighbourhood?.name}
-                      cityName={city?.name}
-                      address={listing.address}
-                      priceLevel={listing.price_level}
-                      googleMapsLink={listing.google_maps_link}
-                      isFeatured={listing.is_featured}
-                      index={i}
-                    />
+              <>
+                {/* Grouped by city for NI-wide listing pages */}
+                {isNIWide && !locationFilter ? (
+                  <div className="space-y-8">
+                    {(() => {
+                      const grouped: Record<string, typeof listings> = {};
+                      for (const l of listings) {
+                        const cn = (l.cities as any)?.name || "Unknown";
+                        if (!grouped[cn]) grouped[cn] = [];
+                        grouped[cn].push(l);
+                      }
+                      return Object.entries(grouped)
+                        .sort((a, b) => b[1].length - a[1].length)
+                        .map(([cityGroupName, cityListings]) => (
+                          <div key={cityGroupName}>
+                            <h3 className="font-display font-semibold text-lg text-foreground mb-4 flex items-center gap-2">
+                              <MapPin className="h-4 w-4 text-accent" />
+                              {cityGroupName}
+                              <span className="text-xs text-muted-foreground font-normal">({cityListings.length})</span>
+                            </h3>
+                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                              {cityListings.map((listing, i) => (
+                                <div key={listing.id} className="relative">
+                                  <span className="absolute -top-2 -left-2 z-10 w-7 h-7 bg-accent text-accent-foreground rounded-full flex items-center justify-center text-xs font-bold card-shadow">
+                                    {i + 1}
+                                  </span>
+                                  <ListingCard
+                                    name={listing.name}
+                                    slug={listing.slug}
+                                    citySlug={(listing.cities as any)?.slug || ""}
+                                    shortDescription={listing.short_description || ""}
+                                    rating={listing.rating}
+                                    reviewCount={listing.review_count || 0}
+                                    imageUrl={listing.image_url}
+                                    imageSource={(listing as any).image_source}
+                                    imageAlt={(listing as any).image_alt}
+                                    imageStatus={(listing as any).image_status}
+                                    categorySlug={(listing.categories as any)?.slug}
+                                    categoryName={(listing.categories as any)?.name}
+                                    cityName={cityGroupName}
+                                    address={listing.address}
+                                    priceLevel={listing.price_level}
+                                    googleMapsLink={listing.google_maps_link}
+                                    isFeatured={listing.is_featured}
+                                    index={i}
+                                  />
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        ));
+                    })()}
                   </div>
-                ))}
-              </div>
+                ) : (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                    {listings.map((listing, i) => (
+                      <div key={listing.id} className="relative">
+                        <span className="absolute -top-2 -left-2 z-10 w-7 h-7 bg-accent text-accent-foreground rounded-full flex items-center justify-center text-xs font-bold card-shadow">
+                          {i + 1}
+                        </span>
+                        <ListingCard
+                          name={listing.name}
+                          slug={listing.slug}
+                          citySlug={parsed?.citySlug || ""}
+                          shortDescription={listing.short_description || ""}
+                          rating={listing.rating}
+                          reviewCount={listing.review_count || 0}
+                          imageUrl={listing.image_url}
+                          imageSource={(listing as any).image_source}
+                          imageAlt={(listing as any).image_alt}
+                          imageStatus={(listing as any).image_status}
+                          categorySlug={(listing.categories as any)?.slug}
+                          categoryName={(listing.categories as any)?.name}
+                          neighbourhoodName={neighbourhood?.name}
+                          cityName={(listing.cities as any)?.name || city?.name}
+                          address={listing.address}
+                          priceLevel={listing.price_level}
+                          googleMapsLink={listing.google_maps_link}
+                          isFeatured={listing.is_featured}
+                          index={i}
+                        />
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </>
             ) : (
               <div className="text-center py-16 bg-muted/50 rounded-lg">
                 <MapPin className="h-8 w-8 text-muted-foreground/30 mx-auto mb-3" />
                 <p className="text-muted-foreground text-sm font-medium">
                   {isFamilyPage
-                    ? "We're curating more family-friendly Belfast recommendations."
+                    ? "We're curating more family-friendly recommendations across Northern Ireland."
                     : "No listings yet — we're collecting the best places."}
                 </p>
                 <p className="text-muted-foreground text-xs mt-1 mb-4">
