@@ -662,7 +662,7 @@ const ProgrammaticPage = () => {
                   <Link
                     key={nb.id}
                     to={buildPageUrl(parsed?.modifierSlug || null, parsed?.categorySlug || "things-to-do", nb.slug, city.slug, parsed?.timeIntent)}
-                    className="p-4 bg-muted rounded-lg hover:bg-accent/10 transition-colors group"
+                    className="p-4 bg-card border border-border rounded-lg hover:border-accent/40 transition-colors group card-shadow"
                   >
                     <span className="font-medium text-sm text-foreground group-hover:text-accent transition-colors">{nb.name}</span>
                     <p className="text-xs text-muted-foreground mt-1 line-clamp-2">{nb.description}</p>
