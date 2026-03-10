@@ -5,7 +5,7 @@ import { Layout } from "@/components/Layout";
 import { ListingCard } from "@/components/ListingCard";
 import { EventCard } from "@/components/EventCard";
 import { AdPlaceholder } from "@/components/AdPlaceholder";
-import { MapPin, ChevronRight, Calendar, Filter } from "lucide-react";
+import { MapPin, ChevronRight, Calendar, Filter, ArrowRight } from "lucide-react";
 import {
   parseSlug,
   generateTitle,
@@ -15,15 +15,23 @@ import {
   formatTimeIntent,
   getTimeIntentDateRange,
   isEventCategory,
+  generateFaqItems,
 } from "@/lib/seo-utils";
-import { useEffect, useMemo, useState } from "react";
+import {
+  getCityClusters,
+  getNeighbourhoodCluster,
+  getSiblingPages,
+  getCrossClusterLinks,
+} from "@/lib/seo-clusters";
+import { useEffect, useMemo } from "react";
+
+const MIN_CONTENT_THRESHOLD = 0; // Show page even with 0 items but with helpful messaging
 
 const ProgrammaticPage = () => {
   const { "*": rawSlug } = useParams();
   const slug = rawSlug || "";
-  const [activeFilter, setActiveFilter] = useState<string | null>(null);
 
-  // Fetch lookup data for slug parsing
+  // Fetch lookup data
   const { data: cities } = useQuery({
     queryKey: ["all-cities"],
     queryFn: async () => {
@@ -67,7 +75,7 @@ const ProgrammaticPage = () => {
     staleTime: 1000 * 60 * 10,
   });
 
-  // Parse the slug
+  // Parse slug
   const parsed = useMemo(() => {
     if (!cities || !neighbourhoods) return null;
     const citySlugs = cities.map((c) => c.slug);
@@ -91,8 +99,25 @@ const ProgrammaticPage = () => {
   const cityName = neighbourhood ? city?.name : undefined;
   const showEvents = parsed ? isEventCategory(parsed.categorySlug) : false;
   const dateRange = parsed ? getTimeIntentDateRange(parsed.timeIntent || null) : null;
+  const currentUrl = "/" + slug;
 
-  // Fetch listings (for non-event categories or mixed)
+  // Clusters
+  const clusters = useMemo(() => {
+    if (!city || !neighbourhoods) return [];
+    const cityClusters = getCityClusters(city.slug, city.name);
+    const cityNbs = neighbourhoods
+      .filter((n) => (n.cities as any)?.slug === city.slug)
+      .map((n) => ({ name: n.name, slug: n.slug }));
+    if (cityNbs.length > 0) {
+      cityClusters.push(getNeighbourhoodCluster(city.slug, city.name, cityNbs));
+    }
+    return cityClusters;
+  }, [city, neighbourhoods]);
+
+  const siblingPages = useMemo(() => getSiblingPages(currentUrl, clusters), [currentUrl, clusters]);
+  const crossClusterLinks = useMemo(() => getCrossClusterLinks(currentUrl, clusters), [currentUrl, clusters]);
+
+  // Fetch listings
   const { data: listings } = useQuery({
     queryKey: ["prog-listings", parsed?.categorySlug, parsed?.citySlug, parsed?.neighbourhoodSlug, parsed?.modifierSlug],
     queryFn: async () => {
@@ -104,8 +129,7 @@ const ProgrammaticPage = () => {
         .order("rating", { ascending: false })
         .limit(20);
 
-      // For generic categories like "things-to-do", don't filter by category
-      if (parsed!.categorySlug !== "things-to-do" && !showEvents) {
+      if (parsed!.categorySlug !== "things-to-do" && parsed!.categorySlug !== "indoor-activities" && !showEvents) {
         query = query.eq("categories.slug", parsed!.categorySlug);
       }
 
@@ -113,7 +137,6 @@ const ProgrammaticPage = () => {
         query = query.eq("neighbourhood_id", neighbourhood.id);
       }
 
-      // Modifier-based filtering
       if (parsed?.modifierSlug === "free") {
         query = query.eq("price_level", "Free");
       }
@@ -125,7 +148,7 @@ const ProgrammaticPage = () => {
     enabled: !!parsed?.citySlug && !!parsed?.categorySlug && !showEvents,
   });
 
-  // Fetch events (for event-related categories)
+  // Fetch events
   const { data: events } = useQuery({
     queryKey: ["prog-events", parsed?.categorySlug, parsed?.citySlug, parsed?.neighbourhoodSlug, parsed?.timeIntent, parsed?.modifierSlug],
     queryFn: async () => {
@@ -161,18 +184,30 @@ const ProgrammaticPage = () => {
 
   const itemCount = showEvents ? (events?.length || 0) : (listings?.length || 0);
 
-  // Dynamic document title & meta
+  // SEO content
   const title = category && city
-    ? generateTitle(modifier?.name?.toLowerCase() || null, category.name, locationName, cityName, parsed?.timeIntent)
+    ? generateTitle(modifier?.name?.toLowerCase() || parsed?.modifierSlug || null, category.name, locationName, cityName, parsed?.timeIntent)
     : "Loading...";
 
   const metaDesc = category && city
-    ? generateMetaDescription(modifier?.name?.toLowerCase() || null, category.name, locationName, cityName, parsed?.timeIntent)
+    ? generateMetaDescription(modifier?.name?.toLowerCase() || parsed?.modifierSlug || null, category.name, locationName, cityName, parsed?.timeIntent)
     : "";
 
   const introText = category && city
-    ? generateIntroText(modifier?.name?.toLowerCase() || null, category.name, locationName, itemCount, cityName, parsed?.timeIntent)
+    ? generateIntroText(modifier?.name?.toLowerCase() || parsed?.modifierSlug || null, category.name, locationName, itemCount, cityName, parsed?.timeIntent)
     : "";
+
+  const faqItems = useMemo(() => {
+    if (!category || !city) return [];
+    return generateFaqItems(
+      modifier?.name?.toLowerCase() || parsed?.modifierSlug || null,
+      category.name,
+      locationName,
+      itemCount,
+      cityName,
+      parsed?.timeIntent
+    );
+  }, [category, city, modifier, parsed, locationName, itemCount, cityName]);
 
   useEffect(() => {
     if (title !== "Loading...") {
@@ -202,11 +237,7 @@ const ProgrammaticPage = () => {
             description: e.short_description,
             startDate: e.date_start,
             endDate: e.date_end || e.date_start,
-            location: e.venue_name ? {
-              "@type": "Place",
-              name: e.venue_name,
-              address: e.venue_address,
-            } : undefined,
+            location: e.venue_name ? { "@type": "Place", name: e.venue_name, address: e.venue_address } : undefined,
             isAccessibleForFree: e.is_free,
             image: e.image_url,
           },
@@ -242,95 +273,19 @@ const ProgrammaticPage = () => {
     return null;
   }, [listings, events, category, city, title, metaDesc, showEvents]);
 
-  // FAQ schema
-  const faqItems = useMemo(() => {
-    if (!category || !city) return [];
-    const loc = neighbourhood ? `${neighbourhood.name}, ${city.name}` : city.name;
-    const catLower = category.name.toLowerCase();
-    const modLabel = modifier?.name?.toLowerCase() || "";
-
-    return [
-      {
-        q: `What are the best ${modLabel} ${catLower} in ${loc}?`,
-        a: `We've curated the top ${modLabel} ${catLower} in ${loc} based on reviews, ratings and local recommendations. Browse our full list above.`,
-      },
-      {
-        q: `How many ${catLower} are there in ${loc}?`,
-        a: `We currently feature ${itemCount} ${modLabel} ${catLower} in ${loc}. We're always adding new places.`,
-      },
-      {
-        q: `Are there free ${catLower} in ${loc}?`,
-        a: `Yes! Check our free ${catLower} page for ${loc} to find options that won't cost a penny.`,
-      },
-    ];
-  }, [category, city, modifier, neighbourhood, itemCount]);
-
-  // Related pages
-  const relatedPages = useMemo(() => {
-    if (!allCategories || !modifiers || !parsed || !city) return [];
-    const links: { url: string; label: string }[] = [];
-
-    // Time intent variations
-    if (!parsed.timeIntent) {
-      ["this-weekend", "today", "this-week"].forEach((ti) => {
-        links.push({
-          url: buildPageUrl(parsed.modifierSlug, parsed.categorySlug, parsed.neighbourhoodSlug, parsed.citySlug, ti),
-          label: `${modifier?.name || ""} ${category?.name || ""} ${locationName} ${formatTimeIntent(ti)}`.trim(),
-        });
-      });
-    }
-
-    // Other categories
-    allCategories
-      .filter((c) => c.slug !== parsed.categorySlug)
-      .slice(0, 5)
-      .forEach((cat) => {
-        links.push({
-          url: buildPageUrl(parsed.modifierSlug, cat.slug, parsed.neighbourhoodSlug, parsed.citySlug, parsed.timeIntent),
-          label: `${modifier?.name || ""} ${cat.name} ${neighbourhood?.name || city?.name || ""}`.trim(),
-        });
-      });
-
-    // Different modifiers
-    modifiers
-      .filter((m) => m.slug !== parsed.modifierSlug)
-      .slice(0, 4)
-      .forEach((mod) => {
-        links.push({
-          url: buildPageUrl(mod.slug, parsed.categorySlug, parsed.neighbourhoodSlug, parsed.citySlug, parsed.timeIntent),
-          label: `${mod.name} ${category?.name || ""} ${neighbourhood?.name || city?.name || ""}`.trim(),
-        });
-      });
-
-    // Neighbourhood variations
-    if (!parsed.neighbourhoodSlug && neighbourhoods) {
-      neighbourhoods
-        .filter((n) => (n.cities as any)?.slug === parsed.citySlug)
-        .slice(0, 6)
-        .forEach((nb) => {
-          links.push({
-            url: buildPageUrl(parsed.modifierSlug, parsed.categorySlug, nb.slug, parsed.citySlug, parsed.timeIntent),
-            label: `${modifier?.name || "Best"} ${category?.name || ""} ${nb.name}`.trim(),
-          });
-        });
-    }
-
-    return links;
-  }, [allCategories, modifiers, parsed, city, category, modifier, neighbourhood, neighbourhoods, locationName]);
-
   // Breadcrumb
   const breadcrumbs = useMemo(() => {
     const crumbs = [{ label: "Home", url: "/" }];
     if (city) crumbs.push({ label: city.name, url: `/${city.slug}` });
-    if (neighbourhood) crumbs.push({ label: neighbourhood.name, url: `/${parsed?.categorySlug}-${neighbourhood.slug}-${city?.slug}` });
+    if (neighbourhood) crumbs.push({ label: neighbourhood.name, url: `/things-to-do-${neighbourhood.slug}-${city?.slug}` });
     if (category) {
-      const label = [modifier?.name, category.name, parsed?.timeIntent ? formatTimeIntent(parsed.timeIntent) : ""].filter(Boolean).join(" ");
-      crumbs.push({ label, url: "" });
+      const parts = [modifier?.name, category.name, parsed?.timeIntent ? formatTimeIntent(parsed.timeIntent) : ""].filter(Boolean);
+      crumbs.push({ label: parts.join(" "), url: "" });
     }
     return crumbs;
   }, [city, neighbourhood, category, modifier, parsed]);
 
-  // Filter options for the page
+  // Filter options
   const filterOptions = useMemo(() => {
     if (!parsed || !city) return [];
     const filters: { label: string; value: string; url: string }[] = [];
@@ -342,11 +297,10 @@ const ProgrammaticPage = () => {
         { label: "This Week", value: "this-week", url: buildPageUrl(parsed.modifierSlug, parsed.categorySlug, parsed.neighbourhoodSlug, parsed.citySlug, "this-week") },
       );
     }
-
-    if (!parsed.modifierSlug || parsed.modifierSlug !== "free") {
+    if (parsed.modifierSlug !== "free") {
       filters.push({ label: "Free", value: "free", url: buildPageUrl("free", parsed.categorySlug, parsed.neighbourhoodSlug, parsed.citySlug, parsed.timeIntent) });
     }
-    if (!parsed.modifierSlug || parsed.modifierSlug !== "family") {
+    if (parsed.modifierSlug !== "family") {
       filters.push({ label: "Family", value: "family", url: buildPageUrl("family", parsed.categorySlug, parsed.neighbourhoodSlug, parsed.citySlug, parsed.timeIntent) });
     }
 
@@ -356,13 +310,8 @@ const ProgrammaticPage = () => {
   return (
     <Layout>
       {jsonLd && (
-        <script
-          type="application/ld+json"
-          dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
-        />
+        <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
       )}
-
-      {/* FAQ Schema */}
       {faqItems.length > 0 && (
         <script
           type="application/ld+json"
@@ -379,8 +328,6 @@ const ProgrammaticPage = () => {
           }}
         />
       )}
-
-      {/* Breadcrumb Schema */}
       {breadcrumbs.length > 1 && (
         <script
           type="application/ld+json"
@@ -407,9 +354,7 @@ const ProgrammaticPage = () => {
               <span key={i} className="flex items-center gap-1">
                 {i > 0 && <ChevronRight className="h-3 w-3" />}
                 {crumb.url ? (
-                  <Link to={crumb.url} className="hover:text-accent transition-colors">
-                    {crumb.label}
-                  </Link>
+                  <Link to={crumb.url} className="hover:text-accent transition-colors">{crumb.label}</Link>
                 ) : (
                   <span className="text-foreground">{crumb.label}</span>
                 )}
@@ -433,18 +378,40 @@ const ProgrammaticPage = () => {
             </div>
           )}
           <h1 className="font-display font-bold text-2xl md:text-3xl text-foreground">{title}</h1>
-          {metaDesc && (
-            <p className="text-muted-foreground text-sm mt-2 max-w-2xl">{metaDesc}</p>
-          )}
+          {metaDesc && <p className="text-muted-foreground text-sm mt-2 max-w-2xl">{metaDesc}</p>}
         </div>
       </section>
 
       <div className="container mx-auto px-4 py-8">
         <AdPlaceholder slot="header" />
 
+        {/* Cluster Navigation — sibling pages */}
+        {siblingPages.length > 0 && (
+          <div className="my-6">
+            <div className="flex items-center gap-2 mb-3">
+              <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Also in this section</span>
+            </div>
+            <div className="flex flex-wrap gap-2">
+              {siblingPages.map((page) => (
+                <Link
+                  key={page.url}
+                  to={page.url}
+                  className={`px-3 py-1.5 text-xs font-medium rounded-full transition-colors ${
+                    page.url === currentUrl
+                      ? "bg-accent text-accent-foreground"
+                      : "bg-muted text-muted-foreground hover:bg-accent hover:text-accent-foreground"
+                  }`}
+                >
+                  {page.label}
+                </Link>
+              ))}
+            </div>
+          </div>
+        )}
+
         {/* Filters */}
         {filterOptions.length > 0 && (
-          <div className="flex items-center gap-2 my-6 flex-wrap">
+          <div className="flex items-center gap-2 my-4 flex-wrap">
             <Filter className="h-4 w-4 text-muted-foreground" />
             {filterOptions.map((f) => (
               <Link
@@ -504,8 +471,17 @@ const ProgrammaticPage = () => {
             ) : (
               <div className="text-center py-16 bg-muted/50 rounded-lg">
                 <Calendar className="h-8 w-8 text-muted-foreground mx-auto mb-3" />
-                <p className="text-muted-foreground text-sm">No events found for this search yet.</p>
-                <p className="text-muted-foreground text-xs mt-1">We're adding new events all the time — check back soon!</p>
+                <p className="text-muted-foreground text-sm font-medium">No events found for this search yet</p>
+                <p className="text-muted-foreground text-xs mt-1 mb-4">We're adding new events all the time — check back soon!</p>
+                {siblingPages.length > 0 && (
+                  <div className="flex flex-wrap justify-center gap-2">
+                    {siblingPages.slice(0, 4).map((page) => (
+                      <Link key={page.url} to={page.url} className="text-xs px-3 py-1.5 bg-card border border-border text-accent rounded-full hover:bg-accent hover:text-accent-foreground transition-colors">
+                        {page.label}
+                      </Link>
+                    ))}
+                  </div>
+                )}
               </div>
             )}
           </div>
@@ -543,8 +519,17 @@ const ProgrammaticPage = () => {
               </div>
             ) : (
               <div className="text-center py-16 bg-muted/50 rounded-lg">
-                <p className="text-muted-foreground text-sm">No listings found for this search yet.</p>
-                <p className="text-muted-foreground text-xs mt-1">We're adding new places all the time!</p>
+                <p className="text-muted-foreground text-sm font-medium">No listings found for this search yet</p>
+                <p className="text-muted-foreground text-xs mt-1 mb-4">We're adding new places all the time!</p>
+                {siblingPages.length > 0 && (
+                  <div className="flex flex-wrap justify-center gap-2">
+                    {siblingPages.slice(0, 4).map((page) => (
+                      <Link key={page.url} to={page.url} className="text-xs px-3 py-1.5 bg-card border border-border text-accent rounded-full hover:bg-accent hover:text-accent-foreground transition-colors">
+                        {page.label}
+                      </Link>
+                    ))}
+                  </div>
+                )}
               </div>
             )}
           </div>
@@ -552,40 +537,109 @@ const ProgrammaticPage = () => {
 
         <AdPlaceholder slot="mid-content" />
 
-        {/* FAQ Section */}
-        {faqItems.length > 0 && (
-          <section className="py-8 border-t border-border mt-8">
-            <h2 className="font-display font-semibold text-lg text-foreground mb-4">Frequently Asked Questions</h2>
-            <div className="space-y-4 max-w-3xl">
-              {faqItems.map((faq, i) => (
-                <div key={i} className="bg-card border border-border rounded-lg p-4">
-                  <h3 className="font-display font-medium text-sm text-foreground mb-2">{faq.q}</h3>
-                  <p className="text-xs text-muted-foreground leading-relaxed">{faq.a}</p>
-                </div>
-              ))}
-            </div>
-          </section>
-        )}
-
-        {/* Internal links */}
-        {relatedPages.length > 0 && (
+        {/* Cross-cluster links */}
+        {crossClusterLinks.length > 0 && (
           <section className="py-8 border-t border-border">
-            <h2 className="font-display font-semibold text-lg text-foreground mb-4">Related Searches</h2>
-            <div className="flex flex-wrap gap-2">
-              {relatedPages.map((link, i) => (
+            <h2 className="font-display font-semibold text-lg text-foreground mb-4">
+              More in {city?.name || "this city"}
+            </h2>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+              {crossClusterLinks.map((link) => (
                 <Link
-                  key={i}
+                  key={link.url}
                   to={link.url}
-                  className="text-xs px-3 py-1.5 bg-card border border-border text-muted-foreground rounded-full hover:border-accent hover:text-accent transition-colors"
+                  className="group flex items-center justify-between p-4 bg-card border border-border rounded-lg card-shadow hover:card-shadow-hover transition-all"
                 >
-                  {link.label}
+                  <div>
+                    <span className="font-display font-medium text-sm text-foreground group-hover:text-accent transition-colors">{link.label}</span>
+                    <p className="text-xs text-muted-foreground mt-0.5">{link.description}</p>
+                  </div>
+                  <ArrowRight className="h-4 w-4 text-muted-foreground group-hover:text-accent transition-colors shrink-0" />
                 </Link>
               ))}
             </div>
           </section>
         )}
 
-        {/* Neighbourhood links */}
+        {/* FAQ Section */}
+        {faqItems.length > 0 && (
+          <section className="py-8 border-t border-border">
+            <h2 className="font-display font-semibold text-lg text-foreground mb-4">Frequently Asked Questions</h2>
+            <div className="space-y-3 max-w-3xl">
+              {faqItems.map((faq, i) => (
+                <details key={i} className="bg-card border border-border rounded-lg group">
+                  <summary className="p-4 cursor-pointer font-display font-medium text-sm text-foreground hover:text-accent transition-colors list-none flex items-center justify-between">
+                    {faq.q}
+                    <ChevronRight className="h-4 w-4 text-muted-foreground group-open:rotate-90 transition-transform shrink-0" />
+                  </summary>
+                  <div className="px-4 pb-4">
+                    <p className="text-xs text-muted-foreground leading-relaxed">{faq.a}</p>
+                  </div>
+                </details>
+              ))}
+            </div>
+          </section>
+        )}
+
+        {/* Related searches (from seo-utils) */}
+        {allCategories && modifiers && parsed && city && (
+          <section className="py-8 border-t border-border">
+            <h2 className="font-display font-semibold text-lg text-foreground mb-4">Related Searches</h2>
+            <div className="flex flex-wrap gap-2">
+              {/* Time intent variations */}
+              {!parsed.timeIntent && ["this-weekend", "today", "this-week"].map((ti) => (
+                <Link
+                  key={ti}
+                  to={buildPageUrl(parsed.modifierSlug, parsed.categorySlug, parsed.neighbourhoodSlug, parsed.citySlug, ti)}
+                  className="text-xs px-3 py-1.5 bg-card border border-border text-muted-foreground rounded-full hover:border-accent hover:text-accent transition-colors"
+                >
+                  {modifier?.name || ""} {category?.name || ""} {locationName} {formatTimeIntent(ti)}
+                </Link>
+              ))}
+              {/* Category variations */}
+              {allCategories
+                .filter((c) => c.slug !== parsed.categorySlug)
+                .slice(0, 5)
+                .map((cat) => (
+                  <Link
+                    key={cat.slug}
+                    to={buildPageUrl(parsed.modifierSlug, cat.slug, parsed.neighbourhoodSlug, parsed.citySlug, parsed.timeIntent)}
+                    className="text-xs px-3 py-1.5 bg-card border border-border text-muted-foreground rounded-full hover:border-accent hover:text-accent transition-colors"
+                  >
+                    {modifier?.name || ""} {cat.name} {neighbourhood?.name || city?.name || ""}
+                  </Link>
+                ))}
+              {/* Modifier variations */}
+              {modifiers
+                .filter((m) => m.slug !== parsed.modifierSlug)
+                .slice(0, 4)
+                .map((mod) => (
+                  <Link
+                    key={mod.slug}
+                    to={buildPageUrl(mod.slug, parsed.categorySlug, parsed.neighbourhoodSlug, parsed.citySlug, parsed.timeIntent)}
+                    className="text-xs px-3 py-1.5 bg-card border border-border text-muted-foreground rounded-full hover:border-accent hover:text-accent transition-colors"
+                  >
+                    {mod.name} {category?.name || ""} {neighbourhood?.name || city?.name || ""}
+                  </Link>
+                ))}
+              {/* Neighbourhood variations */}
+              {!parsed.neighbourhoodSlug && neighbourhoods
+                ?.filter((n) => (n.cities as any)?.slug === parsed.citySlug)
+                .slice(0, 4)
+                .map((nb) => (
+                  <Link
+                    key={nb.slug}
+                    to={buildPageUrl(parsed.modifierSlug, parsed.categorySlug, nb.slug, parsed.citySlug, parsed.timeIntent)}
+                    className="text-xs px-3 py-1.5 bg-card border border-border text-muted-foreground rounded-full hover:border-accent hover:text-accent transition-colors"
+                  >
+                    {modifier?.name || "Best"} {category?.name || ""} {nb.name}
+                  </Link>
+                ))}
+            </div>
+          </section>
+        )}
+
+        {/* Neighbourhood exploration */}
         {!parsed?.neighbourhoodSlug && neighbourhoods && city && (
           <section className="py-8 border-t border-border">
             <h2 className="font-display font-semibold text-lg text-foreground mb-4">

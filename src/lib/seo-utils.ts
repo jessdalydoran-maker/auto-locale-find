@@ -2,14 +2,15 @@
  * Programmatic SEO slug parsing and content generation.
  *
  * Supported URL patterns:
- *   /best-restaurants-belfast                        → modifier + category + city
- *   /cheap-cafes-cathedral-quarter-belfast            → modifier + category + neighbourhood + city
- *   /restaurants-belfast                              → category + city
- *   /things-to-do-belfast-this-weekend                → category + city + timeIntent
- *   /free-events-belfast-this-weekend                 → modifier + category + city + timeIntent
- *   /whats-on-belfast                                 → alias → events + city
- *   /restaurants-near-titanic-belfast                 → category + near landmark + city
- *   /live-music-belfast-tonight                       → category + city + timeIntent
+ *   /best-restaurants-belfast                         → modifier + category + city
+ *   /cheap-cafes-cathedral-quarter-belfast             → modifier + category + neighbourhood + city
+ *   /restaurants-belfast                               → category + city
+ *   /things-to-do-belfast-this-weekend                 → category + city + timeIntent
+ *   /free-events-belfast-this-weekend                  → modifier + category + city + timeIntent
+ *   /whats-on-belfast                                  → alias → events + city
+ *   /restaurants-near-titanic-belfast                  → category + near landmark + city
+ *   /indoor-activities-belfast                         → category + city
+ *   /things-to-do-belfast-rainy-day                    → category + city + special modifier
  */
 
 export interface ParsedSlug {
@@ -33,6 +34,7 @@ const KNOWN_MODIFIERS = [
   "free",
   "indoor",
   "date-night",
+  "rainy-day",
 ];
 
 const KNOWN_TIME_INTENTS = [
@@ -40,11 +42,13 @@ const KNOWN_TIME_INTENTS = [
   "this-week",
   "tonight",
   "today",
+  "rainy-day",
 ];
 
 const CATEGORY_ALIASES: Record<string, string> = {
   "whats-on": "events",
   "what-to-do": "things-to-do",
+  "activities": "things-to-do",
 };
 
 /**
@@ -71,7 +75,6 @@ export function parseSlug(
 
   // 2. Extract modifier from start
   let modifierSlug: string | null = null;
-  // Sort longest-first so "date-night" matches before "date"
   const sortedMods = [...KNOWN_MODIFIERS].sort((a, b) => b.length - a.length);
   for (const mod of sortedMods) {
     if (remaining.startsWith(mod + "-")) {
@@ -103,10 +106,10 @@ export function parseSlug(
     remaining = nearMatch[1];
   } else if (remaining.startsWith("near-")) {
     nearLandmark = remaining.slice(5);
-    remaining = "things-to-do"; // default category for "near" searches
+    remaining = "things-to-do";
   }
 
-  // 5. Try to match neighbourhood before the remaining category
+  // 5. Try to match neighbourhood
   let neighbourhoodSlug: string | null = null;
   if (!nearLandmark) {
     const cityNeighbourhoods = knownNeighbourhoods
@@ -140,7 +143,7 @@ export function parseSlug(
 }
 
 /**
- * Generate a unique SEO title for a programmatic page.
+ * Cluster-aware title generation with unique templates per intent cluster.
  */
 export function generateTitle(
   modifier: string | null,
@@ -149,12 +152,41 @@ export function generateTitle(
   cityName?: string,
   timeIntent?: string | null
 ): string {
-  const location = cityName
-    ? `${locationName}, ${cityName}`
-    : locationName;
+  const location = cityName ? `${locationName}, ${cityName}` : locationName;
   const timeLabel = formatTimeIntent(timeIntent);
-  const timeSuffix = timeLabel ? ` ${timeLabel}` : "";
 
+  // Event / What's On cluster
+  if (categoryName.toLowerCase() === "events") {
+    if (timeLabel) return `What's On in ${location} ${timeLabel} | Events, Activities & More`;
+    return `What's On in ${location} | Events, Food & Things To Do`;
+  }
+
+  // Things to do cluster
+  if (categoryName.toLowerCase() === "things to do") {
+    if (modifier === "free") return `Free Things To Do in ${location}${timeLabel ? ` ${timeLabel}` : ""} | Activities & Attractions`;
+    if (modifier === "family") return `Family Activities in ${location}${timeLabel ? ` ${timeLabel}` : ""} | Kids & Family Fun`;
+    if (modifier === "date-night" || modifier === "romantic") return `Date Night in ${location} | Romantic Ideas & Activities`;
+    if (modifier === "indoor" || timeIntent === "rainy-day") return `Indoor Activities in ${location} | Rainy Day Ideas`;
+    if (timeLabel) return `Things To Do in ${location} ${timeLabel} | Activities & Events`;
+    return `Things To Do in ${location} | Best Activities & Attractions`;
+  }
+
+  // Food & Drink cluster
+  if (["restaurants", "brunch", "cafes", "bars", "cocktail bars"].includes(categoryName.toLowerCase())) {
+    const catLower = categoryName.toLowerCase();
+    if (modifier === "best") return `Best ${categoryName} in ${location} | Top-Rated ${categoryName}`;
+    if (modifier === "cheap") return `Cheap ${categoryName} in ${location} | Budget-Friendly Dining`;
+    if (modifier === "romantic") return `Romantic ${categoryName} in ${location} | Date Night Dining`;
+    if (modifier === "vegan") return `Vegan ${categoryName} in ${location} | Plant-Based Dining`;
+    if (modifier) {
+      const cap = modifier.charAt(0).toUpperCase() + modifier.slice(1);
+      return `${cap} ${categoryName} in ${location} | Top ${categoryName}`;
+    }
+    return `${categoryName} in ${location} | Find the Best ${categoryName}`;
+  }
+
+  // Generic fallback
+  const timeSuffix = timeLabel ? ` ${timeLabel}` : "";
   if (modifier) {
     const cap = modifier.charAt(0).toUpperCase() + modifier.slice(1);
     return `${cap} ${categoryName} in ${location}${timeSuffix} | Top ${categoryName} Spots`;
@@ -163,7 +195,7 @@ export function generateTitle(
 }
 
 /**
- * Generate a unique meta description.
+ * Cluster-aware meta description generation.
  */
 export function generateMetaDescription(
   modifier: string | null,
@@ -172,13 +204,38 @@ export function generateMetaDescription(
   cityName?: string,
   timeIntent?: string | null
 ): string {
-  const location = cityName
-    ? `${locationName}, ${cityName}`
-    : locationName;
+  const location = cityName ? `${locationName}, ${cityName}` : locationName;
   const catLower = categoryName.toLowerCase();
   const timeLabel = formatTimeIntent(timeIntent);
   const timePart = timeLabel ? ` ${timeLabel.toLowerCase()}` : "";
 
+  // Event cluster
+  if (catLower === "events") {
+    if (modifier === "free") return `Discover free events in ${location}${timePart}. Find free gigs, exhibitions, markets, family events and more.`;
+    if (modifier === "family") return `Family-friendly events in ${location}${timePart}. Fun activities for kids and families including shows, workshops and outdoor events.`;
+    if (timeLabel) return `Discover what's on in ${location} ${timeLabel.toLowerCase()}, including events, family activities, live music, food, free things to do and more.`;
+    return `What's on in ${location}? Browse upcoming events, live music, theatre, exhibitions, food events and things to do.`;
+  }
+
+  // Things to do cluster
+  if (catLower === "things to do") {
+    if (modifier === "free") return `Free things to do in ${location}${timePart}. Discover parks, museums, walks, exhibitions and free activities for everyone.`;
+    if (modifier === "family") return `Family activities in ${location}${timePart}. Top-rated family days out, kids activities, soft play, and family-friendly attractions.`;
+    if (modifier === "date-night" || modifier === "romantic") return `Date night ideas in ${location}. Romantic restaurants, cocktail bars, activities and unique experiences for couples.`;
+    if (modifier === "indoor" || timeIntent === "rainy-day") return `Indoor activities in ${location} for rainy days. Escape rooms, museums, cinemas, bowling, and more things to do indoors.`;
+    if (timeLabel) return `Things to do in ${location} ${timeLabel.toLowerCase()}. Discover events, activities, restaurants and free things to do near you.`;
+    return `Discover the best things to do in ${location}. Events, activities, restaurants, attractions and hidden gems — all in one place.`;
+  }
+
+  // Food cluster
+  if (["restaurants", "brunch", "cafes", "bars", "cocktail bars"].includes(catLower)) {
+    if (modifier === "best") return `Best ${catLower} in ${location}. Hand-picked top-rated ${catLower} with ratings, reviews, photos and directions.`;
+    if (modifier === "cheap") return `Cheap ${catLower} in ${location}. Budget-friendly dining spots that don't compromise on quality or taste.`;
+    if (modifier === "vegan") return `Vegan-friendly ${catLower} in ${location}. Plant-based dining options with reviews and ratings.`;
+    return `Find the best ${catLower} in ${location}. Browse ratings, reviews and directions for top ${catLower} near you.`;
+  }
+
+  // Generic fallback
   if (modifier) {
     return `Discover the ${modifier} ${catLower} in ${location}${timePart}. Our curated guide to top-rated ${catLower} with ratings, reviews and maps.`;
   }
@@ -186,7 +243,7 @@ export function generateMetaDescription(
 }
 
 /**
- * Generate unique intro text for the page body.
+ * Cluster-aware intro text generation — unique per page combination.
  */
 export function generateIntroText(
   modifier: string | null,
@@ -196,19 +253,46 @@ export function generateIntroText(
   cityName?: string,
   timeIntent?: string | null
 ): string {
-  const location = cityName
-    ? `${locationName}, ${cityName}`
-    : locationName;
+  const location = cityName ? `${locationName}, ${cityName}` : locationName;
   const catLower = categoryName.toLowerCase();
-  const timeLabel = formatTimeIntent(timeIntent);
-  const timePart = timeLabel ? ` ${timeLabel.toLowerCase()}` : "";
+  const count = listingCount > 0 ? listingCount.toString() : "the best";
 
+  // Event cluster
+  if (catLower === "events") {
+    if (modifier === "free") return `Looking for free things to do in ${location}? We've found ${count} free events happening right now — from exhibitions and markets to live music and outdoor activities. No ticket needed.`;
+    if (modifier === "family") return `Planning a family day out in ${location}? Browse ${count} family-friendly events including workshops, shows, outdoor adventures and activities the whole family will enjoy.`;
+    if (timeIntent === "today") return `Here's what's happening in ${location} today. We've gathered ${count} events taking place right now — from live music and food events to exhibitions and community gatherings.`;
+    if (timeIntent === "this-weekend") return `Planning your weekend in ${location}? Here are ${count} events happening this Saturday and Sunday, including gigs, markets, family activities and more.`;
+    if (timeIntent === "this-week") return `What's on in ${location} this week? Browse ${count} events happening over the coming days, from live performances to food events and exhibitions.`;
+    return `Looking for events in ${location}? We've curated ${count} upcoming events including live music, theatre, exhibitions, markets and more. Updated regularly so you never miss out.`;
+  }
+
+  // Things to do cluster
+  if (catLower === "things to do") {
+    if (modifier === "free") return `${location} is full of free things to do — you just need to know where to look. We've found ${count} free activities, from scenic walks and parks to museums and galleries with free admission.`;
+    if (modifier === "family") return `Whether it's school holidays or a rainy Saturday, ${location} has plenty to keep the kids entertained. Here are ${count} family-friendly activities, from soft play centres to outdoor adventure parks.`;
+    if (modifier === "date-night" || modifier === "romantic") return `Planning a date in ${location}? Whether you're after cocktails, a candlelit dinner, or something more adventurous, we've picked ${count} of the best date night ideas to impress.`;
+    if (modifier === "indoor" || timeIntent === "rainy-day") return `Raining again? Don't let the weather ruin your plans. Here are ${count} indoor activities in ${location} — from escape rooms and bowling to museums, cinemas and indoor climbing.`;
+    if (timeIntent === "this-weekend") return `Not sure what to do this weekend in ${location}? Here are ${count} activities and events happening this Saturday and Sunday.`;
+    if (timeIntent === "today") return `Looking for something to do in ${location} today? Here are ${count} activities happening right now.`;
+    return `Whether you're a local or just visiting, ${location} has no shortage of things to do. We've picked ${count} of the best activities, attractions and hidden gems to help you make the most of your time.`;
+  }
+
+  // Food cluster
+  if (["restaurants", "brunch", "cafes", "bars", "cocktail bars"].includes(catLower)) {
+    if (modifier === "best") return `We've done the hard work of finding the best ${catLower} in ${location}. These ${count} spots have been hand-picked based on real reviews, quality of food, atmosphere and value for money.`;
+    if (modifier === "cheap") return `Great food doesn't have to break the bank. Here are ${count} budget-friendly ${catLower} in ${location} where you can eat well without spending a fortune.`;
+    if (modifier === "romantic") return `Looking for somewhere special for a romantic meal? These ${count} ${catLower} in ${location} are perfect for date night, anniversaries and celebrations.`;
+    if (modifier === "vegan") return `Whether you're fully plant-based or just fancy something different, ${location} has a growing vegan scene. Here are ${count} ${catLower} with excellent vegan options.`;
+    return `Hungry? Here are ${count} of the top ${catLower} in ${location}, hand-picked and rated by locals. From hidden gems to well-known favourites, you'll find something to suit every taste and budget.`;
+  }
+
+  // Generic
   const intros = [
-    `Looking for ${modifier ? modifier + " " : ""}${catLower} in ${location}${timePart}? We've hand-picked ${listingCount > 0 ? listingCount : "the top"} places based on real reviews and ratings to help you find exactly what you're after.`,
-    `Whether you're a local or just visiting, ${location} has no shortage of fantastic ${catLower}${timePart}. Here are our top picks${modifier ? ` for ${modifier} options` : ""}.`,
-    `${location} is home to some incredible ${catLower}. We've done the research so you don't have to — browse our curated selection${timePart} below.`,
+    `Looking for ${modifier ? modifier + " " : ""}${catLower} in ${location}? We've hand-picked ${count} places based on real reviews and ratings to help you find exactly what you're after.`,
+    `Whether you're a local or just visiting, ${location} has no shortage of fantastic ${catLower}. Here are our top picks${modifier ? ` for ${modifier} options` : ""}.`,
+    `${location} is home to some incredible ${catLower}. We've done the research so you don't have to — browse our curated selection below.`,
   ];
-
   const hash = (modifier || "").length + categoryName.length + locationName.length;
   return intros[hash % intros.length];
 }
@@ -239,6 +323,7 @@ export function formatTimeIntent(timeIntent?: string | null): string {
     "tonight": "Tonight",
     "this-week": "This Week",
     "this-weekend": "This Weekend",
+    "rainy-day": "Rainy Day",
   };
   return map[timeIntent] || "";
 }
@@ -270,6 +355,8 @@ export function getTimeIntentDateRange(timeIntent: string | null): { start: stri
       sunday.setDate(saturday.getDate() + 1);
       return { start: saturday.toISOString().split("T")[0], end: sunday.toISOString().split("T")[0] };
     }
+    case "rainy-day":
+      return null; // Not time-based
     default:
       return null;
   }
@@ -280,4 +367,63 @@ export function getTimeIntentDateRange(timeIntent: string | null): { start: stri
  */
 export function isEventCategory(categorySlug: string): boolean {
   return ["events", "live-music", "theatre", "exhibitions", "comedy", "markets", "festivals"].includes(categorySlug);
+}
+
+/**
+ * Generate FAQ items specific to the page cluster.
+ */
+export function generateFaqItems(
+  modifier: string | null,
+  categoryName: string,
+  locationName: string,
+  itemCount: number,
+  cityName?: string,
+  timeIntent?: string | null
+): { q: string; a: string }[] {
+  const location = cityName ? `${locationName}, ${cityName}` : locationName;
+  const catLower = categoryName.toLowerCase();
+  const modLabel = modifier || "";
+
+  // Event FAQs
+  if (catLower === "events") {
+    return [
+      { q: `What's on in ${location}${timeIntent ? " " + formatTimeIntent(timeIntent).toLowerCase() : ""}?`, a: `There are currently ${itemCount} events listed in ${location}. Browse our curated selection above to find live music, theatre, exhibitions, food events and more.` },
+      { q: `Are there free events in ${location}?`, a: `Yes! ${location} regularly hosts free events including exhibitions, markets, live music and community events. Filter by 'Free' to see what's available.` },
+      { q: `How do I find family events in ${location}?`, a: `We tag family-friendly events so you can easily filter for activities suitable for children. Look for the 'Family' badge on event listings.` },
+      { q: `How often is the events listing updated?`, a: `Our ${location} events listing is updated regularly to ensure you always have access to the latest happenings. Check back often or subscribe to our newsletter.` },
+    ];
+  }
+
+  // Things to do FAQs
+  if (catLower === "things to do") {
+    const faqs = [
+      { q: `What are the best things to do in ${location}?`, a: `We've curated ${itemCount} of the best activities in ${location}, from popular attractions to hidden gems. Browse our list above, sorted by rating and reviews.` },
+    ];
+    if (modifier === "free") {
+      faqs.push({ q: `What free activities are there in ${location}?`, a: `${location} offers plenty of free activities including parks, museums with free admission, street art walks, scenic viewpoints and community events.` });
+    }
+    if (modifier === "family") {
+      faqs.push({ q: `What are the best family days out in ${location}?`, a: `Top family activities in ${location} include soft play centres, parks, museums, indoor play areas, nature trails and seasonal events. Many are suitable for all ages.` });
+    }
+    if (modifier === "indoor" || timeIntent === "rainy-day") {
+      faqs.push({ q: `What can I do on a rainy day in ${location}?`, a: `Don't let the rain stop you! ${location} has plenty of indoor activities including escape rooms, bowling, cinemas, museums, indoor climbing, and cosy cafes.` });
+    }
+    faqs.push({ q: `Is ${location} worth visiting?`, a: `Absolutely! ${location} has a vibrant culture, excellent food scene, beautiful architecture and friendly locals. There's something for everyone, whether you're here for a day or a week.` });
+    return faqs;
+  }
+
+  // Food FAQs
+  if (["restaurants", "brunch", "cafes", "bars", "cocktail bars"].includes(catLower)) {
+    return [
+      { q: `What are the best ${modLabel} ${catLower} in ${location}?`, a: `We've curated the top ${itemCount} ${modLabel} ${catLower} in ${location} based on reviews, ratings and local recommendations. Browse our full list above.` },
+      { q: `Do I need to book ${catLower} in ${location}?`, a: `Popular ${catLower} in ${location} can get busy, especially at weekends. We recommend booking ahead for dinner and weekend brunch at the most popular spots.` },
+      { q: `What is the average price for ${catLower} in ${location}?`, a: `${location} has ${catLower} to suit every budget. You'll find options ranging from budget-friendly spots under £15 per head to premium dining experiences.` },
+    ];
+  }
+
+  // Generic FAQs
+  return [
+    { q: `What are the best ${modLabel} ${catLower} in ${location}?`, a: `We've curated the top ${itemCount} ${modLabel} ${catLower} in ${location} based on reviews, ratings and local recommendations.` },
+    { q: `How many ${catLower} are there in ${location}?`, a: `We currently feature ${itemCount} ${modLabel} ${catLower} in ${location}. We're always adding new places.` },
+  ];
 }
