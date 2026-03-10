@@ -197,8 +197,8 @@ const ProgrammaticPage = () => {
 
   // Determine if this is a family-oriented page
   const isFamilyPage = parsed?.modifierSlug === "family";
-  // Determine if this is a date-night page
-  const isDateNightPage = parsed?.modifierSlug === "date-night" || parsed?.modifierSlug === "romantic";
+  // Determine if this is a date-night page (can be either modifier or category slug)
+  const isDateNightPage = parsed?.modifierSlug === "date-night" || parsed?.modifierSlug === "romantic" || parsed?.categorySlug === "date-night";
 
   // Categories to exclude for family pages
   const FAMILY_EXCLUDED_CATEGORIES = ["bars", "cocktail-bars", "nightlife", "late-night", "pubs"];
