@@ -1,5 +1,6 @@
 import { Link } from "react-router-dom";
 import { Star, MapPin, ExternalLink } from "lucide-react";
+import { getImageUrl, generateListingAltText } from "@/lib/image-utils";
 
 interface ListingCardProps {
   name: string;
@@ -9,9 +10,15 @@ interface ListingCardProps {
   rating: number | null;
   reviewCount: number;
   imageUrl: string | null;
+  imageSource?: string | null;
+  imageAlt?: string | null;
   address: string | null;
   priceLevel: string | null;
   googleMapsLink: string | null;
+  categorySlug?: string | null;
+  categoryName?: string | null;
+  neighbourhoodName?: string | null;
+  cityName?: string | null;
   isFeatured?: boolean;
   index?: number;
 }
@@ -24,12 +31,21 @@ export const ListingCard = ({
   rating,
   reviewCount,
   imageUrl,
+  imageSource,
+  imageAlt,
   address,
   priceLevel,
   googleMapsLink,
+  categorySlug,
+  categoryName,
+  neighbourhoodName,
+  cityName,
   isFeatured,
   index = 0,
 }: ListingCardProps) => {
+  const resolvedImage = getImageUrl(imageUrl, imageSource, categorySlug, citySlug);
+  const altText = imageAlt || generateListingAltText(name, categoryName, neighbourhoodName, cityName);
+
   return (
     <div
       className="group bg-card rounded-lg border border-border overflow-hidden card-shadow hover:card-shadow-hover transition-all duration-200 animate-fade-in"
@@ -37,10 +53,13 @@ export const ListingCard = ({
     >
       <div className="relative aspect-[16/10] overflow-hidden">
         <img
-          src={imageUrl || "https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=600"}
-          alt={name}
+          src={resolvedImage}
+          alt={altText}
           className="w-full h-full object-cover group-hover:scale-[1.03] transition-transform duration-300"
           loading="lazy"
+          decoding="async"
+          width={600}
+          height={375}
         />
         {isFeatured && (
           <span className="absolute top-2.5 left-2.5 bg-accent text-accent-foreground text-[10px] font-semibold px-2 py-0.5 rounded">
@@ -62,7 +81,7 @@ export const ListingCard = ({
           >
             {name}
           </Link>
-          {rating && (
+          {rating != null && rating > 0 && (
             <div className="flex items-center gap-1 shrink-0">
               <Star className="h-3.5 w-3.5 fill-amber-400 text-amber-400" />
               <span className="text-xs font-medium text-foreground">{rating}</span>
