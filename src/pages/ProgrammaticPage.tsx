@@ -342,9 +342,9 @@ const ProgrammaticPage = () => {
       if (parsed?.modifierSlug === "free") {
         query = query.eq("is_free", true);
       }
-      if (parsed?.modifierSlug === "family") {
-        query = query.eq("is_family_friendly", true);
-      }
+      // For family pages: do NOT filter by is_family_friendly in DB query
+      // Instead, fetch broadly and apply strict client-side filtering
+      // This ensures events with family/kids tags but is_family_friendly=false are included
 
       const { data, error } = await query;
       if (error) throw error;
