@@ -21,6 +21,7 @@ import {
 import {
   getCityClusters,
   getNeighbourhoodCluster,
+  getLandmarkCluster,
   getSiblingPages,
   getCrossClusterLinks,
 } from "@/lib/seo-clusters";
