@@ -1,6 +1,6 @@
 import { Link } from "react-router-dom";
 import { Star, MapPin, ExternalLink } from "lucide-react";
-import { getImageUrl, generateListingAltText } from "@/lib/image-utils";
+import { getImageUrl, generateListingAltText, isPlaceholderImage } from "@/lib/image-utils";
 
 interface ListingCardProps {
   name: string;
@@ -12,6 +12,7 @@ interface ListingCardProps {
   imageUrl: string | null;
   imageSource?: string | null;
   imageAlt?: string | null;
+  imageStatus?: string | null;
   address: string | null;
   priceLevel: string | null;
   googleMapsLink: string | null;
@@ -33,6 +34,7 @@ export const ListingCard = ({
   imageUrl,
   imageSource,
   imageAlt,
+  imageStatus,
   address,
   priceLevel,
   googleMapsLink,
@@ -43,8 +45,11 @@ export const ListingCard = ({
   isFeatured,
   index = 0,
 }: ListingCardProps) => {
-  const resolvedImage = getImageUrl(imageUrl, imageSource, categorySlug, citySlug);
-  const altText = imageAlt || generateListingAltText(name, categoryName, neighbourhoodName, cityName);
+  const resolvedImage = getImageUrl(imageUrl, imageSource, categorySlug, citySlug, imageStatus);
+  const usingPlaceholder = isPlaceholderImage(resolvedImage) || imageStatus !== "verified";
+  const altText = imageAlt && !usingPlaceholder
+    ? imageAlt
+    : generateListingAltText(name, categoryName, neighbourhoodName, cityName, usingPlaceholder);
 
   return (
     <div
