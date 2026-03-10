@@ -5,6 +5,7 @@ import { Layout } from "@/components/Layout";
 import { ListingCard } from "@/components/ListingCard";
 import { EventCard } from "@/components/EventCard";
 import { AdPlaceholder } from "@/components/AdPlaceholder";
+import { LandmarkMap } from "@/components/LandmarkMap";
 import { MapPin, ChevronRight, Calendar, Filter, ArrowRight, AlertCircle } from "lucide-react";
 import {
   parseSlug,
