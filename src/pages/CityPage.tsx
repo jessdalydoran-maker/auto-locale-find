@@ -38,12 +38,12 @@ const CityPage = () => {
   });
 
   const { data: listings } = useQuery({
-    queryKey: ["city-listings", citySlug, categoryFilter],
+    queryKey: ["city-listings", resolvedCitySlug, categoryFilter],
     queryFn: async () => {
       let query = supabase
         .from("listings")
         .select("*, cities!inner(slug, name), categories!inner(slug, name)")
-        .eq("cities.slug", citySlug!);
+        .eq("cities.slug", resolvedCitySlug);
 
       if (categoryFilter) {
         query = query.eq("categories.slug", categoryFilter);
@@ -55,7 +55,7 @@ const CityPage = () => {
       if (error) throw error;
       return data;
     },
-    enabled: !!citySlug,
+    enabled: !!resolvedCitySlug,
   });
 
   if (!city) return <Layout><div className="container mx-auto px-4 py-20 text-center text-muted-foreground">Loading...</div></Layout>;
