@@ -17,6 +17,7 @@ interface EventCandidate {
   time_end?: string;
   venue_name?: string;
   venue_address?: string;
+  venue_town?: string;
   description?: string;
   short_description?: string;
   ticket_url?: string;
@@ -28,6 +29,7 @@ interface EventCandidate {
   is_outdoor?: boolean;
   tags?: string[];
   image_url?: string;
+  category?: string;
 }
 
 function slugify(text: string): string {
@@ -95,19 +97,27 @@ async function fetchSimple(url: string): Promise<string | null> {
 async function extractEventsWithAI(
   pageContent: string,
   sourceName: string,
+  sourceTown: string | null,
+  councilArea: string | null,
   apiKey: string
 ): Promise<EventCandidate[]> {
   const today = new Date().toISOString().split("T")[0];
 
-  const prompt = `You are an event data extraction assistant. Extract real upcoming events from the following web page content from "${sourceName}".
+  const prompt = `You are an event data extraction assistant for Northern Ireland. Extract real upcoming events from the following web page content from "${sourceName}" (${councilArea || "NI"}, ${sourceTown || "unknown town"}).
 
 RULES:
 - Only extract REAL events with specific dates (not general venue info or permanent exhibitions)
 - Only include events from ${today} onwards
 - Each event must have at minimum: title, date_start (YYYY-MM-DD format)
-- Set is_free to true only if clearly stated as free
-- Set is_family_friendly to true for events suitable for children
-- Use tags from: music, theatre, comedy, film, art, exhibitions, festival, food, market, workshop, dance, literature, family, kids, outdoor, indoor, nightlife, sport, community, heritage
+- Set is_free to true only if clearly stated as free/no charge
+- Set is_family_friendly to true for events explicitly suitable for children, families, or with child-friendly content
+  - Examples of family-friendly: children's shows, family workshops, kids theatre, puppet shows, storytelling, craft sessions, family festivals, community fun days, Easter/Christmas family events, outdoor trails, zoo visits, science workshops for kids
+  - NOT family-friendly by default: comedy gigs, concerts, boxing, professional sport fixtures, late-night events, bar events
+- Set venue_town to the specific town where the event takes place (e.g., "Antrim", "Cookstown", "Enniskillen")
+- Use tags from: music, theatre, comedy, film, art, exhibitions, festival, food, market, workshop, dance, literature, family, kids, outdoor, indoor, nightlife, sport, community, heritage, craft, storytelling, science, nature, trails
+  - Add "kids" tag for events specifically for children
+  - Add "family" tag for events suitable for whole family
+  - Add "workshop" tag for hands-on activity sessions
 - For time_start/time_end use HH:MM:SS format (24h)
 - Keep descriptions concise (1-2 sentences)
 - Extract ticket links where visible
@@ -115,7 +125,7 @@ RULES:
 - Do NOT invent or generate events. Only extract what is explicitly on the page.
 
 Return a JSON array of events. Example:
-[{"title":"Belfast Music Night","date_start":"2026-04-15","time_start":"19:30:00","venue_name":"The MAC","description":"Live music showcase","tags":["music","indoor"],"is_free":false,"price":"£15","ticket_url":"https://example.com/tickets"}]
+[{"title":"Kids Theatre: Mr Hullabaloo","date_start":"2026-04-15","time_start":"14:00:00","venue_name":"Courtyard Theatre","venue_town":"Antrim","description":"Interactive theatre show for children aged 3-7","tags":["theatre","kids","family"],"is_free":false,"is_family_friendly":true,"price":"£6"}]
 
 Web page content:
 ${pageContent}`;
@@ -152,6 +162,68 @@ ${pageContent}`;
     console.error("AI extraction error:", e);
     return [];
   }
+}
+
+/** Resolve a town name to a city_id in the database */
+async function resolveCityId(
+  supabase: any,
+  town: string | null,
+  councilArea: string | null,
+  cityCache: Map<string, string>
+): Promise<string | null> {
+  if (!town && !councilArea) return null;
+
+  // Try town first
+  const lookups = [town, councilArea].filter(Boolean) as string[];
+  for (const name of lookups) {
+    const slug = name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
+    if (cityCache.has(slug)) return cityCache.get(slug)!;
+
+    const { data } = await supabase
+      .from("cities")
+      .select("id, slug")
+      .or(`slug.eq.${slug},name.ilike.%${name}%`)
+      .limit(1)
+      .maybeSingle();
+
+    if (data) {
+      cityCache.set(slug, data.id);
+      return data.id;
+    }
+  }
+
+  // Fallback: try to match council area to known city mappings
+  const COUNCIL_CITY_MAP: Record<string, string> = {
+    "belfast": "belfast",
+    "antrim & newtownabbey": "antrim",
+    "ards & north down": "bangor",
+    "armagh banbridge craigavon": "armagh",
+    "causeway coast & glens": "coleraine",
+    "derry city & strabane": "derry",
+    "fermanagh & omagh": "enniskillen",
+    "lisburn & castlereagh": "lisburn",
+    "mid & east antrim": "ballymena",
+    "mid ulster": "cookstown",
+    "newry mourne & down": "newry",
+  };
+
+  if (councilArea) {
+    const mapped = COUNCIL_CITY_MAP[councilArea.toLowerCase()];
+    if (mapped && cityCache.has(mapped)) return cityCache.get(mapped)!;
+    if (mapped) {
+      const { data } = await supabase
+        .from("cities")
+        .select("id")
+        .eq("slug", mapped)
+        .maybeSingle();
+      if (data) {
+        cityCache.set(mapped, data.id);
+        return data.id;
+      }
+    }
+  }
+
+  return null;
 }
 
 Deno.serve(async (req) => {
@@ -195,22 +267,30 @@ Deno.serve(async (req) => {
     sources_checked: 0,
     events_found: 0,
     events_added: 0,
+    events_updated: 0,
     events_skipped: 0,
     firecrawl_used: 0,
     fallback_used: 0,
     errors: [] as string[],
   };
 
+  // City ID cache to reduce lookups
+  const cityCache = new Map<string, string>();
+
   try {
+    // Pre-load all cities into cache
+    const { data: allCities } = await supabase.from("cities").select("id, slug, name");
+    if (allCities) {
+      for (const c of allCities) {
+        cityCache.set(c.slug, c.id);
+        cityCache.set(c.name.toLowerCase(), c.id);
+      }
+    }
+
     // Resolve city filter
     let cityId: string | null = null;
     if (cityFilter) {
-      const { data: cityData } = await supabase
-        .from("cities")
-        .select("id")
-        .eq("slug", cityFilter)
-        .maybeSingle();
-      cityId = cityData?.id || null;
+      cityId = cityCache.get(cityFilter) || null;
     }
 
     // Fetch active sources
@@ -234,6 +314,14 @@ Deno.serve(async (req) => {
       throw new Error("No active event sources found");
     }
 
+    // Expire past events first
+    const today = new Date().toISOString().split("T")[0];
+    await supabase
+      .from("events")
+      .update({ status: "expired" })
+      .eq("status", "active")
+      .lt("date_start", today);
+
     for (const source of sources) {
       stats.sources_checked++;
       const url = source.events_url || source.website_url;
@@ -244,7 +332,7 @@ Deno.serve(async (req) => {
 
       console.log(`Fetching events from: ${source.name} (${url})`);
 
-      // Try Firecrawl first (handles JS-rendered sites), fallback to simple fetch
+      // Try Firecrawl first, fallback to simple fetch
       let content: string | null = null;
       if (firecrawlApiKey) {
         content = await fetchWithFirecrawl(url, firecrawlApiKey);
@@ -267,7 +355,13 @@ Deno.serve(async (req) => {
 
       console.log(`${source.name}: got ${content.length} chars, extracting events...`);
 
-      const candidates = await extractEventsWithAI(content, source.name, lovableApiKey);
+      const candidates = await extractEventsWithAI(
+        content,
+        source.name,
+        source.town || null,
+        source.council_area || null,
+        lovableApiKey
+      );
       stats.events_found += candidates.length;
       console.log(`${source.name}: found ${candidates.length} event candidates`);
 
@@ -282,15 +376,35 @@ Deno.serve(async (req) => {
           continue;
         }
 
-        // Check for duplicate
+        // Check for duplicate by slug
         const eventSlug = slugify(`${event.title}-${event.date_start}`);
         const { data: existing } = await supabase
           .from("events")
-          .select("id")
+          .select("id, status")
           .eq("slug", eventSlug)
           .maybeSingle();
 
         if (existing) {
+          // Re-activate if previously expired but still valid
+          if (existing.status === "expired" && event.date_start >= today) {
+            await supabase
+              .from("events")
+              .update({ status: "active", updated_at: new Date().toISOString() })
+              .eq("id", existing.id);
+            stats.events_updated++;
+          } else {
+            stats.events_skipped++;
+          }
+          continue;
+        }
+
+        // Resolve town to city_id
+        const eventTown = event.venue_town || source.town || null;
+        const eventCouncilArea = source.council_area || null;
+        const resolvedCityId = source.city_id || await resolveCityId(supabase, eventTown, eventCouncilArea, cityCache);
+
+        if (!resolvedCityId) {
+          console.warn(`Cannot resolve city for "${event.title}" (town: ${eventTown}, council: ${eventCouncilArea})`);
           stats.events_skipped++;
           continue;
         }
@@ -317,7 +431,8 @@ Deno.serve(async (req) => {
           is_indoor: event.is_indoor ?? true,
           is_outdoor: event.is_outdoor ?? false,
           tags: allTags,
-          city_id: source.city_id,
+          city_id: resolvedCityId,
+          council_area: eventCouncilArea,
           source_url: url,
           source_id: `${source.name}:${eventSlug}`,
           status: "active",
@@ -349,6 +464,7 @@ Deno.serve(async (req) => {
           completed_at: new Date().toISOString(),
           details: stats as any,
           listings_added: stats.events_added,
+          listings_updated: stats.events_updated,
         })
         .eq("id", logId);
     }
