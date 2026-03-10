@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import {
   BarChart3, Layers, MapPin, TrendingUp, Play, Settings, Clock,
-  CheckCircle2, XCircle, AlertTriangle, Archive, RefreshCw, FileText,
+  CheckCircle2, XCircle, AlertTriangle, Archive, RefreshCw, FileText, Calendar,
 } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
@@ -16,6 +16,7 @@ const AdminPage = () => {
   const queryClient = useQueryClient();
   const [isRunning, setIsRunning] = useState(false);
   const [isHarvesting, setIsHarvesting] = useState(false);
+  const [isIngesting, setIsIngesting] = useState(false);
 
   const { data: cities } = useQuery({
     queryKey: ["admin-cities"],
@@ -150,6 +151,22 @@ const AdminPage = () => {
     }
   };
 
+  const runEventIngestion = async () => {
+    setIsIngesting(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("ingest-events");
+      if (error) throw error;
+      toast.success(
+        `Event ingestion complete: ${data.stats?.sources_checked || 0} sources checked, ${data.stats?.events_added || 0} events added, ${data.stats?.events_skipped || 0} skipped`
+      );
+      queryClient.invalidateQueries({ queryKey: ["admin-automation-logs"] });
+    } catch (err) {
+      toast.error("Event ingestion failed: " + String(err));
+    } finally {
+      setIsIngesting(false);
+    }
+  };
+
   const stats = [
     { label: "Cities", value: cities?.length || 0, icon: MapPin },
     { label: "Categories", value: categories?.length || 0, icon: Layers },
@@ -247,6 +264,18 @@ const AdminPage = () => {
                         <><RefreshCw className="h-4 w-4 mr-2 animate-spin" /> Harvesting...</>
                       ) : (
                         <><TrendingUp className="h-4 w-4 mr-2" /> Run Search Harvester</>
+                      )}
+                    </Button>
+                    <Button
+                      onClick={runEventIngestion}
+                      disabled={isIngesting}
+                      variant="outline"
+                      className="w-full"
+                    >
+                      {isIngesting ? (
+                        <><RefreshCw className="h-4 w-4 mr-2 animate-spin" /> Ingesting Events...</>
+                      ) : (
+                        <><Calendar className="h-4 w-4 mr-2" /> Run Event Ingestion</>
                       )}
                     </Button>
                     <p className="text-xs text-muted-foreground text-center">

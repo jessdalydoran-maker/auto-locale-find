@@ -155,6 +155,56 @@ export type Database = {
         }
         Relationships: []
       }
+      event_sources: {
+        Row: {
+          city_id: string | null
+          created_at: string
+          events_url: string | null
+          id: string
+          is_active: boolean
+          last_scraped_at: string | null
+          name: string
+          priority: number
+          source_type: string
+          tags: string[] | null
+          website_url: string | null
+        }
+        Insert: {
+          city_id?: string | null
+          created_at?: string
+          events_url?: string | null
+          id?: string
+          is_active?: boolean
+          last_scraped_at?: string | null
+          name: string
+          priority?: number
+          source_type?: string
+          tags?: string[] | null
+          website_url?: string | null
+        }
+        Update: {
+          city_id?: string | null
+          created_at?: string
+          events_url?: string | null
+          id?: string
+          is_active?: boolean
+          last_scraped_at?: string | null
+          name?: string
+          priority?: number
+          source_type?: string
+          tags?: string[] | null
+          website_url?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "event_sources_city_id_fkey"
+            columns: ["city_id"]
+            isOneToOne: false
+            referencedRelation: "cities"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       events: {
         Row: {
           category_id: string | null
