@@ -79,6 +79,17 @@ const ProgrammaticPage = () => {
     staleTime: 1000 * 60 * 10,
   });
 
+  // Fetch landmarks
+  const { data: landmarks } = useQuery({
+    queryKey: ["all-landmarks"],
+    queryFn: async () => {
+      const { data, error } = await supabase.from("landmarks").select("*");
+      if (error) throw error;
+      return data;
+    },
+    staleTime: 1000 * 60 * 10,
+  });
+
   // Parse slug
   const parsed = useMemo(() => {
     if (!cities || !neighbourhoods) return null;
@@ -99,10 +110,16 @@ const ProgrammaticPage = () => {
     [neighbourhoods, parsed]
   );
 
-  const locationName = neighbourhood?.name || city?.name || "";
-  const cityName = neighbourhood ? city?.name : undefined;
+  // Resolve landmark
+  const landmark = useMemo(() => {
+    if (!parsed?.nearLandmark || !landmarks) return null;
+    return landmarks.find((l) => l.slug === parsed.nearLandmark) || null;
+  }, [parsed, landmarks]);
+
+  const isLandmarkPage = !!parsed?.nearLandmark && !!landmark;
+  const locationName = isLandmarkPage ? landmark!.name : (neighbourhood?.name || city?.name || "");
+  const cityName = (neighbourhood || isLandmarkPage) ? city?.name : undefined;
   const showEvents = parsed ? isEventCategory(parsed.categorySlug) : false;
-  // "things-to-do" with a time intent should show BOTH events and listings
   const isWeekendPage = parsed?.categorySlug === "things-to-do" && !!parsed?.timeIntent;
   const dateRange = parsed ? getTimeIntentDateRange(parsed.timeIntent || null) : null;
   const currentUrl = "/" + slug;
