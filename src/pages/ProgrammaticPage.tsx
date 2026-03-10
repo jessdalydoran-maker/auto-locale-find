@@ -118,12 +118,25 @@ const ProgrammaticPage = () => {
   }, [parsed, landmarks]);
 
   const isLandmarkPage = !!parsed?.nearLandmark && !!landmark;
-  const locationName = isLandmarkPage ? landmark!.name : (neighbourhood?.name || city?.name || "");
+  const isNIWide = parsed?.citySlug === "northern-ireland";
+  const locationName = isLandmarkPage ? landmark!.name : isNIWide ? "Northern Ireland" : (neighbourhood?.name || city?.name || "");
   const cityName = (neighbourhood || isLandmarkPage) ? city?.name : undefined;
   const showEvents = parsed ? isEventCategory(parsed.categorySlug) : false;
   const isWeekendPage = parsed?.categorySlug === "things-to-do" && !!parsed?.timeIntent;
   const dateRange = parsed ? getTimeIntentDateRange(parsed.timeIntent || null) : null;
   const currentUrl = "/" + slug;
+
+  // Location filter state for NI-wide pages
+  const [locationFilter, setLocationFilter] = useState<string | null>(null);
+
+  // NI cities for location filter
+  const niCities = useMemo(() => {
+    if (!cities) return [];
+    const NI_SLUGS = ["belfast", "derry", "lisburn", "antrim", "bangor", "newry", "armagh", 
+      "newtownabbey", "ballymena", "coleraine", "cookstown", "craigavon", "enniskillen", 
+      "omagh", "strabane", "downpatrick", "banbridge", "causeway-coast", "county-down"];
+    return cities.filter(c => NI_SLUGS.includes(c.slug)).sort((a, b) => a.name.localeCompare(b.name));
+  }, [cities]);
 
   // Clusters
   const clusters = useMemo(() => {
