@@ -707,12 +707,12 @@ const ProgrammaticPage = () => {
           </div>
         )}
 
-        {/* Weekend Events Section (for things-to-do + time intent pages) */}
-        {isWeekendPage && events && events.length > 0 && (
+        {/* Weekend / Family / Free Events Section — show real events before venues */}
+        {!showEvents && shouldFetchEvents && events && events.length > 0 && (
           <div className="my-8">
             <h2 className="font-display font-semibold text-xl text-foreground mb-6">
               <Calendar className="inline h-5 w-5 mr-2 text-accent" />
-              Events {formatTimeIntent(parsed?.timeIntent || null)} in {locationName}
+              {isFamilyPage ? "Family Events" : parsed?.modifierSlug === "free" ? "Free Events" : "Events"} {parsed?.timeIntent ? formatTimeIntent(parsed.timeIntent) : ""} in {locationName}
             </h2>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
               {events.map((event, i) => (
