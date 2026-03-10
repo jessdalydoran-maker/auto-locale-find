@@ -464,6 +464,41 @@ const Index = () => {
         </section>
       )}
 
+      {/* Explore Belfast by Mood */}
+      <section className="container mx-auto px-4 py-10">
+        <div className="mb-6">
+          <h2 className="font-display font-bold text-xl md:text-2xl text-foreground">Explore Belfast by Mood</h2>
+          <p className="text-sm text-muted-foreground mt-1">Find the perfect outing for any occasion</p>
+        </div>
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
+          {[
+            { label: "Date Night", to: "/date-night-belfast", icon: Heart, desc: "Romantic restaurants, cocktail bars & evening activities", color: "hsl(var(--accent))" },
+            { label: "Family Day Out", to: "/family-day-out-belfast", icon: Users, desc: "Kids activities, parks & family-friendly attractions", color: "hsl(var(--accent))" },
+            { label: "Rainy Day Ideas", to: "/rainy-day-activities-belfast", icon: CloudRain, desc: "Museums, indoor activities, cafes & escape rooms", color: "hsl(var(--accent))" },
+            { label: "Cheap & Free", to: "/cheap-things-to-do-belfast", icon: Coins, desc: "Free events, parks, walks & budget-friendly fun", color: "hsl(var(--accent))" },
+            { label: "Nightlife", to: "/nightlife-belfast", icon: PartyPopper, desc: "Bars, clubs, live music & late-night spots", color: "hsl(var(--accent))" },
+            { label: "Brunch & Coffee", to: "/best-brunch-belfast", icon: Coffee, desc: "Top brunch spots, specialty coffee & bakeries", color: "hsl(var(--accent))" },
+          ].map((mood, i) => (
+            <Link
+              key={mood.to}
+              to={mood.to}
+              className="group bg-card border border-border rounded-xl p-4 text-center card-shadow hover:card-shadow-hover hover:border-accent/40 transition-all duration-200 animate-fade-in flex flex-col items-center gap-2.5"
+              style={{ animationDelay: `${i * 60}ms` }}
+            >
+              <div className="w-11 h-11 rounded-full bg-accent/10 flex items-center justify-center group-hover:bg-accent/20 transition-colors">
+                <mood.icon className="h-5 w-5 text-accent" />
+              </div>
+              <h3 className="font-display font-semibold text-sm text-foreground group-hover:text-accent transition-colors">
+                {mood.label}
+              </h3>
+              <p className="text-[11px] text-muted-foreground leading-snug line-clamp-2">
+                {mood.desc}
+              </p>
+            </Link>
+          ))}
+        </div>
+      </section>
+
       {/* SEO Internal Links */}
       <section className="container mx-auto px-4 py-10 border-t border-border">
         <h2 className="font-display font-semibold text-base text-foreground mb-4">More Searches</h2>
