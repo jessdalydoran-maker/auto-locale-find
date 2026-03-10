@@ -433,6 +433,39 @@ const AdminPage = () => {
                           <td className="p-3 text-muted-foreground text-xs">{(listing.categories as any)?.name}</td>
                           <td className="p-3 text-xs">{listing.rating}</td>
                           <td className="p-3">
+                            <div className="flex flex-wrap gap-1">
+                              {((listing as any).audience_tags || []).map((tag: string) => (
+                                <Badge key={tag} variant="secondary" className="text-[9px] cursor-pointer" onClick={async () => {
+                                  const tags: string[] = (listing as any).audience_tags || [];
+                                  await supabase.from("listings").update({ audience_tags: tags.filter((t: string) => t !== tag) } as any).eq("id", listing.id);
+                                  queryClient.invalidateQueries({ queryKey: ["admin-listings"] });
+                                  toast.success(`Removed "${tag}" from ${listing.name}`);
+                                }}>
+                                  {tag} ×
+                                </Badge>
+                              ))}
+                              <button
+                                className="text-[9px] px-1.5 py-0.5 rounded border border-border text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
+                                onClick={async () => {
+                                  const AVAILABLE_TAGS = ["family", "kids", "couples", "groups", "indoor", "outdoor", "nightlife", "romantic"];
+                                  const currentTags: string[] = (listing as any).audience_tags || [];
+                                  const remaining = AVAILABLE_TAGS.filter(t => !currentTags.includes(t));
+                                  if (remaining.length === 0) { toast.info("All tags already applied"); return; }
+                                  const tag = prompt(`Add tag to ${listing.name}:\n\nAvailable: ${remaining.join(", ")}`);
+                                  if (tag && AVAILABLE_TAGS.includes(tag) && !currentTags.includes(tag)) {
+                                    await supabase.from("listings").update({ audience_tags: [...currentTags, tag] } as any).eq("id", listing.id);
+                                    queryClient.invalidateQueries({ queryKey: ["admin-listings"] });
+                                    toast.success(`Added "${tag}" to ${listing.name}`);
+                                  } else if (tag) {
+                                    toast.error(`Invalid tag: "${tag}"`);
+                                  }
+                                }}
+                              >
+                                + tag
+                              </button>
+                            </div>
+                          </td>
+                          <td className="p-3">
                             <Badge
                               variant={imgStatus === "verified" ? "default" : "secondary"}
                               className="text-[10px]"
