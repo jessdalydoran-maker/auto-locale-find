@@ -213,6 +213,88 @@ const Index = () => {
         </div>
       </section>
 
+      {/* Belfast Highlights — Editorial */}
+      {featuredListings && featuredListings.length > 0 && (
+        <section className="container mx-auto px-4 py-10">
+          <div className="flex items-center justify-between mb-6">
+            <div>
+              <h2 className="font-display font-bold text-xl md:text-2xl text-foreground">Belfast Highlights</h2>
+              <p className="text-sm text-muted-foreground mt-1">Curated places and experiences we recommend</p>
+            </div>
+            <Link to="/things-to-do-belfast" className="text-[13px] text-accent font-medium flex items-center gap-1 hover:underline">
+              Explore more <ArrowRight className="h-3.5 w-3.5" />
+            </Link>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+            {featuredListings.slice(0, 6).map((listing, i) => {
+              const catSlug = (listing.categories as any)?.slug;
+              const catName = (listing.categories as any)?.name || "Place";
+              const citySlug = (listing.cities as any)?.slug || "belfast";
+              const imgSrc = getImageUrl(listing.image_url, (listing as any).image_source, catSlug, citySlug, (listing as any).image_status);
+              return (
+                <Link
+                  key={listing.id}
+                  to={`/${citySlug}/${listing.slug}`}
+                  className="group bg-card rounded-xl border border-border overflow-hidden card-shadow hover:card-shadow-hover transition-all duration-200 animate-fade-in"
+                  style={{ animationDelay: `${i * 80}ms` }}
+                >
+                  <div className="relative aspect-[3/2] overflow-hidden">
+                    <img
+                      src={imgSrc}
+                      alt={(listing as any).image_alt || `${listing.name} — ${catName} in Belfast`}
+                      className="w-full h-full object-cover group-hover:scale-[1.04] transition-transform duration-500"
+                      loading="lazy"
+                      decoding="async"
+                      width={600}
+                      height={400}
+                    />
+                    <span className="absolute top-3 left-3 bg-accent text-accent-foreground text-[11px] font-semibold px-2.5 py-1 rounded-md">
+                      {catName}
+                    </span>
+                    {listing.rating && listing.rating > 0 && (
+                      <span className="absolute top-3 right-3 bg-card/90 backdrop-blur-sm text-foreground text-[11px] font-semibold px-2 py-1 rounded-md flex items-center gap-1">
+                        <Star className="h-3 w-3 fill-amber-400 text-amber-400" /> {listing.rating}
+                      </span>
+                    )}
+                  </div>
+                  <div className="p-4">
+                    <h3 className="font-display font-semibold text-base text-foreground group-hover:text-accent transition-colors mb-1.5">
+                      {listing.name}
+                    </h3>
+                    <p className="text-[13px] text-muted-foreground line-clamp-3 leading-relaxed mb-3">
+                      {listing.description || listing.short_description || `One of Belfast's top ${catName.toLowerCase()} — a must-visit for locals and visitors alike.`}
+                    </p>
+                    {listing.address && (
+                      <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                        <MapPin className="h-3 w-3 shrink-0" />
+                        <span className="line-clamp-1">{listing.address}</span>
+                      </div>
+                    )}
+                  </div>
+                </Link>
+              );
+            })}
+          </div>
+          <div className="flex flex-wrap gap-2 mt-6">
+            {[
+              { label: "Things To Do Belfast", to: "/things-to-do-belfast" },
+              { label: "Best Restaurants Belfast", to: "/best-restaurants-belfast" },
+              { label: "Best Cafes Belfast", to: "/best-cafes-belfast" },
+              { label: "Bars Belfast", to: "/bars-belfast" },
+              { label: "This Weekend", to: "/things-to-do-belfast-this-weekend" },
+            ].map((link) => (
+              <Link
+                key={link.to}
+                to={link.to}
+                className="text-xs px-3 py-1.5 bg-secondary text-muted-foreground rounded-full hover:text-accent transition-colors"
+              >
+                {link.label}
+              </Link>
+            ))}
+          </div>
+        </section>
+      )}
+
       {/* Trending This Weekend */}
       {weekendItems && weekendItems.length > 0 && (
         <section className="container mx-auto px-4 py-8">
