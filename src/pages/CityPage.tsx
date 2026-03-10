@@ -124,7 +124,7 @@ const CityPage = () => {
               key={listing.id}
               name={listing.name}
               slug={listing.slug}
-              citySlug={citySlug!}
+              citySlug={resolvedCitySlug}
               shortDescription={listing.short_description || ""}
               rating={listing.rating}
               reviewCount={listing.review_count || 0}
