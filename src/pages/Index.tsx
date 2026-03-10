@@ -135,6 +135,17 @@ const Index = () => {
               </Link>
             ))
           )}
+          {cities?.slice(0, 3).flatMap((city) =>
+            ["cheap", "romantic", "vegan"].map((mod) => (
+              <Link
+                key={`${mod}-restaurants-${city.slug}`}
+                to={`/${mod}-restaurants-${city.slug}`}
+                className="text-xs px-3 py-1.5 bg-muted text-muted-foreground rounded-full hover:bg-accent hover:text-accent-foreground transition-colors"
+              >
+                {mod.charAt(0).toUpperCase() + mod.slice(1)} Restaurants {city.name}
+              </Link>
+            ))
+          )}
         </div>
       </section>
 
