@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import {
   BarChart3, Layers, MapPin, TrendingUp, Play, Settings, Clock,
-  CheckCircle2, XCircle, AlertTriangle, Archive, RefreshCw, FileText,
+  CheckCircle2, XCircle, AlertTriangle, Archive, RefreshCw, FileText, Calendar,
 } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
