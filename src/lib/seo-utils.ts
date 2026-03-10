@@ -51,6 +51,7 @@ const CATEGORY_ALIASES: Record<string, string> = {
   "what-to-do": "things-to-do",
   "activities": "things-to-do",
   "family-day-out": "things-to-do",
+  "day-out": "things-to-do",
   "rainy-day-activities": "things-to-do",
   "cheap-things-to-do": "things-to-do",
 };
