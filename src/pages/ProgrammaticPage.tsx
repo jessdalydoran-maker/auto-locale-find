@@ -103,7 +103,13 @@ const ProgrammaticPage = () => {
   }, [slug, cities, neighbourhoods]);
 
   // Resolve entities
-  const city = useMemo(() => cities?.find((c) => c.slug === parsed?.citySlug), [cities, parsed]);
+  // For NI-wide pages, create a virtual city object so all downstream logic works
+  const city = useMemo(() => {
+    if (parsed?.citySlug === "northern-ireland") {
+      return { id: "ni-wide", name: "Northern Ireland", slug: "northern-ireland" } as any;
+    }
+    return cities?.find((c) => c.slug === parsed?.citySlug);
+  }, [cities, parsed]);
   const category = useMemo(() => allCategories?.find((c) => c.slug === parsed?.categorySlug), [allCategories, parsed]);
   const modifier = useMemo(() => modifiers?.find((m) => m.slug === parsed?.modifierSlug), [modifiers, parsed]);
   const neighbourhood = useMemo(
@@ -560,14 +566,18 @@ const ProgrammaticPage = () => {
   // Breadcrumb
   const breadcrumbs = useMemo(() => {
     const crumbs = [{ label: "Home", url: "/" }];
-    if (city) crumbs.push({ label: city.name, url: `/${city.slug}` });
+    if (isNIWide) {
+      crumbs.push({ label: "Northern Ireland", url: "/" });
+    } else if (city) {
+      crumbs.push({ label: city.name, url: `/${city.slug}` });
+    }
     if (neighbourhood) crumbs.push({ label: neighbourhood.name, url: `/things-to-do-${neighbourhood.slug}-${city?.slug}` });
     if (category) {
       const parts = [modifier?.name, category.name, parsed?.timeIntent ? formatTimeIntent(parsed.timeIntent) : ""].filter(Boolean);
       crumbs.push({ label: parts.join(" "), url: "" });
     }
     return crumbs;
-  }, [city, neighbourhood, category, modifier, parsed]);
+  }, [city, neighbourhood, category, modifier, parsed, isNIWide]);
 
   // Filter options
   const filterOptions = useMemo(() => {
@@ -649,9 +659,13 @@ const ProgrammaticPage = () => {
           {city && (
             <div className="flex items-center gap-2 text-muted-foreground text-[13px] mb-2">
               <MapPin className="h-3.5 w-3.5" />
-              <Link to={`/${city.slug}`} className="hover:text-foreground transition-colors">
-                {neighbourhood ? `${neighbourhood.name}, ${city.name}` : city.name}
-              </Link>
+              {isNIWide ? (
+                <span>Northern Ireland</span>
+              ) : (
+                <Link to={`/${city.slug}`} className="hover:text-foreground transition-colors">
+                  {neighbourhood ? `${neighbourhood.name}, ${city.name}` : city.name}
+                </Link>
+              )}
               {parsed?.timeIntent && (
                 <>
                   <span className="text-border">·</span>
@@ -772,7 +786,7 @@ const ProgrammaticPage = () => {
                   {page.label}
                 </Link>
               ))}
-              {city && (
+              {city && !isNIWide && (
                 <Link
                   to={`/${city.slug}`}
                   className="px-3 py-1.5 text-[12px] font-medium bg-accent text-accent-foreground rounded-full"
