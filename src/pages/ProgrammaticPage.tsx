@@ -277,17 +277,23 @@ const ProgrammaticPage = () => {
 
   const listings = isLandmarkPage ? nearbyListings : regularListings;
 
-  // Fetch events (for event pages OR weekend/time-intent "things to do" pages)
+  // Fetch events (for event pages, weekend pages, AND family/free event pages)
+  const shouldFetchEvents = showEvents || isWeekendPage || 
+    (parsed?.modifierSlug === "family" && parsed?.categorySlug === "things-to-do") ||
+    (parsed?.modifierSlug === "free" && parsed?.categorySlug === "things-to-do");
+
   const { data: events } = useQuery({
     queryKey: ["prog-events", parsed?.categorySlug, parsed?.citySlug, parsed?.neighbourhoodSlug, parsed?.timeIntent, parsed?.modifierSlug],
     queryFn: async () => {
+      const today = new Date().toISOString().split("T")[0];
       let query = supabase
         .from("events")
         .select("*, cities!inner(slug, name)")
         .eq("cities.slug", parsed!.citySlug)
         .eq("status", "active")
+        .gte("date_start", today)
         .order("date_start", { ascending: true })
-        .limit(20);
+        .limit(30);
 
       if (parsed?.neighbourhoodSlug && neighbourhood) {
         query = query.eq("neighbourhood_id", neighbourhood.id);
@@ -308,7 +314,7 @@ const ProgrammaticPage = () => {
       if (error) throw error;
       return data;
     },
-    enabled: !!parsed?.citySlug && (showEvents || isWeekendPage),
+    enabled: !!parsed?.citySlug && shouldFetchEvents,
   });
 
   const itemCount = (showEvents ? (events?.length || 0) : (listings?.length || 0)) + (isWeekendPage ? (events?.length || 0) : 0);
