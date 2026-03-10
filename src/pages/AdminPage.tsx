@@ -272,18 +272,35 @@ const AdminPage = () => {
                         <><TrendingUp className="h-4 w-4 mr-2" /> Run Search Harvester</>
                       )}
                     </Button>
-                    <Button
-                      onClick={runEventIngestion}
-                      disabled={isIngesting}
-                      variant="outline"
-                      className="w-full"
-                    >
-                      {isIngesting ? (
-                        <><RefreshCw className="h-4 w-4 mr-2 animate-spin" /> Ingesting Events...</>
-                      ) : (
-                        <><Calendar className="h-4 w-4 mr-2" /> Run Event Ingestion</>
-                      )}
-                    </Button>
+                    <div className="space-y-2">
+                      <div className="flex gap-1 flex-wrap">
+                        {["all", "council", "venue", "festival", "recurring"].map((t) => (
+                          <button
+                            key={t}
+                            onClick={() => setIngestionSourceType(t)}
+                            className={`px-2 py-1 text-[10px] font-medium rounded ${
+                              ingestionSourceType === t
+                                ? "bg-accent text-accent-foreground"
+                                : "bg-muted text-muted-foreground hover:bg-accent/20"
+                            }`}
+                          >
+                            {t === "all" ? "All Sources" : t.charAt(0).toUpperCase() + t.slice(1)}
+                          </button>
+                        ))}
+                      </div>
+                      <Button
+                        onClick={runEventIngestion}
+                        disabled={isIngesting}
+                        variant="outline"
+                        className="w-full"
+                      >
+                        {isIngesting ? (
+                          <><RefreshCw className="h-4 w-4 mr-2 animate-spin" /> Ingesting Events...</>
+                        ) : (
+                          <><Calendar className="h-4 w-4 mr-2" /> Run Event Ingestion ({ingestionSourceType})</>
+                        )}
+                      </Button>
+                    </div>
                     <p className="text-xs text-muted-foreground text-center">
                       {settingsMap.get("last_manual_run")
                         ? `Last manual run: ${new Date(settingsMap.get("last_manual_run")!).toLocaleString()}`
