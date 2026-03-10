@@ -8,21 +8,21 @@ const NAV_ITEMS = [
   {
     label: "What's On",
     links: [
-      { label: "Events Belfast", to: "/events-belfast" },
-      { label: "Events This Weekend", to: "/events-belfast-this-weekend" },
-      { label: "Free Events", to: "/free-events-belfast" },
-      { label: "Family Events", to: "/family-events-belfast" },
-      { label: "Live Music", to: "/live-music-belfast" },
+      { label: "Events", to: "/events" },
+      { label: "Events This Weekend", to: "/events-this-weekend" },
+      { label: "Free Events", to: "/free-events" },
+      { label: "Family Events", to: "/family-events" },
+      { label: "Live Music", to: "/live-music" },
     ],
   },
   {
     label: "Things To Do",
     links: [
-      { label: "Things To Do Belfast", to: "/things-to-do-belfast" },
-      { label: "This Weekend", to: "/things-to-do-belfast-this-weekend" },
-      { label: "Free Things To Do", to: "/free-things-to-do-belfast" },
+      { label: "Things To Do", to: "/things-to-do" },
+      { label: "This Weekend", to: "/things-to-do-this-weekend" },
+      { label: "Free Things To Do", to: "/free-things-to-do" },
       { label: "Family Activities", to: "/family-activities" },
-      { label: "Date Night", to: "/date-night-belfast" },
+      { label: "Date Night", to: "/date-night" },
     ],
   },
   {

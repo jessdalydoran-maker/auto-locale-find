@@ -12,23 +12,23 @@ import { getImageUrl, getCategoryPlaceholder } from "@/lib/image-utils";
 import { Link } from "react-router-dom";
 
 const QUICK_LINKS = [
-  { label: "What's On", to: "/events-belfast", icon: Calendar },
-  { label: "Things To Do", to: "/things-to-do-belfast", icon: Sparkles },
+  { label: "What's On", to: "/events", icon: Calendar },
+  { label: "Things To Do", to: "/things-to-do", icon: Sparkles },
   { label: "Restaurants", to: "/best-restaurants-belfast", icon: Utensils },
-  { label: "Free", to: "/free-things-to-do-belfast", icon: Star },
-  { label: "Date Night", to: "/date-night-belfast", icon: Heart },
-  { label: "This Weekend", to: "/things-to-do-belfast-this-weekend", icon: Calendar },
+  { label: "Free", to: "/free-things-to-do", icon: Star },
+  { label: "Date Night", to: "/date-night", icon: Heart },
+  { label: "This Weekend", to: "/things-to-do-this-weekend", icon: Calendar },
 ];
 
 const POPULAR_SEARCHES = [
-  { label: "What's on this weekend", to: "/events-belfast-this-weekend" },
-  { label: "Free events Belfast", to: "/free-events-belfast" },
+  { label: "What's on this weekend", to: "/events-this-weekend" },
+  { label: "Free events", to: "/free-events" },
   { label: "Family activities", to: "/family-activities" },
   { label: "Best restaurants Belfast", to: "/best-restaurants-belfast" },
   { label: "Best brunch Belfast", to: "/best-brunch-belfast" },
-  { label: "Date night Belfast", to: "/date-night-belfast" },
-  { label: "Live music tonight", to: "/live-music-belfast-tonight" },
-  { label: "Things to do today", to: "/things-to-do-belfast-today" },
+  { label: "Date night", to: "/date-night" },
+  { label: "Live music tonight", to: "/live-music-tonight" },
+  { label: "Things to do today", to: "/things-to-do-today" },
   { label: "Best cafes Belfast", to: "/best-cafes-belfast" },
   { label: "Cocktail bars Belfast", to: "/cocktail-bars-belfast" },
   { label: "Things to do Cathedral Quarter", to: "/things-to-do-cathedral-quarter-belfast" },
@@ -225,7 +225,7 @@ const Index = () => {
               <h2 className="font-display font-bold text-xl md:text-2xl text-foreground">Belfast Highlights</h2>
               <p className="text-sm text-muted-foreground mt-1">Curated places and experiences we recommend</p>
             </div>
-            <Link to="/things-to-do-belfast" className="text-[13px] text-accent font-medium flex items-center gap-1 hover:underline">
+            <Link to="/things-to-do" className="text-[13px] text-accent font-medium flex items-center gap-1 hover:underline">
               Explore more <ArrowRight className="h-3.5 w-3.5" />
             </Link>
           </div>
@@ -281,11 +281,11 @@ const Index = () => {
           </div>
           <div className="flex flex-wrap gap-2 mt-6">
             {[
-              { label: "Things To Do Belfast", to: "/things-to-do-belfast" },
+              { label: "Things To Do", to: "/things-to-do" },
               { label: "Best Restaurants Belfast", to: "/best-restaurants-belfast" },
               { label: "Best Cafes Belfast", to: "/best-cafes-belfast" },
               { label: "Bars Belfast", to: "/bars-belfast" },
-              { label: "This Weekend", to: "/things-to-do-belfast-this-weekend" },
+              { label: "This Weekend", to: "/things-to-do-this-weekend" },
             ].map((link) => (
               <Link
                 key={link.to}
@@ -305,9 +305,9 @@ const Index = () => {
           <div className="flex items-center justify-between mb-5">
             <h2 className="font-display font-semibold text-lg text-foreground flex items-center gap-2">
               <TrendingUp className="h-5 w-5 text-accent" />
-              Trending This Weekend in Belfast
+              Trending This Weekend
             </h2>
-            <Link to="/things-to-do-belfast-this-weekend" className="text-[13px] text-accent font-medium flex items-center gap-1 hover:underline">
+            <Link to="/things-to-do-this-weekend" className="text-[13px] text-accent font-medium flex items-center gap-1 hover:underline">
               See all <ArrowRight className="h-3.5 w-3.5" />
             </Link>
           </div>
@@ -473,16 +473,16 @@ const Index = () => {
       {/* Explore Belfast by Mood */}
       <section className="container mx-auto px-4 py-10">
         <div className="mb-6">
-          <h2 className="font-display font-bold text-xl md:text-2xl text-foreground">Explore Belfast by Mood</h2>
+          <h2 className="font-display font-bold text-xl md:text-2xl text-foreground">Explore by Mood</h2>
           <p className="text-sm text-muted-foreground mt-1">Find the perfect outing for any occasion</p>
         </div>
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
           {[
-            { label: "Date Night", to: "/date-night-belfast", icon: Heart, desc: "Romantic restaurants, cocktail bars & evening activities", color: "hsl(var(--accent))" },
-            { label: "Family Day Out", to: "/family-day-out-belfast", icon: Users, desc: "Kids activities, parks & family-friendly attractions", color: "hsl(var(--accent))" },
-            { label: "Rainy Day Ideas", to: "/rainy-day-activities-belfast", icon: CloudRain, desc: "Museums, indoor activities, cafes & escape rooms", color: "hsl(var(--accent))" },
-            { label: "Cheap & Free", to: "/cheap-things-to-do-belfast", icon: Coins, desc: "Free events, parks, walks & budget-friendly fun", color: "hsl(var(--accent))" },
-            { label: "Nightlife", to: "/nightlife-belfast", icon: PartyPopper, desc: "Bars, clubs, live music & late-night spots", color: "hsl(var(--accent))" },
+            { label: "Date Night", to: "/date-night", icon: Heart, desc: "Romantic restaurants, cocktail bars & evening activities", color: "hsl(var(--accent))" },
+            { label: "Family Day Out", to: "/family-activities", icon: Users, desc: "Kids activities, parks & family-friendly attractions", color: "hsl(var(--accent))" },
+            { label: "Rainy Day Ideas", to: "/rainy-day-activities", icon: CloudRain, desc: "Museums, indoor activities, cafes & escape rooms", color: "hsl(var(--accent))" },
+            { label: "Cheap & Free", to: "/free-things-to-do", icon: Coins, desc: "Free events, parks, walks & budget-friendly fun", color: "hsl(var(--accent))" },
+            { label: "Nightlife", to: "/nightlife", icon: PartyPopper, desc: "Bars, clubs, live music & late-night spots", color: "hsl(var(--accent))" },
             { label: "Brunch & Coffee", to: "/best-brunch-belfast", icon: Coffee, desc: "Top brunch spots, specialty coffee & bakeries", color: "hsl(var(--accent))" },
           ].map((mood, i) => (
             <Link
@@ -523,10 +523,10 @@ const Index = () => {
           {["free-things-to-do", "family-activities", "date-night", "live-music", "nightlife"].map((combo) => (
             <Link
               key={combo}
-              to={`/${combo}-belfast`}
+              to={`/${combo}`}
               className="text-xs px-3 py-1.5 bg-card border border-border text-muted-foreground rounded-full hover:border-accent/40 hover:text-accent transition-colors"
             >
-              {combo.split("-").map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(" ")} Belfast
+              {combo.split("-").map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(" ")}
             </Link>
           ))}
         </div>
