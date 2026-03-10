@@ -101,6 +101,8 @@ const ProgrammaticPage = () => {
   const locationName = neighbourhood?.name || city?.name || "";
   const cityName = neighbourhood ? city?.name : undefined;
   const showEvents = parsed ? isEventCategory(parsed.categorySlug) : false;
+  // "things-to-do" with a time intent should show BOTH events and listings
+  const isWeekendPage = parsed?.categorySlug === "things-to-do" && !!parsed?.timeIntent;
   const dateRange = parsed ? getTimeIntentDateRange(parsed.timeIntent || null) : null;
   const currentUrl = "/" + slug;
 
