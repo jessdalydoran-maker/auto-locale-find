@@ -281,11 +281,11 @@ const Index = () => {
           </div>
           <div className="flex flex-wrap gap-2 mt-6">
             {[
-              { label: "Things To Do Belfast", to: "/things-to-do-belfast" },
+              { label: "Things To Do", to: "/things-to-do" },
               { label: "Best Restaurants Belfast", to: "/best-restaurants-belfast" },
               { label: "Best Cafes Belfast", to: "/best-cafes-belfast" },
               { label: "Bars Belfast", to: "/bars-belfast" },
-              { label: "This Weekend", to: "/things-to-do-belfast-this-weekend" },
+              { label: "This Weekend", to: "/things-to-do-this-weekend" },
             ].map((link) => (
               <Link
                 key={link.to}
