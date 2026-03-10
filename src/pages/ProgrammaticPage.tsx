@@ -140,8 +140,34 @@ const ProgrammaticPage = () => {
   const siblingPages = useMemo(() => getSiblingPages(currentUrl, clusters), [currentUrl, clusters]);
   const crossClusterLinks = useMemo(() => getCrossClusterLinks(currentUrl, clusters), [currentUrl, clusters]);
 
-  // Fetch listings
-  const { data: listings } = useQuery({
+  // Fetch nearby listings (for landmark pages)
+  const { data: nearbyListings } = useQuery({
+    queryKey: ["nearby-listings", landmark?.id, parsed?.categorySlug],
+    queryFn: async () => {
+      const catSlug = parsed!.categorySlug === "things-to-do" ? null : parsed!.categorySlug;
+      const { data, error } = await supabase.rpc("nearby_listings", {
+        p_lat: landmark!.latitude,
+        p_lng: landmark!.longitude,
+        p_radius_km: landmark!.radius_km,
+        p_category_slug: catSlug,
+        p_limit: 20,
+      });
+      if (error) throw error;
+      // Need to fetch categories for each listing
+      if (!data || data.length === 0) return [];
+      const ids = data.map((l: any) => l.id);
+      const { data: enriched } = await supabase
+        .from("listings")
+        .select("*, cities!inner(slug, name), categories!inner(slug, name)")
+        .in("id", ids)
+        .order("rating", { ascending: false });
+      return enriched || [];
+    },
+    enabled: isLandmarkPage && !showEvents,
+  });
+
+  // Fetch regular listings (non-landmark pages)
+  const { data: regularListings } = useQuery({
     queryKey: ["prog-listings", parsed?.categorySlug, parsed?.citySlug, parsed?.neighbourhoodSlug, parsed?.modifierSlug],
     queryFn: async () => {
       let query = supabase
@@ -168,8 +194,10 @@ const ProgrammaticPage = () => {
       if (error) throw error;
       return data;
     },
-    enabled: !!parsed?.citySlug && !!parsed?.categorySlug && !showEvents,
+    enabled: !!parsed?.citySlug && !!parsed?.categorySlug && !showEvents && !isLandmarkPage,
   });
+
+  const listings = isLandmarkPage ? nearbyListings : regularListings;
 
   // Fetch events (for event pages OR weekend/time-intent "things to do" pages)
   const { data: events } = useQuery({
