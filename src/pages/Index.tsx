@@ -12,23 +12,23 @@ import { getImageUrl, getCategoryPlaceholder } from "@/lib/image-utils";
 import { Link } from "react-router-dom";
 
 const QUICK_LINKS = [
-  { label: "What's On", to: "/events-belfast", icon: Calendar },
-  { label: "Things To Do", to: "/things-to-do-belfast", icon: Sparkles },
+  { label: "What's On", to: "/events", icon: Calendar },
+  { label: "Things To Do", to: "/things-to-do", icon: Sparkles },
   { label: "Restaurants", to: "/best-restaurants-belfast", icon: Utensils },
-  { label: "Free", to: "/free-things-to-do-belfast", icon: Star },
-  { label: "Date Night", to: "/date-night-belfast", icon: Heart },
-  { label: "This Weekend", to: "/things-to-do-belfast-this-weekend", icon: Calendar },
+  { label: "Free", to: "/free-things-to-do", icon: Star },
+  { label: "Date Night", to: "/date-night", icon: Heart },
+  { label: "This Weekend", to: "/things-to-do-this-weekend", icon: Calendar },
 ];
 
 const POPULAR_SEARCHES = [
-  { label: "What's on this weekend", to: "/events-belfast-this-weekend" },
-  { label: "Free events Belfast", to: "/free-events-belfast" },
+  { label: "What's on this weekend", to: "/events-this-weekend" },
+  { label: "Free events", to: "/free-events" },
   { label: "Family activities", to: "/family-activities" },
   { label: "Best restaurants Belfast", to: "/best-restaurants-belfast" },
   { label: "Best brunch Belfast", to: "/best-brunch-belfast" },
-  { label: "Date night Belfast", to: "/date-night-belfast" },
-  { label: "Live music tonight", to: "/live-music-belfast-tonight" },
-  { label: "Things to do today", to: "/things-to-do-belfast-today" },
+  { label: "Date night", to: "/date-night" },
+  { label: "Live music tonight", to: "/live-music-tonight" },
+  { label: "Things to do today", to: "/things-to-do-today" },
   { label: "Best cafes Belfast", to: "/best-cafes-belfast" },
   { label: "Cocktail bars Belfast", to: "/cocktail-bars-belfast" },
   { label: "Things to do Cathedral Quarter", to: "/things-to-do-cathedral-quarter-belfast" },

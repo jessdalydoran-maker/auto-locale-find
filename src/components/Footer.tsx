@@ -12,23 +12,23 @@ const FOOTER_CITIES = [
 ];
 
 const FOOTER_CATEGORIES = [
-  { name: "Events", to: "/events-belfast" },
-  { name: "Things To Do", to: "/things-to-do-belfast" },
+  { name: "Events", to: "/events" },
+  { name: "Things To Do", to: "/things-to-do" },
   { name: "Restaurants", to: "/best-restaurants-belfast" },
   { name: "Cafes", to: "/best-cafes-belfast" },
   { name: "Bars", to: "/bars-belfast" },
   { name: "Brunch", to: "/best-brunch-belfast" },
-  { name: "Nightlife", to: "/nightlife-belfast" },
-  { name: "Live Music", to: "/live-music-belfast" },
+  { name: "Nightlife", to: "/nightlife" },
+  { name: "Live Music", to: "/live-music" },
 ];
 
 const FOOTER_QUICK_LINKS = [
-  { name: "This Weekend", to: "/things-to-do-belfast-this-weekend" },
-  { name: "Today", to: "/things-to-do-belfast-today" },
-  { name: "Free Events", to: "/free-events-belfast" },
+  { name: "This Weekend", to: "/things-to-do-this-weekend" },
+  { name: "Today", to: "/things-to-do-today" },
+  { name: "Free Events", to: "/free-events" },
   { name: "Family Activities", to: "/family-activities" },
-  { name: "Date Night", to: "/date-night-belfast" },
-  { name: "Free Things To Do", to: "/free-things-to-do-belfast" },
+  { name: "Date Night", to: "/date-night" },
+  { name: "Free Things To Do", to: "/free-things-to-do" },
 ];
 
 export const Footer = () => {
