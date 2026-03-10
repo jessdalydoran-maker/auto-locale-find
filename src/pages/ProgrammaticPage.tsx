@@ -375,8 +375,8 @@ const ProgrammaticPage = () => {
 
   const listings = isLandmarkPage ? nearbyListings : regularListings;
 
-  // Fetch events (for event pages, weekend pages, AND family/free event pages)
-  const shouldFetchEvents = showEvents || isWeekendPage || 
+  // Fetch events (for event pages, weekend pages, family/free/date-night pages)
+  const shouldFetchEvents = showEvents || isWeekendPage || isDateNightPage ||
     (parsed?.modifierSlug === "family" && parsed?.categorySlug === "things-to-do") ||
     (parsed?.modifierSlug === "free" && parsed?.categorySlug === "things-to-do");
 
