@@ -334,6 +334,7 @@ export type Database = {
           city_id: string
           created_at: string
           description: string | null
+          family_friendly: boolean
           google_maps_link: string | null
           id: string
           image_alt: string | null
@@ -343,6 +344,7 @@ export type Database = {
           is_approved: boolean
           is_archived: boolean
           is_featured: boolean
+          kids_friendly: boolean
           latitude: number | null
           longitude: number | null
           name: string
@@ -364,6 +366,7 @@ export type Database = {
           city_id: string
           created_at?: string
           description?: string | null
+          family_friendly?: boolean
           google_maps_link?: string | null
           id?: string
           image_alt?: string | null
@@ -373,6 +376,7 @@ export type Database = {
           is_approved?: boolean
           is_archived?: boolean
           is_featured?: boolean
+          kids_friendly?: boolean
           latitude?: number | null
           longitude?: number | null
           name: string
@@ -394,6 +398,7 @@ export type Database = {
           city_id?: string
           created_at?: string
           description?: string | null
+          family_friendly?: boolean
           google_maps_link?: string | null
           id?: string
           image_alt?: string | null
@@ -403,6 +408,7 @@ export type Database = {
           is_approved?: boolean
           is_archived?: boolean
           is_featured?: boolean
+          kids_friendly?: boolean
           latitude?: number | null
           longitude?: number | null
           name?: string
@@ -733,6 +739,7 @@ export type Database = {
           city_id: string
           created_at: string
           description: string | null
+          family_friendly: boolean
           google_maps_link: string | null
           id: string
           image_alt: string | null
@@ -742,6 +749,7 @@ export type Database = {
           is_approved: boolean
           is_archived: boolean
           is_featured: boolean
+          kids_friendly: boolean
           latitude: number | null
           longitude: number | null
           name: string
