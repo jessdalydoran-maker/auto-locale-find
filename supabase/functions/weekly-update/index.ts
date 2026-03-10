@@ -90,38 +90,20 @@ Deno.serve(async (req) => {
       .select("id");
     stats.listings_archived += archiveResult?.length || 0;
 
-    // ─── 4. FIX BROKEN IMAGES ───
-    // Replace null/empty image URLs with category-appropriate fallbacks
-    const categoryFallbacks: Record<string, string> = {
-      "restaurants": "https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=600&h=400&fit=crop",
-      "cafes": "https://images.unsplash.com/photo-1501339847302-ac426a4a7cbb?w=600&h=400&fit=crop",
-      "bars": "https://images.unsplash.com/photo-1514933651103-005eec06c04b?w=600&h=400&fit=crop",
-      "things-to-do": "https://images.unsplash.com/photo-1596394723269-e3e2b9eb8cb6?w=600&h=400&fit=crop",
-      "gyms": "https://images.unsplash.com/photo-1534438327276-14e5300c3a48?w=600&h=400&fit=crop",
-    };
-
-    const { data: categories } = await supabase
-      .from("categories")
-      .select("id, slug")
-      .eq("is_active", true);
-
-    if (categories) {
-      for (const cat of categories) {
-        const fallback = categoryFallbacks[cat.slug] || categoryFallbacks["things-to-do"];
-        const { data: fixed } = await supabase
-          .from("listings")
-          .update({
-            image_url: fallback,
-            image_source: "fallback",
-            image_alt: `${cat.slug} in Belfast`,
-          })
-          .eq("category_id", cat.id)
-          .is("image_url", null)
-          .eq("is_archived", false)
-          .select("id");
-        stats.listings_updated += fixed?.length || 0;
-      }
-    }
+    // ─── 4. IMAGE AUDIT ───
+    // Set any listings without verified images to placeholder status
+    const { data: unverifiedListings } = await supabase
+      .from("listings")
+      .update({
+        image_status: "placeholder",
+        image_source: "fallback",
+      })
+      .eq("is_archived", false)
+      .neq("image_status", "verified")
+      .not("image_source", "in", '("manual","google_places","official")')
+      .select("id");
+    stats.listings_updated += unverifiedListings?.length || 0;
+    console.log(`Set ${unverifiedListings?.length || 0} listings to placeholder status`);
 
     // ─── 5. PAGE QUALITY CHECK ───
     const thresholdCategoryCity = parseInt(settingsMap.get("content_threshold_category_city") || "5");
