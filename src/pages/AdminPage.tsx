@@ -447,7 +447,7 @@ const AdminPage = () => {
                               <button
                                 className="text-[9px] px-1.5 py-0.5 rounded border border-border text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
                                 onClick={async () => {
-                                  const AVAILABLE_TAGS = ["family", "kids", "couples", "groups", "indoor", "outdoor", "nightlife", "romantic"];
+                                  const AVAILABLE_TAGS = ["family", "kids", "couples", "groups", "indoor", "outdoor", "nightlife", "romantic", "late-night", "adults-only"];
                                   const currentTags: string[] = (listing as any).audience_tags || [];
                                   const remaining = AVAILABLE_TAGS.filter(t => !currentTags.includes(t));
                                   if (remaining.length === 0) { toast.info("All tags already applied"); return; }
@@ -549,6 +549,38 @@ const AdminPage = () => {
                                 }}
                               >
                                 {listing.is_featured ? "★ Featured" : "☆ Feature"}
+                              </Button>
+                              <Button
+                                size="sm"
+                                variant={(listing as any).family_friendly ? "default" : "outline"}
+                                className="text-[10px] h-6 px-2"
+                                onClick={async () => {
+                                  const current = (listing as any).family_friendly || false;
+                                  await supabase
+                                    .from("listings")
+                                    .update({ family_friendly: !current } as any)
+                                    .eq("id", listing.id);
+                                  queryClient.invalidateQueries({ queryKey: ["admin-listings"] });
+                                  toast.success(`${listing.name} ${current ? "unmarked" : "marked"} family-friendly`);
+                                }}
+                              >
+                                {(listing as any).family_friendly ? "👨‍👩‍👧 Family ✓" : "👨‍👩‍👧 Family"}
+                              </Button>
+                              <Button
+                                size="sm"
+                                variant={(listing as any).kids_friendly ? "default" : "outline"}
+                                className="text-[10px] h-6 px-2"
+                                onClick={async () => {
+                                  const current = (listing as any).kids_friendly || false;
+                                  await supabase
+                                    .from("listings")
+                                    .update({ kids_friendly: !current } as any)
+                                    .eq("id", listing.id);
+                                  queryClient.invalidateQueries({ queryKey: ["admin-listings"] });
+                                  toast.success(`${listing.name} ${current ? "unmarked" : "marked"} kids-friendly`);
+                                }}
+                              >
+                                {(listing as any).kids_friendly ? "🧒 Kids ✓" : "🧒 Kids"}
                               </Button>
                             </div>
                           </td>

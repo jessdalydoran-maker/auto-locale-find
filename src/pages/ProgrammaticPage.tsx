@@ -181,8 +181,10 @@ const ProgrammaticPage = () => {
 
   // Categories to exclude for family pages
   const FAMILY_EXCLUDED_CATEGORIES = ["bars", "cocktail-bars", "nightlife", "late-night"];
-  // Categories that are acceptable fallbacks for family pages
-  const FAMILY_FALLBACK_CATEGORIES = ["attractions", "parks", "museums", "markets", "tours", "restaurants", "cafes", "cinemas", "activity-centres"];
+  // Tags that disqualify a listing from family pages
+  const FAMILY_EXCLUDED_TAGS = ["nightlife", "late-night", "cocktails", "romantic", "adults-only"];
+  // Categories that are acceptable fallbacks for family pages (NO restaurants/cafes unless family-tagged)
+  const FAMILY_FALLBACK_CATEGORIES = ["attractions", "things-to-do", "parks", "museums", "markets", "tours", "cinemas", "activity-centres", "leisure-centres", "zoos", "science-centres", "outdoor-activities", "indoor-play"];
 
   // Fetch regular listings (non-landmark pages)
   const { data: regularListings } = useQuery({
@@ -208,54 +210,64 @@ const ProgrammaticPage = () => {
         query = query.eq("price_level", "Free");
       }
 
-      // For family pages, filter by audience_tags containing family or kids
-      if (isFamilyPage) {
-        query = query.overlaps("audience_tags", ["family", "kids"]);
-      }
-
       const { data, error } = await query;
       if (error) throw error;
 
       let results = data || [];
 
       if (isFamilyPage) {
-        // Exclude nightlife/bars categories
-        results = results.filter((l: any) => {
-          const catSlug = (l.categories as any)?.slug || "";
-          const tags: string[] = (l as any).audience_tags || [];
-          return !FAMILY_EXCLUDED_CATEGORIES.includes(catSlug) && !tags.includes("nightlife");
-        });
+        // STRICT family filter: only show listings that are explicitly family-suitable
+        // Step 1: Get all listings for this city (the query above may already have audience_tags filter for non-family modifier pages)
+        // We need to re-fetch without category restriction to get family-tagged listings across all categories
+        const { data: familyData } = await supabase
+          .from("listings")
+          .select("*, cities!inner(slug, name), categories!inner(slug, name)")
+          .eq("cities.slug", parsed!.citySlug)
+          .eq("is_approved", true)
+          .order("rating", { ascending: false })
+          .limit(100);
 
-        // If fewer than 5 family-tagged results, supplement with suitable attractions
-        if (results.length < 5) {
-          const existingIds = results.map((l: any) => l.id);
-          const { data: fallback } = await supabase
-            .from("listings")
-            .select("*, cities!inner(slug, name), categories!inner(slug, name)")
-            .eq("cities.slug", parsed!.citySlug)
-            .eq("is_approved", true)
-            .order("rating", { ascending: false })
-            .limit(20);
-
-          if (fallback) {
-            const supplemental = fallback.filter((l: any) => {
-              const catSlug = (l.categories as any)?.slug || "";
-              return !existingIds.includes(l.id) &&
-                FAMILY_FALLBACK_CATEGORIES.includes(catSlug) &&
-                !FAMILY_EXCLUDED_CATEGORIES.includes(catSlug);
-            });
-            results = [...results, ...supplemental].slice(0, 20);
-          }
+        if (familyData) {
+          results = familyData;
         }
 
-        // Prioritise listings with family/kids tags
+        // Step 2: Hard filter — only keep listings that are explicitly family-friendly
+        results = results.filter((l: any) => {
+          const tags: string[] = (l as any).audience_tags || [];
+          const catSlug = (l.categories as any)?.slug || "";
+          const isFamilyTagged = tags.includes("family") || tags.includes("kids") || (l as any).family_friendly === true || (l as any).kids_friendly === true;
+          
+          // Exclude nightlife/bars/cocktails regardless
+          if (FAMILY_EXCLUDED_CATEGORIES.includes(catSlug)) return false;
+          if (tags.some((t: string) => FAMILY_EXCLUDED_TAGS.includes(t))) return false;
+          
+          // If explicitly family-tagged, include it
+          if (isFamilyTagged) return true;
+          
+          // If it's a clearly suitable category (museum, park, attraction, etc.), allow as fallback
+          if (FAMILY_FALLBACK_CATEGORIES.includes(catSlug)) return true;
+          
+          // Generic restaurants/cafes/bars without family tag: EXCLUDE
+          return false;
+        });
+
+        // Step 3: Priority sort — family+kids first, then family, then kids, then fallback categories
         results.sort((a: any, b: any) => {
           const aTags: string[] = a.audience_tags || [];
           const bTags: string[] = b.audience_tags || [];
-          const aScore = (aTags.includes("family") ? 2 : 0) + (aTags.includes("kids") ? 1 : 0);
-          const bScore = (bTags.includes("family") ? 2 : 0) + (bTags.includes("kids") ? 1 : 0);
+          const aFam = aTags.includes("family");
+          const aKids = aTags.includes("kids");
+          const aFF = (a as any).family_friendly === true;
+          const bFam = bTags.includes("family");
+          const bKids = bTags.includes("kids");
+          const bFF = (b as any).family_friendly === true;
+          const aScore = (aFam && aKids ? 4 : 0) + (aFam ? 2 : 0) + (aKids ? 1 : 0) + (aFF ? 0.5 : 0);
+          const bScore = (bFam && bKids ? 4 : 0) + (bFam ? 2 : 0) + (bKids ? 1 : 0) + (bFF ? 0.5 : 0);
           return bScore - aScore;
         });
+
+        // Limit to reasonable count
+        results = results.slice(0, 20);
       }
 
       return results;
@@ -809,8 +821,16 @@ const ProgrammaticPage = () => {
             ) : (
               <div className="text-center py-16 bg-muted/50 rounded-lg">
                 <MapPin className="h-8 w-8 text-muted-foreground/30 mx-auto mb-3" />
-                <p className="text-muted-foreground text-sm font-medium">No listings yet — we're collecting the best places.</p>
-                <p className="text-muted-foreground text-xs mt-1 mb-4">Check back soon for curated recommendations.</p>
+                <p className="text-muted-foreground text-sm font-medium">
+                  {isFamilyPage
+                    ? "We're curating more family-friendly Belfast recommendations."
+                    : "No listings yet — we're collecting the best places."}
+                </p>
+                <p className="text-muted-foreground text-xs mt-1 mb-4">
+                  {isFamilyPage
+                    ? "Quality matters — we only show genuinely family-suitable places."
+                    : "Check back soon for curated recommendations."}
+                </p>
                 {siblingPages.length > 0 && (
                   <div className="flex flex-wrap justify-center gap-2">
                     {siblingPages.slice(0, 4).map((page) => (
