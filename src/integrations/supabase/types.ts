@@ -158,41 +158,53 @@ export type Database = {
       event_sources: {
         Row: {
           city_id: string | null
+          council_area: string | null
+          crawl_frequency: string | null
           created_at: string
           events_url: string | null
           id: string
           is_active: boolean
           last_scraped_at: string | null
           name: string
+          notes: string | null
           priority: number
           source_type: string
           tags: string[] | null
+          town: string | null
           website_url: string | null
         }
         Insert: {
           city_id?: string | null
+          council_area?: string | null
+          crawl_frequency?: string | null
           created_at?: string
           events_url?: string | null
           id?: string
           is_active?: boolean
           last_scraped_at?: string | null
           name: string
+          notes?: string | null
           priority?: number
           source_type?: string
           tags?: string[] | null
+          town?: string | null
           website_url?: string | null
         }
         Update: {
           city_id?: string | null
+          council_area?: string | null
+          crawl_frequency?: string | null
           created_at?: string
           events_url?: string | null
           id?: string
           is_active?: boolean
           last_scraped_at?: string | null
           name?: string
+          notes?: string | null
           priority?: number
           source_type?: string
           tags?: string[] | null
+          town?: string | null
           website_url?: string | null
         }
         Relationships: [
@@ -209,6 +221,7 @@ export type Database = {
         Row: {
           category_id: string | null
           city_id: string
+          council_area: string | null
           created_at: string
           date_end: string | null
           date_start: string
@@ -242,6 +255,7 @@ export type Database = {
         Insert: {
           category_id?: string | null
           city_id: string
+          council_area?: string | null
           created_at?: string
           date_end?: string | null
           date_start: string
@@ -275,6 +289,7 @@ export type Database = {
         Update: {
           category_id?: string | null
           city_id?: string
+          council_area?: string | null
           created_at?: string
           date_end?: string | null
           date_start?: string
