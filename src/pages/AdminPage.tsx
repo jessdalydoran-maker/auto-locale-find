@@ -1,11 +1,21 @@
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Layout } from "@/components/Layout";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
-import { BarChart3, Layers, MapPin, TrendingUp } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Switch } from "@/components/ui/switch";
+import {
+  BarChart3, Layers, MapPin, TrendingUp, Play, Settings, Clock,
+  CheckCircle2, XCircle, AlertTriangle, Archive, RefreshCw, FileText,
+} from "lucide-react";
+import { useState } from "react";
+import { toast } from "sonner";
 
 const AdminPage = () => {
+  const queryClient = useQueryClient();
+  const [isRunning, setIsRunning] = useState(false);
+
   const { data: cities } = useQuery({
     queryKey: ["admin-cities"],
     queryFn: async () => {
@@ -49,6 +59,66 @@ const AdminPage = () => {
     },
   });
 
+  const { data: automationLogs } = useQuery({
+    queryKey: ["admin-automation-logs"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("automation_logs")
+        .select("*")
+        .order("started_at", { ascending: false })
+        .limit(20);
+      if (error) throw error;
+      return data;
+    },
+  });
+
+  const { data: automationSettings } = useQuery({
+    queryKey: ["admin-automation-settings"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("automation_settings")
+        .select("*");
+      if (error) throw error;
+      return data;
+    },
+  });
+
+  const { data: pageQuality } = useQuery({
+    queryKey: ["admin-page-quality"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("page_quality")
+        .select("*")
+        .order("content_count", { ascending: false });
+      if (error) throw error;
+      return data;
+    },
+  });
+
+  const settingsMap = new Map(
+    automationSettings?.map((s) => [s.key, s.value]) || []
+  );
+
+  const runWeeklyUpdate = async () => {
+    setIsRunning(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("weekly-update", {
+        headers: { "x-manual-run": "true" },
+      });
+      if (error) throw error;
+      toast.success(
+        `Update complete: ${data.listings_added} added, ${data.listings_updated} updated, ${data.events_expired} events expired, ${data.duplicates_merged} duplicates merged`
+      );
+      queryClient.invalidateQueries({ queryKey: ["admin-automation-logs"] });
+      queryClient.invalidateQueries({ queryKey: ["admin-page-quality"] });
+      queryClient.invalidateQueries({ queryKey: ["admin-listings"] });
+    } catch (err) {
+      toast.error("Weekly update failed: " + String(err));
+    } finally {
+      setIsRunning(false);
+    }
+  };
+
   const stats = [
     { label: "Cities", value: cities?.length || 0, icon: MapPin },
     { label: "Categories", value: categories?.length || 0, icon: Layers },
@@ -74,14 +144,151 @@ const AdminPage = () => {
           ))}
         </div>
 
-        <Tabs defaultValue="listings">
-          <TabsList className="mb-6">
+        <Tabs defaultValue="automation">
+          <TabsList className="mb-6 flex-wrap">
+            <TabsTrigger value="automation">Automation</TabsTrigger>
             <TabsTrigger value="listings">Listings</TabsTrigger>
+            <TabsTrigger value="pages">Page Quality</TabsTrigger>
             <TabsTrigger value="cities">Cities</TabsTrigger>
             <TabsTrigger value="categories">Categories</TabsTrigger>
             <TabsTrigger value="analytics">Analytics</TabsTrigger>
           </TabsList>
 
+          {/* ─── AUTOMATION TAB ─── */}
+          <TabsContent value="automation">
+            <div className="space-y-6">
+              {/* Controls */}
+              <div className="bg-card rounded-xl p-6 card-shadow">
+                <h3 className="font-display font-semibold text-foreground mb-4 flex items-center gap-2">
+                  <Settings className="h-5 w-5" /> Automation Controls
+                </h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div className="space-y-4">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-sm font-medium text-foreground">Weekly Automation</p>
+                        <p className="text-xs text-muted-foreground">Runs every Sunday at 3 AM</p>
+                      </div>
+                      <Badge variant={settingsMap.get("automation_enabled") === "true" ? "default" : "secondary"}>
+                        {settingsMap.get("automation_enabled") === "true" ? "Enabled" : "Disabled"}
+                      </Badge>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-sm font-medium text-foreground">Priority City</p>
+                        <p className="text-xs text-muted-foreground">Focus automation on this city first</p>
+                      </div>
+                      <Badge variant="secondary" className="capitalize">
+                        {settingsMap.get("priority_city") || "belfast"}
+                      </Badge>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-sm font-medium text-foreground">Category/City Threshold</p>
+                        <p className="text-xs text-muted-foreground">Min listings for page publishing</p>
+                      </div>
+                      <Badge variant="secondary">
+                        {settingsMap.get("content_threshold_category_city") || "5"} listings
+                      </Badge>
+                    </div>
+                  </div>
+                  <div className="flex flex-col gap-3">
+                    <Button
+                      onClick={runWeeklyUpdate}
+                      disabled={isRunning}
+                      className="w-full"
+                    >
+                      {isRunning ? (
+                        <><RefreshCw className="h-4 w-4 mr-2 animate-spin" /> Running...</>
+                      ) : (
+                        <><Play className="h-4 w-4 mr-2" /> Run Weekly Update Now</>
+                      )}
+                    </Button>
+                    <p className="text-xs text-muted-foreground text-center">
+                      {settingsMap.get("last_manual_run")
+                        ? `Last manual run: ${new Date(settingsMap.get("last_manual_run")!).toLocaleString()}`
+                        : "No manual runs yet"}
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Recent Logs */}
+              <div className="bg-card rounded-xl card-shadow overflow-hidden">
+                <div className="p-4 border-b border-border">
+                  <h3 className="font-display font-semibold text-foreground flex items-center gap-2">
+                    <FileText className="h-5 w-5" /> Update Logs
+                  </h3>
+                </div>
+                <div className="overflow-x-auto">
+                  <table className="w-full text-sm">
+                    <thead>
+                      <tr className="border-b border-border">
+                        <th className="text-left p-3 font-medium text-muted-foreground">Date</th>
+                        <th className="text-left p-3 font-medium text-muted-foreground">Type</th>
+                        <th className="text-left p-3 font-medium text-muted-foreground">Status</th>
+                        <th className="text-left p-3 font-medium text-muted-foreground">Added</th>
+                        <th className="text-left p-3 font-medium text-muted-foreground">Updated</th>
+                        <th className="text-left p-3 font-medium text-muted-foreground">Archived</th>
+                        <th className="text-left p-3 font-medium text-muted-foreground">Expired</th>
+                        <th className="text-left p-3 font-medium text-muted-foreground">Dupes</th>
+                        <th className="text-left p-3 font-medium text-muted-foreground">Pages +/-</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {automationLogs && automationLogs.length > 0 ? (
+                        automationLogs.map((log) => (
+                          <tr key={log.id} className="border-b border-border last:border-0">
+                            <td className="p-3 text-foreground text-xs">
+                              {new Date(log.started_at).toLocaleString()}
+                            </td>
+                            <td className="p-3">
+                              <Badge variant="secondary" className="text-xs">{log.run_type}</Badge>
+                            </td>
+                            <td className="p-3">
+                              {log.status === "completed" && (
+                                <Badge variant="default" className="text-xs">
+                                  <CheckCircle2 className="h-3 w-3 mr-1" /> Done
+                                </Badge>
+                              )}
+                              {log.status === "running" && (
+                                <Badge variant="secondary" className="text-xs">
+                                  <RefreshCw className="h-3 w-3 mr-1 animate-spin" /> Running
+                                </Badge>
+                              )}
+                              {log.status === "failed" && (
+                                <Badge variant="destructive" className="text-xs">
+                                  <XCircle className="h-3 w-3 mr-1" /> Failed
+                                </Badge>
+                              )}
+                            </td>
+                            <td className="p-3 text-foreground">{log.listings_added}</td>
+                            <td className="p-3 text-foreground">{log.listings_updated}</td>
+                            <td className="p-3 text-foreground">{log.listings_archived}</td>
+                            <td className="p-3 text-foreground">{log.events_expired}</td>
+                            <td className="p-3 text-foreground">{log.duplicates_merged}</td>
+                            <td className="p-3 text-foreground">
+                              <span className="text-green-600">+{log.pages_published}</span>
+                              {" / "}
+                              <span className="text-red-500">-{log.pages_unpublished}</span>
+                            </td>
+                          </tr>
+                        ))
+                      ) : (
+                        <tr>
+                          <td colSpan={9} className="p-6 text-center text-muted-foreground text-sm">
+                            No automation runs yet. Click "Run Weekly Update Now" to start.
+                          </td>
+                        </tr>
+                      )}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+          </TabsContent>
+
+          {/* ─── LISTINGS TAB ─── */}
           <TabsContent value="listings">
             <div className="bg-card rounded-xl card-shadow overflow-hidden">
               <div className="overflow-x-auto">
@@ -109,6 +316,64 @@ const AdminPage = () => {
                         </td>
                       </tr>
                     ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </TabsContent>
+
+          {/* ─── PAGE QUALITY TAB ─── */}
+          <TabsContent value="pages">
+            <div className="bg-card rounded-xl card-shadow overflow-hidden">
+              <div className="p-4 border-b border-border">
+                <h3 className="font-display font-semibold text-foreground">Page Quality Overview</h3>
+                <p className="text-xs text-muted-foreground mt-1">
+                  Pages need ≥5 listings to be published. Run the weekly update to refresh.
+                </p>
+              </div>
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="border-b border-border">
+                      <th className="text-left p-3 font-medium text-muted-foreground">Page</th>
+                      <th className="text-left p-3 font-medium text-muted-foreground">Content</th>
+                      <th className="text-left p-3 font-medium text-muted-foreground">Status</th>
+                      <th className="text-left p-3 font-medium text-muted-foreground">Last Checked</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {pageQuality && pageQuality.length > 0 ? (
+                      pageQuality.map((pq) => (
+                        <tr key={pq.id} className="border-b border-border last:border-0">
+                          <td className="p-3 font-medium text-foreground text-xs font-mono">/{pq.page_slug}</td>
+                          <td className="p-3">
+                            <Badge variant={pq.content_count >= 5 ? "default" : "secondary"}>
+                              {pq.content_count} items
+                            </Badge>
+                          </td>
+                          <td className="p-3">
+                            {pq.is_published ? (
+                              <Badge variant="default" className="text-xs">
+                                <CheckCircle2 className="h-3 w-3 mr-1" /> Published
+                              </Badge>
+                            ) : (
+                              <Badge variant="secondary" className="text-xs">
+                                <AlertTriangle className="h-3 w-3 mr-1" /> Unpublished
+                              </Badge>
+                            )}
+                          </td>
+                          <td className="p-3 text-muted-foreground text-xs">
+                            {new Date(pq.last_checked_at).toLocaleDateString()}
+                          </td>
+                        </tr>
+                      ))
+                    ) : (
+                      <tr>
+                        <td colSpan={4} className="p-6 text-center text-muted-foreground text-sm">
+                          No page quality data yet. Run the weekly update to populate.
+                        </td>
+                      </tr>
+                    )}
                   </tbody>
                 </table>
               </div>
