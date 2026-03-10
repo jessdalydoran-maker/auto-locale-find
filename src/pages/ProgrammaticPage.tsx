@@ -375,6 +375,79 @@ const ProgrammaticPage = () => {
 
   const listings = isLandmarkPage ? nearbyListings : regularListings;
 
+  // Fetch venue listings for event-category pages (live-music, theatre, comedy etc)
+  // so we show both events AND related venues
+  const VENUE_CATEGORY_MAP: Record<string, string[]> = {
+    "live-music": ["bars", "nightlife", "live-music"],
+    "theatre": ["theatre", "attractions"],
+    "comedy": ["comedy", "bars", "nightlife"],
+    "exhibitions": ["exhibitions", "museums", "attractions"],
+    "markets": ["markets"],
+    "festivals": ["festivals", "attractions"],
+  };
+
+  const venueCategories = showEvents && parsed?.categorySlug ? VENUE_CATEGORY_MAP[parsed.categorySlug] || [] : [];
+
+  const { data: venueListings } = useQuery({
+    queryKey: ["venue-listings", parsed?.categorySlug, parsed?.citySlug, locationFilter],
+    queryFn: async () => {
+      let query = supabase
+        .from("listings")
+        .select("*, cities!inner(slug, name), categories!inner(slug, name)")
+        .eq("is_approved", true)
+        .order("rating", { ascending: false })
+        .limit(30);
+
+      if (isNIWide) {
+        if (locationFilter) {
+          query = query.eq("cities.slug", locationFilter);
+        }
+      } else {
+        query = query.eq("cities.slug", parsed!.citySlug);
+      }
+
+      // For live-music, include bars that host live music
+      if (parsed?.categorySlug === "live-music") {
+        query = query.or(`categories.slug.in.(${venueCategories.join(",")})`);
+      }
+
+      const { data, error } = await query;
+      if (error) throw error;
+
+      let results = data || [];
+
+      // For live-music, also include bars with music-related names/descriptions
+      if (parsed?.categorySlug === "live-music") {
+        results = results.filter((l: any) => {
+          const catSlug = (l.categories as any)?.slug || "";
+          const name = l.name?.toLowerCase() || "";
+          const desc = (l.short_description || l.description || "").toLowerCase();
+          const tags: string[] = l.audience_tags || [];
+
+          // Direct category match
+          if (["live-music", "nightlife"].includes(catSlug)) return true;
+
+          // Bars that have music signals
+          if (catSlug === "bars") {
+            if (name.includes("music") || name.includes("empire") || name.includes("limelight") ||
+                name.includes("front page") || name.includes("sunflower") || name.includes("voodoo") ||
+                name.includes("filthy") || name.includes("mandela") || name.includes("lavery") ||
+                name.includes("errigle") || name.includes("botanic") || name.includes("harp")) return true;
+            if (desc.includes("music") || desc.includes("live") || desc.includes("gig") || desc.includes("band")) return true;
+            if (tags.includes("live-music") || tags.includes("music")) return true;
+            // Include all bars as potential music venues (many NI bars host live music)
+            return true;
+          }
+
+          return false;
+        });
+      }
+
+      return results;
+    },
+    enabled: venueCategories.length > 0 && !!parsed?.citySlug,
+  });
+
   // Fetch events (for event pages, weekend pages, family/free/date-night pages)
   const shouldFetchEvents = showEvents || isWeekendPage || isDateNightPage ||
     (parsed?.modifierSlug === "family" && parsed?.categorySlug === "things-to-do") ||
