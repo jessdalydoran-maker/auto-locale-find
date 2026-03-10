@@ -30,7 +30,7 @@ import {
   isThinContent,
   getCanonicalSlug,
 } from "@/lib/content-quality";
-import { useEffect, useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 const ProgrammaticPage = () => {
   const { "*": rawSlug } = useParams();
