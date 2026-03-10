@@ -763,37 +763,81 @@ const ProgrammaticPage = () => {
         {showEvents && (
           <div className="my-8">
             <h2 className="font-display font-semibold text-xl text-foreground mb-6">
-              {modifier?.name || ""} {category?.name || "Events"} in {locationName}
+              {modifier?.name || ""} {category?.name || "Events"} {locationFilter ? `in ${niCities.find(c => c.slug === locationFilter)?.name || ""}` : `Across ${locationName}`}
               {parsed?.timeIntent ? ` ${formatTimeIntent(parsed.timeIntent)}` : ""}
             </h2>
             {events && events.length > 0 ? (
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                {events.map((event, i) => (
-                  <EventCard
-                    key={event.id}
-                    title={event.title}
-                    slug={event.slug}
-                    shortDescription={event.short_description}
-                    dateStart={event.date_start}
-                    dateEnd={event.date_end}
-                    timeStart={event.time_start}
-                    venueName={event.venue_name}
-                    venueAddress={event.venue_address}
-                    imageUrl={event.image_url}
-                    imageSource={(event as any).image_source}
-                    imageAlt={(event as any).image_alt}
-                    imageStatus={(event as any).image_status}
-                    categorySlug={parsed?.categorySlug}
-                    cityName={city?.name}
-                    isFree={event.is_free}
-                    isFamilyFriendly={event.is_family_friendly}
-                    ticketUrl={event.ticket_url}
-                    price={event.price}
-                    tags={event.tags || []}
-                    index={i}
-                  />
-                ))}
-              </div>
+              <>
+                {/* Grouped by city for NI-wide pages without location filter */}
+                {eventsByCity && !locationFilter ? (
+                  <div className="space-y-8">
+                    {eventsByCity.map(([cityGroupName, cityEvents]) => (
+                      <div key={cityGroupName}>
+                        <h3 className="font-display font-semibold text-lg text-foreground mb-4 flex items-center gap-2">
+                          <MapPin className="h-4 w-4 text-accent" />
+                          {cityGroupName}
+                          <span className="text-xs text-muted-foreground font-normal">({cityEvents.length} event{cityEvents.length !== 1 ? "s" : ""})</span>
+                        </h3>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                          {cityEvents.map((event, i) => (
+                            <EventCard
+                              key={event.id}
+                              title={event.title}
+                              slug={event.slug}
+                              shortDescription={event.short_description}
+                              dateStart={event.date_start}
+                              dateEnd={event.date_end}
+                              timeStart={event.time_start}
+                              venueName={event.venue_name}
+                              venueAddress={event.venue_address}
+                              imageUrl={event.image_url}
+                              imageSource={(event as any).image_source}
+                              imageAlt={(event as any).image_alt}
+                              imageStatus={(event as any).image_status}
+                              categorySlug={parsed?.categorySlug}
+                              cityName={cityGroupName}
+                              isFree={event.is_free}
+                              isFamilyFriendly={event.is_family_friendly}
+                              ticketUrl={event.ticket_url}
+                              price={event.price}
+                              tags={event.tags || []}
+                              index={i}
+                            />
+                          ))}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                    {events.map((event, i) => (
+                      <EventCard
+                        key={event.id}
+                        title={event.title}
+                        slug={event.slug}
+                        shortDescription={event.short_description}
+                        dateStart={event.date_start}
+                        dateEnd={event.date_end}
+                        timeStart={event.time_start}
+                        venueName={event.venue_name}
+                        venueAddress={event.venue_address}
+                        imageUrl={event.image_url}
+                        imageSource={(event as any).image_source}
+                        imageAlt={(event as any).image_alt}
+                        imageStatus={(event as any).image_status}
+                        categorySlug={parsed?.categorySlug}
+                        cityName={(event.cities as any)?.name || city?.name}
+                        isFree={event.is_free}
+                        isFamilyFriendly={event.is_family_friendly}
+                        ticketUrl={event.ticket_url}
+                        price={event.price}
+                        tags={event.tags || []}
+                        index={i}
+                      />
+                    ))}
+                  </div>
+                )}
+              </>
             ) : (
               <div className="text-center py-16 bg-muted/50 rounded-lg">
                 <Calendar className="h-8 w-8 text-muted-foreground mx-auto mb-3" />
