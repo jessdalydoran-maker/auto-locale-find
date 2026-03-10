@@ -201,15 +201,24 @@ const ProgrammaticPage = () => {
 
   // Fetch regular listings (non-landmark pages)
   const { data: regularListings } = useQuery({
-    queryKey: ["prog-listings", parsed?.categorySlug, parsed?.citySlug, parsed?.neighbourhoodSlug, parsed?.modifierSlug],
+    queryKey: ["prog-listings", parsed?.categorySlug, parsed?.citySlug, parsed?.neighbourhoodSlug, parsed?.modifierSlug, locationFilter],
     queryFn: async () => {
       let query = supabase
         .from("listings")
         .select("*, cities!inner(slug, name), categories!inner(slug, name)")
-        .eq("cities.slug", parsed!.citySlug)
         .eq("is_approved", true)
         .order("rating", { ascending: false })
-        .limit(30);
+        .limit(isFamilyPage && isNIWide ? 100 : 30);
+
+      // For NI-wide pages, don't filter by city unless locationFilter is set
+      if (isNIWide) {
+        if (locationFilter) {
+          query = query.eq("cities.slug", locationFilter);
+        }
+        // No city filter = all NI cities
+      } else {
+        query = query.eq("cities.slug", parsed!.citySlug);
+      }
 
       if (parsed!.categorySlug !== "things-to-do" && parsed!.categorySlug !== "indoor-activities" && !showEvents) {
         query = query.eq("categories.slug", parsed!.categorySlug);
@@ -229,42 +238,41 @@ const ProgrammaticPage = () => {
       let results = data || [];
 
       if (isFamilyPage) {
-        // STRICT family filter: only show listings that are explicitly family-suitable
-        // Step 1: Get all listings for this city (the query above may already have audience_tags filter for non-family modifier pages)
-        // We need to re-fetch without category restriction to get family-tagged listings across all categories
-        const { data: familyData } = await supabase
+        // For family NI-wide, re-fetch across all categories without city restriction
+        let familyQuery = supabase
           .from("listings")
           .select("*, cities!inner(slug, name), categories!inner(slug, name)")
-          .eq("cities.slug", parsed!.citySlug)
           .eq("is_approved", true)
           .order("rating", { ascending: false })
-          .limit(100);
+          .limit(200);
 
+        if (isNIWide) {
+          if (locationFilter) {
+            familyQuery = familyQuery.eq("cities.slug", locationFilter);
+          }
+        } else {
+          familyQuery = familyQuery.eq("cities.slug", parsed!.citySlug);
+        }
+
+        const { data: familyData } = await familyQuery;
         if (familyData) {
           results = familyData;
         }
 
-        // Step 2: Hard filter — only keep listings that are explicitly family-friendly
+        // Hard filter — only keep listings that are explicitly family-friendly
         results = results.filter((l: any) => {
           const tags: string[] = (l as any).audience_tags || [];
           const catSlug = (l.categories as any)?.slug || "";
           const isFamilyTagged = tags.includes("family") || tags.includes("kids") || (l as any).family_friendly === true || (l as any).kids_friendly === true;
           
-          // Exclude nightlife/bars/cocktails regardless
           if (FAMILY_EXCLUDED_CATEGORIES.includes(catSlug)) return false;
           if (tags.some((t: string) => FAMILY_EXCLUDED_TAGS.includes(t))) return false;
-          
-          // If explicitly family-tagged, include it
           if (isFamilyTagged) return true;
-          
-          // If it's a clearly suitable category (museum, park, attraction, etc.), allow as fallback
           if (FAMILY_FALLBACK_CATEGORIES.includes(catSlug)) return true;
-          
-          // Generic restaurants/cafes/bars without family tag: EXCLUDE
           return false;
         });
 
-        // Step 3: Priority sort — family+kids first, then family, then kids, then fallback categories
+        // Priority sort — family+kids first, then family, then kids, then fallback categories
         results.sort((a: any, b: any) => {
           const aTags: string[] = a.audience_tags || [];
           const bTags: string[] = b.audience_tags || [];
@@ -279,8 +287,7 @@ const ProgrammaticPage = () => {
           return bScore - aScore;
         });
 
-        // Limit to reasonable count
-        results = results.slice(0, 20);
+        results = results.slice(0, 30);
       }
 
       return results;
