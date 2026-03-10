@@ -5,7 +5,7 @@ import { Layout } from "@/components/Layout";
 import { ListingCard } from "@/components/ListingCard";
 import { EventCard } from "@/components/EventCard";
 import { AdPlaceholder } from "@/components/AdPlaceholder";
-import { MapPin, ChevronRight, Calendar, Filter, ArrowRight } from "lucide-react";
+import { MapPin, ChevronRight, Calendar, Filter, ArrowRight, AlertCircle } from "lucide-react";
 import {
   parseSlug,
   generateTitle,
@@ -23,9 +23,12 @@ import {
   getSiblingPages,
   getCrossClusterLinks,
 } from "@/lib/seo-clusters";
+import {
+  meetsContentThreshold,
+  isThinContent,
+  getCanonicalSlug,
+} from "@/lib/content-quality";
 import { useEffect, useMemo } from "react";
-
-const MIN_CONTENT_THRESHOLD = 0; // Show page even with 0 items but with helpful messaging
 
 const ProgrammaticPage = () => {
   const { "*": rawSlug } = useParams();
