@@ -35,6 +35,7 @@ const KNOWN_MODIFIERS = [
   "indoor",
   "date-night",
   "rainy-day",
+  "top",
 ];
 
 const KNOWN_TIME_INTENTS = [
