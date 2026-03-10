@@ -56,6 +56,11 @@ const CATEGORY_ALIASES: Record<string, string> = {
   "cheap-things-to-do": "things-to-do",
 };
 
+/** City slug aliases — allows short forms like "ni" for "northern-ireland" */
+const CITY_ALIASES: Record<string, string> = {
+  "ni": "northern-ireland",
+};
+
 /**
  * Parse a programmatic SEO slug into its components.
  */

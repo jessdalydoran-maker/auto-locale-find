@@ -282,6 +282,9 @@ const ProgrammaticPage = () => {
     (parsed?.modifierSlug === "family" && parsed?.categorySlug === "things-to-do") ||
     (parsed?.modifierSlug === "free" && parsed?.categorySlug === "things-to-do");
 
+  // NI-wide pages show events from all NI cities
+  const isNIWide = parsed?.citySlug === "northern-ireland";
+
   const { data: events } = useQuery({
     queryKey: ["prog-events", parsed?.categorySlug, parsed?.citySlug, parsed?.neighbourhoodSlug, parsed?.timeIntent, parsed?.modifierSlug],
     queryFn: async () => {
@@ -289,11 +292,15 @@ const ProgrammaticPage = () => {
       let query = supabase
         .from("events")
         .select("*, cities!inner(slug, name)")
-        .eq("cities.slug", parsed!.citySlug)
         .eq("status", "active")
         .gte("date_start", today)
         .order("date_start", { ascending: true })
-        .limit(30);
+        .limit(50);
+
+      // For NI-wide pages, don't filter by city — show all events
+      if (!isNIWide) {
+        query = query.eq("cities.slug", parsed!.citySlug);
+      }
 
       if (parsed?.neighbourhoodSlug && neighbourhood) {
         query = query.eq("neighbourhood_id", neighbourhood.id);
