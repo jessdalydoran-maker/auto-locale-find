@@ -724,7 +724,7 @@ const ProgrammaticPage = () => {
             ))}
             {parsed?.timeIntent && (
               <Link
-                to={buildPageUrl(parsed.modifierSlug, parsed.categorySlug, parsed.neighbourhoodSlug, parsed.citySlug)}
+                to={buildPageUrl(parsed.modifierSlug, parsed.categorySlug, parsed.neighbourhoodSlug, isNIWide ? null as any : parsed.citySlug)}
                 className="px-3 py-1.5 text-xs font-medium bg-accent text-accent-foreground rounded-full"
               >
                 {formatTimeIntent(parsed.timeIntent)} ✕
