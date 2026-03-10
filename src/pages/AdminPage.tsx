@@ -151,6 +151,22 @@ const AdminPage = () => {
     }
   };
 
+  const runEventIngestion = async () => {
+    setIsIngesting(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("ingest-events");
+      if (error) throw error;
+      toast.success(
+        `Event ingestion complete: ${data.stats?.sources_checked || 0} sources checked, ${data.stats?.events_added || 0} events added, ${data.stats?.events_skipped || 0} skipped`
+      );
+      queryClient.invalidateQueries({ queryKey: ["admin-automation-logs"] });
+    } catch (err) {
+      toast.error("Event ingestion failed: " + String(err));
+    } finally {
+      setIsIngesting(false);
+    }
+  };
+
   const stats = [
     { label: "Cities", value: cities?.length || 0, icon: MapPin },
     { label: "Categories", value: categories?.length || 0, icon: Layers },
