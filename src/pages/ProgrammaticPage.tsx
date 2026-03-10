@@ -979,46 +979,102 @@ const ProgrammaticPage = () => {
                 ? `${category?.name || "Places"} Near ${landmark?.name}`
                 : isWeekendPage
                   ? `Popular Places ${formatTimeIntent(parsed?.timeIntent || null)}`
-                  : `Top ${itemCount > 0 ? itemCount : ""} ${modifier?.name || ""} ${category?.name || "Places"}`
-              } in {isLandmarkPage ? city?.name || "" : locationName}
+                  : `Top ${modifier?.name || ""} ${category?.name || "Places"}`
+              } {locationFilter ? `in ${niCities.find(c => c.slug === locationFilter)?.name || ""}` : isNIWide ? "Across Northern Ireland" : `in ${isLandmarkPage ? city?.name || "" : locationName}`}
             </h2>
             {listings && listings.length > 0 ? (
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                {listings.map((listing, i) => (
-                  <div key={listing.id} className="relative">
-                    <span className="absolute -top-2 -left-2 z-10 w-7 h-7 bg-accent text-accent-foreground rounded-full flex items-center justify-center text-xs font-bold card-shadow">
-                      {i + 1}
-                    </span>
-                     <ListingCard
-                      name={listing.name}
-                      slug={listing.slug}
-                      citySlug={parsed?.citySlug || ""}
-                      shortDescription={listing.short_description || ""}
-                      rating={listing.rating}
-                      reviewCount={listing.review_count || 0}
-                      imageUrl={listing.image_url}
-                      imageSource={(listing as any).image_source}
-                      imageAlt={(listing as any).image_alt}
-                      imageStatus={(listing as any).image_status}
-                      categorySlug={(listing.categories as any)?.slug}
-                      categoryName={(listing.categories as any)?.name}
-                      neighbourhoodName={neighbourhood?.name}
-                      cityName={city?.name}
-                      address={listing.address}
-                      priceLevel={listing.price_level}
-                      googleMapsLink={listing.google_maps_link}
-                      isFeatured={listing.is_featured}
-                      index={i}
-                    />
+              <>
+                {/* Grouped by city for NI-wide listing pages */}
+                {isNIWide && !locationFilter ? (
+                  <div className="space-y-8">
+                    {(() => {
+                      const grouped: Record<string, typeof listings> = {};
+                      for (const l of listings) {
+                        const cn = (l.cities as any)?.name || "Unknown";
+                        if (!grouped[cn]) grouped[cn] = [];
+                        grouped[cn].push(l);
+                      }
+                      return Object.entries(grouped)
+                        .sort((a, b) => b[1].length - a[1].length)
+                        .map(([cityGroupName, cityListings]) => (
+                          <div key={cityGroupName}>
+                            <h3 className="font-display font-semibold text-lg text-foreground mb-4 flex items-center gap-2">
+                              <MapPin className="h-4 w-4 text-accent" />
+                              {cityGroupName}
+                              <span className="text-xs text-muted-foreground font-normal">({cityListings.length})</span>
+                            </h3>
+                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                              {cityListings.map((listing, i) => (
+                                <div key={listing.id} className="relative">
+                                  <span className="absolute -top-2 -left-2 z-10 w-7 h-7 bg-accent text-accent-foreground rounded-full flex items-center justify-center text-xs font-bold card-shadow">
+                                    {i + 1}
+                                  </span>
+                                  <ListingCard
+                                    name={listing.name}
+                                    slug={listing.slug}
+                                    citySlug={(listing.cities as any)?.slug || ""}
+                                    shortDescription={listing.short_description || ""}
+                                    rating={listing.rating}
+                                    reviewCount={listing.review_count || 0}
+                                    imageUrl={listing.image_url}
+                                    imageSource={(listing as any).image_source}
+                                    imageAlt={(listing as any).image_alt}
+                                    imageStatus={(listing as any).image_status}
+                                    categorySlug={(listing.categories as any)?.slug}
+                                    categoryName={(listing.categories as any)?.name}
+                                    cityName={cityGroupName}
+                                    address={listing.address}
+                                    priceLevel={listing.price_level}
+                                    googleMapsLink={listing.google_maps_link}
+                                    isFeatured={listing.is_featured}
+                                    index={i}
+                                  />
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        ));
+                    })()}
                   </div>
-                ))}
-              </div>
+                ) : (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                    {listings.map((listing, i) => (
+                      <div key={listing.id} className="relative">
+                        <span className="absolute -top-2 -left-2 z-10 w-7 h-7 bg-accent text-accent-foreground rounded-full flex items-center justify-center text-xs font-bold card-shadow">
+                          {i + 1}
+                        </span>
+                        <ListingCard
+                          name={listing.name}
+                          slug={listing.slug}
+                          citySlug={parsed?.citySlug || ""}
+                          shortDescription={listing.short_description || ""}
+                          rating={listing.rating}
+                          reviewCount={listing.review_count || 0}
+                          imageUrl={listing.image_url}
+                          imageSource={(listing as any).image_source}
+                          imageAlt={(listing as any).image_alt}
+                          imageStatus={(listing as any).image_status}
+                          categorySlug={(listing.categories as any)?.slug}
+                          categoryName={(listing.categories as any)?.name}
+                          neighbourhoodName={neighbourhood?.name}
+                          cityName={(listing.cities as any)?.name || city?.name}
+                          address={listing.address}
+                          priceLevel={listing.price_level}
+                          googleMapsLink={listing.google_maps_link}
+                          isFeatured={listing.is_featured}
+                          index={i}
+                        />
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </>
             ) : (
               <div className="text-center py-16 bg-muted/50 rounded-lg">
                 <MapPin className="h-8 w-8 text-muted-foreground/30 mx-auto mb-3" />
                 <p className="text-muted-foreground text-sm font-medium">
                   {isFamilyPage
-                    ? "We're curating more family-friendly Belfast recommendations."
+                    ? "We're curating more family-friendly recommendations across Northern Ireland."
                     : "No listings yet — we're collecting the best places."}
                 </p>
                 <p className="text-muted-foreground text-xs mt-1 mb-4">
