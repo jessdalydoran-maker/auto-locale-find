@@ -340,7 +340,7 @@ const ProgrammaticPage = () => {
       }
 
       // For neighbourhood pages with few results, also fetch nearby by coordinates
-      if (parsed?.neighbourhoodSlug && neighbourhood && results.length < 5 && neighbourhood.latitude && neighbourhood.longitude) {
+      if (parsed?.neighbourhoodSlug && neighbourhood && results.length < 5 && (neighbourhood as any).latitude && (neighbourhood as any).longitude) {
         const { data: nearbyData } = await supabase
           .from("listings")
           .select("*, cities!inner(slug, name), categories!inner(slug, name)")
