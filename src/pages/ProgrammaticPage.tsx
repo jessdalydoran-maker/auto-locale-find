@@ -258,17 +258,18 @@ const ProgrammaticPage = () => {
           results = familyData;
         }
 
-        // Hard filter — only keep listings that are explicitly family-friendly
+        // STRICT filter — only keep listings explicitly tagged family/kids
         results = results.filter((l: any) => {
           const tags: string[] = (l as any).audience_tags || [];
           const catSlug = (l.categories as any)?.slug || "";
           const isFamilyTagged = tags.includes("family") || tags.includes("kids") || (l as any).family_friendly === true || (l as any).kids_friendly === true;
           
+          // Hard exclude
           if (FAMILY_EXCLUDED_CATEGORIES.includes(catSlug)) return false;
           if (tags.some((t: string) => FAMILY_EXCLUDED_TAGS.includes(t))) return false;
-          if (isFamilyTagged) return true;
-          if (FAMILY_FALLBACK_CATEGORIES.includes(catSlug)) return true;
-          return false;
+          
+          // ONLY show explicitly family-tagged listings — no generic fallbacks
+          return isFamilyTagged;
         });
 
         // Priority sort — family+kids first, then family, then kids, then fallback categories
@@ -342,9 +343,9 @@ const ProgrammaticPage = () => {
       if (parsed?.modifierSlug === "free") {
         query = query.eq("is_free", true);
       }
-      if (parsed?.modifierSlug === "family") {
-        query = query.eq("is_family_friendly", true);
-      }
+      // For family pages: do NOT filter by is_family_friendly in DB query
+      // Instead, fetch broadly and apply strict client-side filtering
+      // This ensures events with family/kids tags but is_family_friendly=false are included
 
       const { data, error } = await query;
       if (error) throw error;
@@ -366,23 +367,32 @@ const ProgrammaticPage = () => {
       const isVsMatch = /\bvs\.?\b|\bversus\b/i.test(event.title);
       const isChampionship = /championship|league|cup\b/i.test(event.title);
       const isRace = /\b\d+k\b|\bmarathon\b|\bhalf.?marathon\b/i.test(t);
-      // It's a professional sport if it has sport tag AND (vs match OR championship OR race)
       return hasSportTag && (isVsMatch || isChampionship || isRace);
     };
 
-    // Helper: is genuinely family-oriented (not just generically tagged)
+    // Helper: is genuinely family-oriented
     const isGenuinelyFamily = (event: typeof rawEvents[0]) => {
       const t = event.title.toLowerCase();
       const tags: string[] = event.tags || [];
       return tags.includes("kids") || tags.includes("workshop") || tags.includes("workshops") ||
         t.includes("children") || t.includes("kids") || t.includes("family fun") ||
-        t.includes("family day");
+        t.includes("family day") || t.includes("family festival");
     };
 
-    // STRICT FILTER: exclude professional sports, nightlife, bars, late-night
+    // Helper: has any family signal
+    const hasFamilySignal = (event: typeof rawEvents[0]) => {
+      const tags: string[] = event.tags || [];
+      return event.is_family_friendly || 
+        tags.includes("family") || tags.includes("kids") ||
+        isGenuinelyFamily(event);
+    };
+
+    // STRICT FILTER: must have family signal, exclude nightlife/sports/bars
     const EXCLUDED_TAGS_SET = new Set(["nightlife", "late-night", "cocktails", "adults-only"]);
     const filtered = rawEvents.filter(event => {
       const tags: string[] = event.tags || [];
+      // Must have at least one family signal
+      if (!hasFamilySignal(event)) return false;
       // Always exclude nightlife/bars/late-night
       if (tags.some(t => EXCLUDED_TAGS_SET.has(t))) return false;
       // Exclude professional sports unless genuinely kids-oriented
@@ -392,7 +402,6 @@ const ProgrammaticPage = () => {
 
     // Sort by family relevance
     return filtered.sort((a, b) => {
-      // Score by family priority tags
       const aTags: string[] = a.tags || [];
       const bTags: string[] = b.tags || [];
       const aScore = aTags.reduce((s, t) => s + (FAMILY_EVENT_PRIORITY_TAGS[t] || 0), 0) +
@@ -400,8 +409,6 @@ const ProgrammaticPage = () => {
       const bScore = bTags.reduce((s, t) => s + (FAMILY_EVENT_PRIORITY_TAGS[t] || 0), 0) +
         (isGenuinelyFamily(b) ? 15 : 0);
       if (bScore !== aScore) return bScore - aScore;
-      
-      // Same score: sort by date
       return a.date_start.localeCompare(b.date_start);
     });
   }, [rawEvents, isFamilyPage]);

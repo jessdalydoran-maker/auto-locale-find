@@ -112,7 +112,10 @@ export function parseSlug(
     }
   }
 
-  if (!citySlug) return null;
+  // If no city matched, default to NI-wide (instead of returning null)
+  if (!citySlug) {
+    citySlug = "northern-ireland";
+  }
 
   // 4. Check for "near-[landmark]" pattern
   let nearLandmark: string | null = null;
