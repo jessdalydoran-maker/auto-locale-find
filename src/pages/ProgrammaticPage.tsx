@@ -193,11 +193,10 @@ const ProgrammaticPage = () => {
   const isFamilyPage = parsed?.modifierSlug === "family";
 
   // Categories to exclude for family pages
-  const FAMILY_EXCLUDED_CATEGORIES = ["bars", "cocktail-bars", "nightlife", "late-night"];
-  // Tags that disqualify a listing from family pages
+  const FAMILY_EXCLUDED_CATEGORIES = ["bars", "cocktail-bars", "nightlife", "late-night", "pubs"];
   const FAMILY_EXCLUDED_TAGS = ["nightlife", "late-night", "cocktails", "romantic", "adults-only"];
-  // Categories that are acceptable fallbacks for family pages (NO restaurants/cafes unless family-tagged)
-  const FAMILY_FALLBACK_CATEGORIES = ["attractions", "things-to-do", "parks", "museums", "markets", "tours", "cinemas", "activity-centres", "leisure-centres", "zoos", "science-centres", "outdoor-activities", "indoor-play"];
+  // Only allow fallback categories that are inherently family-suitable (not restaurants/cafes/generic)
+  const FAMILY_FALLBACK_CATEGORIES = ["parks", "museums", "zoos", "science-centres", "indoor-play", "leisure-centres", "activity-centres"];
 
   // Fetch regular listings (non-landmark pages)
   const { data: regularListings } = useQuery({
@@ -354,24 +353,52 @@ const ProgrammaticPage = () => {
     enabled: !!parsed?.citySlug && shouldFetchEvents,
   });
 
-  // Apply family priority sorting to events
+  // Apply family filtering + priority sorting to events
   const events = useMemo(() => {
     if (!rawEvents) return rawEvents;
     if (!isFamilyPage) return rawEvents;
     
-    return [...rawEvents].sort((a, b) => {
+    // Helper: detect professional sports fixtures by title pattern
+    const isProfessionalSport = (event: typeof rawEvents[0]) => {
+      const t = event.title.toLowerCase();
+      const tags: string[] = event.tags || [];
+      const hasSportTag = tags.includes("sport") || tags.includes("boxing") || tags.includes("rugby") || tags.includes("football");
+      const isVsMatch = /\bvs\.?\b|\bversus\b/i.test(event.title);
+      const isChampionship = /championship|league|cup\b/i.test(event.title);
+      const isRace = /\b\d+k\b|\bmarathon\b|\bhalf.?marathon\b/i.test(t);
+      // It's a professional sport if it has sport tag AND (vs match OR championship OR race)
+      return hasSportTag && (isVsMatch || isChampionship || isRace);
+    };
+
+    // Helper: is genuinely family-oriented (not just generically tagged)
+    const isGenuinelyFamily = (event: typeof rawEvents[0]) => {
+      const t = event.title.toLowerCase();
+      const tags: string[] = event.tags || [];
+      return tags.includes("kids") || tags.includes("workshop") || tags.includes("workshops") ||
+        t.includes("children") || t.includes("kids") || t.includes("family fun") ||
+        t.includes("family day");
+    };
+
+    // STRICT FILTER: exclude professional sports, nightlife, bars, late-night
+    const EXCLUDED_TAGS_SET = new Set(["nightlife", "late-night", "cocktails", "adults-only"]);
+    const filtered = rawEvents.filter(event => {
+      const tags: string[] = event.tags || [];
+      // Always exclude nightlife/bars/late-night
+      if (tags.some(t => EXCLUDED_TAGS_SET.has(t))) return false;
+      // Exclude professional sports unless genuinely kids-oriented
+      if (isProfessionalSport(event) && !isGenuinelyFamily(event)) return false;
+      return true;
+    });
+
+    // Sort by family relevance
+    return filtered.sort((a, b) => {
+      // Score by family priority tags
       const aTags: string[] = a.tags || [];
       const bTags: string[] = b.tags || [];
-      
-      // Deprioritise sports unless explicitly family-tagged
-      const aIsSport = aTags.some(t => FAMILY_EVENT_DEPRIORITY_TAGS.includes(t)) && !a.is_family_friendly;
-      const bIsSport = bTags.some(t => FAMILY_EVENT_DEPRIORITY_TAGS.includes(t)) && !b.is_family_friendly;
-      if (aIsSport && !bIsSport) return 1;
-      if (!aIsSport && bIsSport) return -1;
-      
-      // Score by family priority tags
-      const aScore = aTags.reduce((s, t) => s + (FAMILY_EVENT_PRIORITY_TAGS[t] || 0), 0);
-      const bScore = bTags.reduce((s, t) => s + (FAMILY_EVENT_PRIORITY_TAGS[t] || 0), 0);
+      const aScore = aTags.reduce((s, t) => s + (FAMILY_EVENT_PRIORITY_TAGS[t] || 0), 0) +
+        (isGenuinelyFamily(a) ? 15 : 0);
+      const bScore = bTags.reduce((s, t) => s + (FAMILY_EVENT_PRIORITY_TAGS[t] || 0), 0) +
+        (isGenuinelyFamily(b) ? 15 : 0);
       if (bScore !== aScore) return bScore - aScore;
       
       // Same score: sort by date
@@ -841,8 +868,12 @@ const ProgrammaticPage = () => {
             ) : (
               <div className="text-center py-16 bg-muted/50 rounded-lg">
                 <Calendar className="h-8 w-8 text-muted-foreground mx-auto mb-3" />
-                <p className="text-muted-foreground text-sm font-medium">No events found for this search yet</p>
-                <p className="text-muted-foreground text-xs mt-1 mb-4">We're adding new events all the time — check back soon!</p>
+                <p className="text-muted-foreground text-sm font-medium">
+                  {isFamilyPage ? "We're curating more family-friendly events for this area." : "No events found for this search yet"}
+                </p>
+                <p className="text-muted-foreground text-xs mt-1 mb-4">
+                  {isFamilyPage ? "Only genuinely family-suitable events are shown here." : "We're adding new events all the time — check back soon!"}
+                </p>
                 {siblingPages.length > 0 && (
                   <div className="flex flex-wrap justify-center gap-2">
                     {siblingPages.slice(0, 4).map((page) => (
