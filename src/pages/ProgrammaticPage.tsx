@@ -1706,7 +1706,7 @@ const ProgrammaticPage = () => {
                 <Link
                   key={ti}
                   to={buildPageUrl(parsed.modifierSlug, parsed.categorySlug, parsed.neighbourhoodSlug, parsed.citySlug, ti)}
-                  className="text-xs px-3 py-1.5 bg-card border border-border text-muted-foreground rounded-full hover:border-accent hover:text-accent transition-colors"
+                  className="text-xs px-3 py-1.5 bg-card border border-border text-muted-foreground rounded-full hover:border-primary hover:text-primary transition-colors"
                 >
                   {modifier?.name || ""} {category?.name || ""} {locationName} {formatTimeIntent(ti)}
                 </Link>
