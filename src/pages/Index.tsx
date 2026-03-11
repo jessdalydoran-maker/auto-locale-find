@@ -268,11 +268,7 @@ const Index = () => {
                       decoding="async"
                       width={600}
                       height={400}
-                      onError={(e) => {
-                        const img = e.currentTarget;
-                        const fb = getCategoryPlaceholder(catSlug, listing.name);
-                        if (img.src !== fb) img.src = fb;
-                      }}
+                      onError={buildImageErrorHandler(catSlug, listing.name)}
                     />
                     <span className="absolute top-3 left-3 bg-teal text-teal-foreground text-[11px] font-semibold px-2.5 py-1 rounded-md">
                       {catName}
