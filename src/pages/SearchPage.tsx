@@ -277,7 +277,7 @@ const SearchPage = () => {
         }
       } else {
         // No explicit location: broad search
-        const broadResults = await fetchForCities([], 30);
+        const broadResults = await fetchForCities(null, 30);
         exactResults.push(...broadResults);
       }
 
