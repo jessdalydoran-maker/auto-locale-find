@@ -1098,21 +1098,17 @@ const ProgrammaticPage = () => {
             <Filter className="h-4 w-4 text-muted-foreground" />
             {filterOptions.map((f) => (
               <Link
-                key={f.value}
+                key={f.value || "all"}
                 to={f.url}
-                className="px-3 py-1.5 text-xs font-medium bg-muted text-muted-foreground rounded-full hover:bg-primary hover:text-primary-foreground transition-colors"
+                className={`px-3 py-1.5 text-xs font-medium rounded-full transition-colors ${
+                  (f as any).active
+                    ? "bg-primary text-primary-foreground"
+                    : "bg-muted text-muted-foreground hover:bg-primary hover:text-primary-foreground"
+                }`}
               >
                 {f.label}
               </Link>
             ))}
-            {parsed?.timeIntent && (
-              <Link
-                to={buildPageUrl(parsed.modifierSlug, parsed.categorySlug, parsed.neighbourhoodSlug, isNIWide ? null as any : parsed.citySlug)}
-                className="px-3 py-1.5 text-xs font-medium bg-primary text-primary-foreground rounded-full"
-              >
-                {formatTimeIntent(parsed.timeIntent)} ✕
-              </Link>
-            )}
           </div>
         )}
 
