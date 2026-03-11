@@ -54,6 +54,10 @@ const CATEGORY_ALIASES: Record<string, string> = {
   "day-out": "things-to-do",
   "rainy-day-activities": "things-to-do",
   "cheap-things-to-do": "things-to-do",
+  "gigs": "live-music",
+  "acoustic": "live-music",
+  "concerts": "live-music",
+  "bands": "live-music",
 };
 
 /** City slug aliases — allows short forms like "ni" for "northern-ireland" */
