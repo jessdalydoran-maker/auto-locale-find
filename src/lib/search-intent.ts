@@ -111,7 +111,7 @@ const INTENT_TO_CATEGORIES: Record<string, string[]> = {
   "drag": ["lgbtq", "events"],
   "queer": ["lgbtq", "events", "bars"],
   "shopping": ["shopping"],
-  "cinema": ["cinema"],
+  "movies": ["cinema", "things-to-do"],
   "swimming": ["leisure-centres", "leisure"],
   "leisure": ["leisure-centres", "leisure"],
   "leisure centre": ["leisure-centres"],
