@@ -465,7 +465,7 @@ const Index = () => {
         <section className="container mx-auto px-4 py-10">
           <div className="flex items-center justify-between mb-5">
             <h2 className="font-display font-semibold text-lg text-foreground">Featured Places</h2>
-            <Link to="/best-restaurants-belfast" className="text-[13px] text-accent font-medium flex items-center gap-1 hover:underline">
+            <Link to="/best-restaurants-belfast" className="text-[13px] text-primary font-medium flex items-center gap-1 hover:underline">
               View all <ArrowRight className="h-3.5 w-3.5" />
             </Link>
           </div>
