@@ -9,7 +9,7 @@ import { NeighbourhoodCard } from "@/components/NeighbourhoodCard";
 import { AdPlaceholder } from "@/components/AdPlaceholder";
 import { ArrowRight, Calendar, Utensils, MapPin, Star, Sparkles, Heart, TrendingUp, Moon, Users, CloudRain, Coins, PartyPopper, Coffee, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { getImageUrl, getCategoryPlaceholder } from "@/lib/image-utils";
+import { getImageUrl, getCategoryPlaceholder, buildImageErrorHandler } from "@/lib/image-utils";
 import { Link } from "react-router-dom";
 
 const QUICK_LINKS = [
