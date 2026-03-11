@@ -842,15 +842,16 @@ const ProgrammaticPage = () => {
       }
       canonicalEl.href = `https://bestlocal.co.uk${canonicalSlug || currentUrl}`;
 
-      // Noindex thin pages
+      // Noindex pages that don't meet quality threshold
+      const robotsDirective = getRobotsDirective(validation);
       let robotsEl = document.querySelector('meta[name="robots"]') as HTMLMetaElement;
-      if (!hasEnoughContent && itemCount === 0) {
+      if (robotsDirective) {
         if (!robotsEl) {
           robotsEl = document.createElement("meta");
           robotsEl.name = "robots";
           document.head.appendChild(robotsEl);
         }
-        robotsEl.content = "noindex, follow";
+        robotsEl.content = robotsDirective;
       } else if (robotsEl) {
         robotsEl.remove();
       }
