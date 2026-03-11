@@ -58,7 +58,7 @@ const EventDetailPage = () => {
   const resolvedImage = event
     ? (keywordImage && (!event.image_url || event.image_status !== "verified")
         ? keywordImage
-        : getImageUrl(event.image_url, event.image_source, category?.slug || "events", null, event.image_status))
+        : getImageUrl(event.image_url, event.image_source, category?.slug || "events", null, event.image_status, event.title, event.tags, event.short_description))
     : "";
   const usingPlaceholder = !event || isPlaceholderImage(resolvedImage) || (event.image_status !== "verified" && !keywordImage);
   const altText = event
@@ -195,7 +195,7 @@ const EventDetailPage = () => {
             height={400}
             onError={(e) => {
               const img = e.currentTarget;
-              const fb = getCategoryPlaceholder(category?.slug || "events");
+              const fb = getCategoryPlaceholder(category?.slug || "events", event?.title, event?.tags);
               if (img.src !== fb) img.src = fb;
             }}
           />

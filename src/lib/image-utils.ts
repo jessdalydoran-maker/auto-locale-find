@@ -1,160 +1,364 @@
 /**
  * Image utilities for venue-specific photo matching,
- * category-based fallbacks, alt text generation, and WebP support.
+ * keyword-aware category fallbacks, alt text generation, and WebP support.
  *
  * RULES:
  * - Only display an image if it is verified (image_status = 'verified')
- *   or manually set by admin (image_source = 'manual').
- * - All other images use the category placeholder.
- * - It is better to show a placeholder than the wrong venue.
+ *   or from a trusted source (google_places, manual, official, website, unsplash).
+ * - All other images use a context-aware category placeholder.
+ * - It is better to show a relevant placeholder than the wrong venue.
+ * - Fallback images rotate per-category to avoid repetition on the same page.
  */
 
-/**
- * Category-specific placeholder images.
- * Neutral, high-quality stock that represents the category — not a specific venue.
- */
-export const CATEGORY_PLACEHOLDERS: Record<string, string> = {
-  // Food & Drink — high-quality dining/food photography
-  "restaurants": "https://images.unsplash.com/photo-1414235077428-338989a2e8c0?w=800&h=500&fit=crop&fm=webp&q=80",
-  "cafes": "https://images.unsplash.com/photo-1495474472287-4d71bcdd2085?w=800&h=500&fit=crop&fm=webp&q=80",
-  "brunch": "https://images.unsplash.com/photo-1525351484163-7529414344d8?w=800&h=500&fit=crop&fm=webp&q=80",
-  "bars": "https://images.unsplash.com/photo-1470337458703-46ad1756a187?w=800&h=500&fit=crop&fm=webp&q=80",
-  "cocktail-bars": "https://images.unsplash.com/photo-1514362545857-3bc16c4c7d1b?w=800&h=500&fit=crop&fm=webp&q=80",
-  "nightlife": "https://images.unsplash.com/photo-1516450360452-9312f5e86fc7?w=800&h=500&fit=crop&fm=webp&q=80",
-  "coffee-shops": "https://images.unsplash.com/photo-1509042239860-f550ce710b93?w=800&h=500&fit=crop&fm=webp&q=80",
-  "italian": "https://images.unsplash.com/photo-1498579150354-977475b7ea0b?w=800&h=500&fit=crop&fm=webp&q=80",
+// ─── Fallback image pools (multiple per category for rotation) ───
 
-  // Activities & Attractions
-  "things-to-do": "https://images.unsplash.com/photo-1533154683836-84ea7a0bc310?w=800&h=500&fit=crop&fm=webp&q=80", // Belfast skyline
-  "attractions": "https://images.unsplash.com/photo-1590073844006-33379778ae09?w=800&h=500&fit=crop&fm=webp&q=80", // Giant's Causeway
-  "museums": "https://images.unsplash.com/photo-1565060299509-453c4f3bc905?w=800&h=500&fit=crop&fm=webp&q=80",
-  "tours": "https://images.unsplash.com/photo-1590073844006-33379778ae09?w=800&h=500&fit=crop&fm=webp&q=80", // NI scenery
-  "parks": "https://images.unsplash.com/photo-1441974231531-c6227db76b6e?w=800&h=500&fit=crop&fm=webp&q=80",
-  "cinemas": "https://images.unsplash.com/photo-1489599849927-2ee91cede3ba?w=800&h=500&fit=crop&fm=webp&q=80",
-  "escape-rooms": "https://images.unsplash.com/photo-1528605248644-14dd04022da1?w=800&h=500&fit=crop&fm=webp&q=80",
-  "sports": "https://images.unsplash.com/photo-1461896836934-bd45ba1a603c?w=800&h=500&fit=crop&fm=webp&q=80",
-  "indoor-activities": "https://images.unsplash.com/photo-1545558014-8692077e9b5c?w=800&h=500&fit=crop&fm=webp&q=80",
-  "family-activities": "https://images.unsplash.com/photo-1472162072942-cd5147eb3902?w=800&h=500&fit=crop&fm=webp&q=80",
-  "date-night": "https://images.unsplash.com/photo-1529543544282-ea8407407d89?w=800&h=500&fit=crop&fm=webp&q=80",
-  "hidden-gems": "https://images.unsplash.com/photo-1564959130747-897a8e5c33c6?w=800&h=500&fit=crop&fm=webp&q=80", // NI coastal scenery
-  "gyms": "https://images.unsplash.com/photo-1534438327276-14e5300c3a48?w=800&h=500&fit=crop&fm=webp&q=80",
+const FALLBACK_POOLS: Record<string, string[]> = {
+  // Theatre / Stage / Performance / Arts
+  "theatre": [
+    "https://images.unsplash.com/photo-1503095396549-807759245b35?w=800&h=500&fit=crop&fm=webp&q=80",
+    "https://images.unsplash.com/photo-1507676184212-d03ab07a01bf?w=800&h=500&fit=crop&fm=webp&q=80",
+    "https://images.unsplash.com/photo-1460881680858-30d872d5b530?w=800&h=500&fit=crop&fm=webp&q=80",
+  ],
 
-  // Events
-  "events": "https://images.unsplash.com/photo-1540575467063-178a50c2df87?w=800&h=500&fit=crop&fm=webp&q=80",
-  "live-music": "https://images.unsplash.com/photo-1501386761578-eac5c94b800a?w=800&h=500&fit=crop&fm=webp&q=80",
-  "theatre": "https://images.unsplash.com/photo-1503095396549-807759245b35?w=800&h=500&fit=crop&fm=webp&q=80",
-  "exhibitions": "https://images.unsplash.com/photo-1531058020387-3be344556be6?w=800&h=500&fit=crop&fm=webp&q=80",
-  "comedy": "https://images.unsplash.com/photo-1585699324551-f6c309eedeca?w=800&h=500&fit=crop&fm=webp&q=80",
-  "markets": "https://images.unsplash.com/photo-1555396273-367ea4eb4db5?w=800&h=500&fit=crop&fm=webp&q=80",
-  "festivals": "https://images.unsplash.com/photo-1533174072545-7a4b6ad7a6c3?w=800&h=500&fit=crop&fm=webp&q=80",
+  // Live Music / Concerts / Gigs / Festivals
+  "live-music": [
+    "https://images.unsplash.com/photo-1501386761578-eac5c94b800a?w=800&h=500&fit=crop&fm=webp&q=80",
+    "https://images.unsplash.com/photo-1470229722913-7c0e2dbbafd3?w=800&h=500&fit=crop&fm=webp&q=80",
+    "https://images.unsplash.com/photo-1459749411175-04bf5292ceea?w=800&h=500&fit=crop&fm=webp&q=80",
+  ],
+  "festivals": [
+    "https://images.unsplash.com/photo-1533174072545-7a4b6ad7a6c3?w=800&h=500&fit=crop&fm=webp&q=80",
+    "https://images.unsplash.com/photo-1506157786151-b8491531f063?w=800&h=500&fit=crop&fm=webp&q=80",
+    "https://images.unsplash.com/photo-1429962714451-bb934ecdc4ec?w=800&h=500&fit=crop&fm=webp&q=80",
+  ],
+
+  // Restaurants / Dining / Food
+  "restaurants": [
+    "https://images.unsplash.com/photo-1414235077428-338989a2e8c0?w=800&h=500&fit=crop&fm=webp&q=80",
+    "https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=800&h=500&fit=crop&fm=webp&q=80",
+    "https://images.unsplash.com/photo-1559339352-11d035aa65de?w=800&h=500&fit=crop&fm=webp&q=80",
+  ],
+  "brunch": [
+    "https://images.unsplash.com/photo-1525351484163-7529414344d8?w=800&h=500&fit=crop&fm=webp&q=80",
+    "https://images.unsplash.com/photo-1504754524776-8f4f37790ca0?w=800&h=500&fit=crop&fm=webp&q=80",
+  ],
+  "cafes": [
+    "https://images.unsplash.com/photo-1495474472287-4d71bcdd2085?w=800&h=500&fit=crop&fm=webp&q=80",
+    "https://images.unsplash.com/photo-1509042239860-f550ce710b93?w=800&h=500&fit=crop&fm=webp&q=80",
+    "https://images.unsplash.com/photo-1442512595331-e89e73853f31?w=800&h=500&fit=crop&fm=webp&q=80",
+  ],
+  "coffee-shops": [
+    "https://images.unsplash.com/photo-1509042239860-f550ce710b93?w=800&h=500&fit=crop&fm=webp&q=80",
+    "https://images.unsplash.com/photo-1442512595331-e89e73853f31?w=800&h=500&fit=crop&fm=webp&q=80",
+  ],
+  "italian": [
+    "https://images.unsplash.com/photo-1498579150354-977475b7ea0b?w=800&h=500&fit=crop&fm=webp&q=80",
+    "https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?w=800&h=500&fit=crop&fm=webp&q=80",
+  ],
+
+  // Bars / Cocktails / Nightlife
+  "bars": [
+    "https://images.unsplash.com/photo-1470337458703-46ad1756a187?w=800&h=500&fit=crop&fm=webp&q=80",
+    "https://images.unsplash.com/photo-1572116469696-31de0f17cc34?w=800&h=500&fit=crop&fm=webp&q=80",
+    "https://images.unsplash.com/photo-1543007630-9710e4a00a20?w=800&h=500&fit=crop&fm=webp&q=80",
+  ],
+  "cocktail-bars": [
+    "https://images.unsplash.com/photo-1514362545857-3bc16c4c7d1b?w=800&h=500&fit=crop&fm=webp&q=80",
+    "https://images.unsplash.com/photo-1551024709-8f23befc6f87?w=800&h=500&fit=crop&fm=webp&q=80",
+    "https://images.unsplash.com/photo-1536935338788-846bb9981813?w=800&h=500&fit=crop&fm=webp&q=80",
+  ],
+  "nightlife": [
+    "https://images.unsplash.com/photo-1516450360452-9312f5e86fc7?w=800&h=500&fit=crop&fm=webp&q=80",
+    "https://images.unsplash.com/photo-1571266028243-e4733b0f0bb0?w=800&h=500&fit=crop&fm=webp&q=80",
+  ],
+
+  // Family / Kids
+  "family-activities": [
+    "https://images.unsplash.com/photo-1472162072942-cd5147eb3902?w=800&h=500&fit=crop&fm=webp&q=80",
+    "https://images.unsplash.com/photo-1596464716127-f2a82984de30?w=800&h=500&fit=crop&fm=webp&q=80",
+    "https://images.unsplash.com/photo-1587654780760-d7e6e6752e09?w=800&h=500&fit=crop&fm=webp&q=80",
+  ],
+
+  // Museums / History / Heritage
+  "museums": [
+    "https://images.unsplash.com/photo-1565060299509-453c4f3bc905?w=800&h=500&fit=crop&fm=webp&q=80",
+    "https://images.unsplash.com/photo-1554907984-15263bfd63bd?w=800&h=500&fit=crop&fm=webp&q=80",
+    "https://images.unsplash.com/photo-1568605117036-5fe5e7bab0b7?w=800&h=500&fit=crop&fm=webp&q=80",
+  ],
+
+  // Tours
+  "tours": [
+    "https://images.unsplash.com/photo-1533154683836-84ea7a0bc310?w=800&h=500&fit=crop&fm=webp&q=80", // Belfast
+    "https://images.unsplash.com/photo-1590073844006-33379778ae09?w=800&h=500&fit=crop&fm=webp&q=80", // Giant's Causeway
+    "https://images.unsplash.com/photo-1564959130747-897a8e5c33c6?w=800&h=500&fit=crop&fm=webp&q=80", // NI coast
+  ],
+
+  // Parks / Outdoor / Beaches / Hiking
+  "parks": [
+    "https://images.unsplash.com/photo-1441974231531-c6227db76b6e?w=800&h=500&fit=crop&fm=webp&q=80",
+    "https://images.unsplash.com/photo-1501854140801-50d01698950b?w=800&h=500&fit=crop&fm=webp&q=80",
+    "https://images.unsplash.com/photo-1476231682828-37e571bc172f?w=800&h=500&fit=crop&fm=webp&q=80",
+  ],
+
+  // Attractions / Landmarks / Castles
+  "attractions": [
+    "https://images.unsplash.com/photo-1590073844006-33379778ae09?w=800&h=500&fit=crop&fm=webp&q=80", // Giant's Causeway
+    "https://images.unsplash.com/photo-1533154683836-84ea7a0bc310?w=800&h=500&fit=crop&fm=webp&q=80", // Belfast skyline
+    "https://images.unsplash.com/photo-1564959130747-897a8e5c33c6?w=800&h=500&fit=crop&fm=webp&q=80", // NI coast
+  ],
+  "things-to-do": [
+    "https://images.unsplash.com/photo-1533154683836-84ea7a0bc310?w=800&h=500&fit=crop&fm=webp&q=80",
+    "https://images.unsplash.com/photo-1590073844006-33379778ae09?w=800&h=500&fit=crop&fm=webp&q=80",
+  ],
+
+  // Events (generic)
+  "events": [
+    "https://images.unsplash.com/photo-1540575467063-178a50c2df87?w=800&h=500&fit=crop&fm=webp&q=80",
+    "https://images.unsplash.com/photo-1492684223066-81342ee5ff30?w=800&h=500&fit=crop&fm=webp&q=80",
+    "https://images.unsplash.com/photo-1475721027785-f74eccf877e2?w=800&h=500&fit=crop&fm=webp&q=80",
+  ],
+
+  // Other categories
+  "cinemas": [
+    "https://images.unsplash.com/photo-1489599849927-2ee91cede3ba?w=800&h=500&fit=crop&fm=webp&q=80",
+    "https://images.unsplash.com/photo-1440404653325-ab127d49abc1?w=800&h=500&fit=crop&fm=webp&q=80",
+  ],
+  "comedy": [
+    "https://images.unsplash.com/photo-1585699324551-f6c309eedeca?w=800&h=500&fit=crop&fm=webp&q=80",
+    "https://images.unsplash.com/photo-1527224857830-43a7acc85260?w=800&h=500&fit=crop&fm=webp&q=80",
+  ],
+  "exhibitions": [
+    "https://images.unsplash.com/photo-1531058020387-3be344556be6?w=800&h=500&fit=crop&fm=webp&q=80",
+    "https://images.unsplash.com/photo-1554907984-15263bfd63bd?w=800&h=500&fit=crop&fm=webp&q=80",
+  ],
+  "markets": [
+    "https://images.unsplash.com/photo-1555396273-367ea4eb4db5?w=800&h=500&fit=crop&fm=webp&q=80",
+    "https://images.unsplash.com/photo-1488459716781-31db52582fe9?w=800&h=500&fit=crop&fm=webp&q=80",
+  ],
+  "escape-rooms": [
+    "https://images.unsplash.com/photo-1528605248644-14dd04022da1?w=800&h=500&fit=crop&fm=webp&q=80",
+  ],
+  "sports": [
+    "https://images.unsplash.com/photo-1461896836934-bd45ba1a603c?w=800&h=500&fit=crop&fm=webp&q=80",
+    "https://images.unsplash.com/photo-1571019614242-c5c5dee9f50b?w=800&h=500&fit=crop&fm=webp&q=80",
+  ],
+  "indoor-activities": [
+    "https://images.unsplash.com/photo-1545558014-8692077e9b5c?w=800&h=500&fit=crop&fm=webp&q=80",
+  ],
+  "gyms": [
+    "https://images.unsplash.com/photo-1534438327276-14e5300c3a48?w=800&h=500&fit=crop&fm=webp&q=80",
+  ],
+  "date-night": [
+    "https://images.unsplash.com/photo-1529543544282-ea8407407d89?w=800&h=500&fit=crop&fm=webp&q=80",
+    "https://images.unsplash.com/photo-1414235077428-338989a2e8c0?w=800&h=500&fit=crop&fm=webp&q=80",
+  ],
+  "hidden-gems": [
+    "https://images.unsplash.com/photo-1564959130747-897a8e5c33c6?w=800&h=500&fit=crop&fm=webp&q=80",
+    "https://images.unsplash.com/photo-1533154683836-84ea7a0bc310?w=800&h=500&fit=crop&fm=webp&q=80",
+  ],
 };
 
-/**
- * Keyword-to-image mapping for events.
- * Matches words in the event title/tags to a contextually appropriate image.
- */
-const EVENT_KEYWORD_IMAGES: Array<{ keywords: string[]; image: string }> = [
+// ─── Keyword → category mapping for title/tag matching ───
+
+const KEYWORD_CATEGORY_MAP: Array<{ keywords: string[]; category: string }> = [
+  // Theatre & Performance — check first so "Beauty and the Beast" → theatre, not attractions
   {
-    keywords: ["trad", "traditional", "irish music", "fiddle", "folk session", "céilí", "ceili"],
-    image: "https://images.unsplash.com/photo-1524230572899-a752b3835840?w=800&h=500&fit=crop&fm=webp&q=80", // pub/fiddle music
+    keywords: ["theatre", "theater", "musical", "pantomime", "panto", "stage", "play", "drama", "ballet", "opera", "performance", "show", "jnr", "junior", "production"],
+    category: "theatre",
   },
+  // Comedy
+  {
+    keywords: ["comedy", "stand-up", "standup", "comedian", "laugh", "improv"],
+    category: "comedy",
+  },
+  // Live Music / Gigs
+  {
+    keywords: ["gig", "concert", "band", "rock", "indie", "punk", "metal", "live music", "singer", "acoustic", "open mic", "open-mic", "songwriter"],
+    category: "live-music",
+  },
+  // Trad / Folk
+  {
+    keywords: ["trad", "traditional", "irish music", "fiddle", "folk session", "céilí", "ceili", "folk"],
+    category: "live-music",
+  },
+  // DJ / Club
+  {
+    keywords: ["dj", "club night", "dance", "techno", "electronic", "rave", "clubbing"],
+    category: "nightlife",
+  },
+  // Festivals
+  {
+    keywords: ["festival", "carnival", "parade", "celebration", "fest"],
+    category: "festivals",
+  },
+  // Food / Dining
+  {
+    keywords: ["restaurant", "dining", "food", "supper club", "tasting", "food market", "street food", "fine dining", "bistro", "brasserie"],
+    category: "restaurants",
+  },
+  // Brunch
+  {
+    keywords: ["brunch", "breakfast", "bottomless"],
+    category: "brunch",
+  },
+  // Café
+  {
+    keywords: ["cafe", "café", "coffee"],
+    category: "cafes",
+  },
+  // Bars / Cocktails
+  {
+    keywords: ["bar", "cocktail", "speakeasy", "rooftop", "pub", "gin", "whiskey", "beer garden", "tap room"],
+    category: "bars",
+  },
+  // Family / Kids
+  {
+    keywords: ["kids", "children", "family", "soft play", "farm", "aquarium", "zoo", "petting", "storytime", "toddler", "baby", "playground"],
+    category: "family-activities",
+  },
+  // Museums / History
+  {
+    keywords: ["museum", "history", "heritage", "exhibition", "gallery", "artefact"],
+    category: "museums",
+  },
+  // Tours
+  {
+    keywords: ["tour", "taxi tour", "walking tour", "bus tour", "boat tour", "guided"],
+    category: "tours",
+  },
+  // Parks / Outdoor
+  {
+    keywords: ["park", "forest", "beach", "hiking", "walk", "trail", "nature", "garden", "outdoor", "mountain", "glen", "lough"],
+    category: "parks",
+  },
+  // Attractions / Castles / Landmarks
+  {
+    keywords: ["castle", "landmark", "bridge", "causeway", "visitor", "heritage site", "ruins", "fort", "tower", "monument", "distillery", "caves"],
+    category: "attractions",
+  },
+  // Cinema
+  {
+    keywords: ["cinema", "film", "movie", "screening", "imax"],
+    category: "cinemas",
+  },
+  // Markets
+  {
+    keywords: ["market", "craft", "vintage", "flea", "antique"],
+    category: "markets",
+  },
+  // Workshops
+  {
+    keywords: ["workshop", "class", "pottery", "yoga", "wellness", "craft workshop"],
+    category: "indoor-activities",
+  },
+  // Quiz
   {
     keywords: ["quiz", "pub quiz", "trivia"],
-    image: "https://images.unsplash.com/photo-1606761568499-6d2451b23c66?w=800&h=500&fit=crop&fm=webp&q=80",
+    category: "bars",
   },
+  // Sports / Fitness
   {
-    keywords: ["dj", "club night", "dance", "techno", "electronic", "rave"],
-    image: "https://images.unsplash.com/photo-1571266028243-e4733b0f0bb0?w=800&h=500&fit=crop&fm=webp&q=80",
-  },
-  {
-    keywords: ["open mic", "open-mic", "acoustic", "singer-songwriter", "songwriter"],
-    image: "https://images.unsplash.com/photo-1516450360452-9312f5e86fc7?w=800&h=500&fit=crop&fm=webp&q=80",
-  },
-  {
-    keywords: ["comedy", "stand-up", "standup", "comedian", "laugh"],
-    image: "https://images.unsplash.com/photo-1585699324551-f6c309eedeca?w=800&h=500&fit=crop&fm=webp&q=80",
-  },
-  {
-    keywords: ["art", "exhibition", "gallery", "painting", "sculpture"],
-    image: "https://images.unsplash.com/photo-1531058020387-3be344556be6?w=800&h=500&fit=crop&fm=webp&q=80",
-  },
-  {
-    keywords: ["theatre", "theater", "play", "drama", "musical", "pantomime"],
-    image: "https://images.unsplash.com/photo-1503095396549-807759245b35?w=800&h=500&fit=crop&fm=webp&q=80",
-  },
-  {
-    keywords: ["food", "supper club", "tasting", "food market", "street food"],
-    image: "https://images.unsplash.com/photo-1414235077428-338989a2e8c0?w=800&h=500&fit=crop&fm=webp&q=80",
-  },
-  {
-    keywords: ["market", "craft", "vintage", "flea"],
-    image: "https://images.unsplash.com/photo-1555396273-367ea4eb4db5?w=800&h=500&fit=crop&fm=webp&q=80",
-  },
-  {
-    keywords: ["run", "marathon", "5k", "10k", "parkrun", "race", "cycling"],
-    image: "https://images.unsplash.com/photo-1461896836934-bd45ba1a603c?w=800&h=500&fit=crop&fm=webp&q=80",
-  },
-  {
-    keywords: ["workshop", "class", "craft workshop", "pottery", "yoga", "wellness"],
-    image: "https://images.unsplash.com/photo-1545558014-8692077e9b5c?w=800&h=500&fit=crop&fm=webp&q=80",
-  },
-  {
-    keywords: ["festival", "carnival", "parade", "celebration"],
-    image: "https://images.unsplash.com/photo-1533174072545-7a4b6ad7a6c3?w=800&h=500&fit=crop&fm=webp&q=80",
-  },
-  {
-    keywords: ["cinema", "film", "movie", "screening"],
-    image: "https://images.unsplash.com/photo-1489599849927-2ee91cede3ba?w=800&h=500&fit=crop&fm=webp&q=80",
-  },
-  {
-    keywords: ["kids", "children", "family", "storytime", "petting"],
-    image: "https://images.unsplash.com/photo-1472162072942-cd5147eb3902?w=800&h=500&fit=crop&fm=webp&q=80",
-  },
-  {
-    keywords: ["gig", "concert", "band", "rock", "indie", "punk", "metal"],
-    image: "https://images.unsplash.com/photo-1501386761578-eac5c94b800a?w=800&h=500&fit=crop&fm=webp&q=80",
+    keywords: ["run", "marathon", "5k", "10k", "parkrun", "race", "cycling", "sport", "gym", "fitness", "swimming"],
+    category: "sports",
   },
 ];
 
-/**
- * Get a contextually relevant placeholder image for an event based on its title and tags.
- */
-export function getEventImageByKeywords(
-  title: string,
-  tags?: string[] | null
-): string | null {
-  const searchText = [title, ...(tags || [])].join(" ").toLowerCase();
+// ─── Rotation tracker (per page load, avoids same image on one page) ───
 
-  for (const entry of EVENT_KEYWORD_IMAGES) {
+const _usedImages = new Set<string>();
+let _resetTimer: ReturnType<typeof setTimeout> | null = null;
+
+function resetUsedImages() {
+  _usedImages.clear();
+}
+
+function pickFromPool(pool: string[]): string {
+  // Schedule a reset after current render cycle
+  if (!_resetTimer) {
+    _resetTimer = setTimeout(() => {
+      resetUsedImages();
+      _resetTimer = null;
+    }, 0);
+  }
+
+  // Try to find an unused image
+  const unused = pool.filter((img) => !_usedImages.has(img));
+  const candidates = unused.length > 0 ? unused : pool;
+  const pick = candidates[Math.floor(Math.random() * candidates.length)];
+  _usedImages.add(pick);
+  return pick;
+}
+
+// ─── Default NI placeholder ───
+
+const DEFAULT_PLACEHOLDER = "https://images.unsplash.com/photo-1533154683836-84ea7a0bc310?w=800&h=500&fit=crop&fm=webp&q=80"; // Belfast skyline
+
+// ─── Trusted sources ───
+
+const TRUSTED_SOURCES = new Set(["google_places", "manual", "official", "website", "unsplash"]);
+
+// ─── Public API ───
+
+/**
+ * Detect the best fallback category from title, tags, and description keywords.
+ */
+export function detectCategoryFromKeywords(
+  title?: string | null,
+  tags?: string[] | null,
+  description?: string | null
+): string | null {
+  const searchText = [title, ...(tags || []), description].filter(Boolean).join(" ").toLowerCase();
+  if (!searchText) return null;
+
+  for (const entry of KEYWORD_CATEGORY_MAP) {
     if (entry.keywords.some((kw) => searchText.includes(kw))) {
-      return entry.image;
+      return entry.category;
     }
   }
   return null;
 }
 
-const DEFAULT_PLACEHOLDER = "https://images.unsplash.com/photo-1533154683836-84ea7a0bc310?w=800&h=500&fit=crop&fm=webp&q=80"; // Belfast skyline
+/**
+ * Get a context-aware placeholder image.
+ * Uses categorySlug first, then keyword detection from title/tags/description.
+ * Rotates images from pools to prevent repetition on same page.
+ */
+export function getCategoryPlaceholder(
+  categorySlug?: string | null,
+  title?: string | null,
+  tags?: string[] | null,
+  description?: string | null
+): string {
+  // 1. Try keyword-detected category first (more specific than slug)
+  const keywordCategory = detectCategoryFromKeywords(title, tags, description);
+  if (keywordCategory && FALLBACK_POOLS[keywordCategory]) {
+    return pickFromPool(FALLBACK_POOLS[keywordCategory]);
+  }
 
-/** Trusted image sources that bypass verification */
-const TRUSTED_SOURCES = new Set(["google_places", "manual", "official", "website", "unsplash"]);
+  // 2. Try the direct category slug
+  if (categorySlug && FALLBACK_POOLS[categorySlug]) {
+    return pickFromPool(FALLBACK_POOLS[categorySlug]);
+  }
+
+  // 3. Fallback to NI default
+  return DEFAULT_PLACEHOLDER;
+}
 
 /**
  * Get the image URL for a listing or event.
- *
- * Only returns the venue-specific image if:
- *   - image_status is 'verified', OR
- *   - image_source is a trusted source (google_places, manual, official)
- *
- * Otherwise returns the category placeholder.
+ * Only returns the venue-specific image if verified or from a trusted source.
+ * Otherwise returns a context-aware category placeholder.
  */
 export function getImageUrl(
   imageUrl: string | null | undefined,
   imageSource: string | null | undefined,
   categorySlug?: string | null,
   citySlug?: string | null,
-  imageStatus?: string | null
+  imageStatus?: string | null,
+  title?: string | null,
+  tags?: string[] | null,
+  description?: string | null
 ): string {
-  // Only use venue image if verified or from a trusted source
   const isVerified = imageStatus === "verified";
   const isTrustedSource = imageSource ? TRUSTED_SOURCES.has(imageSource) : false;
 
@@ -162,21 +366,22 @@ export function getImageUrl(
     return ensureWebP(imageUrl);
   }
 
-  // Everything else: use category placeholder
-  return getCategoryPlaceholder(categorySlug, citySlug);
+  return getCategoryPlaceholder(categorySlug, title, tags, description);
 }
 
 /**
- * Get the category placeholder image.
+ * Get a contextually relevant placeholder image for an event based on its title and tags.
+ * Now uses the unified keyword detection + pool rotation system.
  */
-export function getCategoryPlaceholder(
-  categorySlug?: string | null,
-  citySlug?: string | null
-): string {
-  if (categorySlug && CATEGORY_PLACEHOLDERS[categorySlug]) {
-    return CATEGORY_PLACEHOLDERS[categorySlug];
+export function getEventImageByKeywords(
+  title: string,
+  tags?: string[] | null
+): string | null {
+  const detectedCategory = detectCategoryFromKeywords(title, tags);
+  if (detectedCategory && FALLBACK_POOLS[detectedCategory]) {
+    return pickFromPool(FALLBACK_POOLS[detectedCategory]);
   }
-  return DEFAULT_PLACEHOLDER;
+  return null;
 }
 
 /**
@@ -184,7 +389,8 @@ export function getCategoryPlaceholder(
  */
 export function isPlaceholderImage(imageUrl: string | null | undefined): boolean {
   if (!imageUrl) return true;
-  return Object.values(CATEGORY_PLACEHOLDERS).some((p) => imageUrl.includes(p.split("?")[0]));
+  const allPoolImages = Object.values(FALLBACK_POOLS).flat();
+  return allPoolImages.some((p) => imageUrl.includes(p.split("?")[0])) || imageUrl === DEFAULT_PLACEHOLDER;
 }
 
 /**
@@ -212,7 +418,6 @@ function ensureWebP(url: string): string {
 
 /**
  * Generate SEO-optimised alt text for a listing image.
- * For placeholders, uses neutral category description — never a specific venue name.
  */
 export function generateListingAltText(
   venueName: string,
@@ -269,17 +474,17 @@ export function generateCityAltText(cityName: string): string {
  * Image source types for tracking provenance.
  */
 export type ImageSource =
-  | "google_places"   // From Google Places Photo API via place_id
-  | "manual"          // Manually uploaded by admin
-  | "official"        // From venue's official source
-  | "scrape"          // Scraped from venue website (needs review)
-  | "unsplash"        // From Unsplash (generic, needs review)
-  | "fallback";       // Category/generic placeholder
+  | "google_places"
+  | "manual"
+  | "official"
+  | "scrape"
+  | "unsplash"
+  | "fallback";
 
 /**
  * Image verification statuses.
  */
 export type ImageStatus =
-  | "verified"       // Confirmed to be the correct venue image
-  | "needs_review"   // Not yet verified — shows placeholder
-  | "placeholder";   // No venue image available — using category placeholder
+  | "verified"
+  | "needs_review"
+  | "placeholder";

@@ -53,7 +53,7 @@ const PlaceDetailPage = () => {
 
   // Compute image before hooks/effects
   const resolvedImage = listing
-    ? getImageUrl(listing.image_url, listing.image_source, category?.slug, city?.slug, listing.image_status)
+    ? getImageUrl(listing.image_url, listing.image_source, category?.slug, city?.slug, listing.image_status, listing.name)
     : "";
   const usingPlaceholder = !listing || isPlaceholderImage(resolvedImage) || listing.image_status !== "verified";
   const altText = listing
@@ -184,7 +184,7 @@ const PlaceDetailPage = () => {
             height={400}
             onError={(e) => {
               const img = e.currentTarget;
-              const fb = getCategoryPlaceholder(catSlug);
+              const fb = getCategoryPlaceholder(catSlug, listing?.name);
               if (img.src !== fb) img.src = fb;
             }}
           />

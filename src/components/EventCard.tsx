@@ -51,13 +51,13 @@ export const EventCard = ({
   const keywordImage = getEventImageByKeywords(title, tags);
   const resolvedImage = keywordImage && (!imageUrl || imageStatus !== "verified")
     ? keywordImage
-    : getImageUrl(imageUrl, imageSource, categorySlug || "events", null, imageStatus);
+    : getImageUrl(imageUrl, imageSource, categorySlug || "events", null, imageStatus, title, tags, shortDescription);
   const usingPlaceholder = isPlaceholderImage(resolvedImage) || (imageStatus !== "verified" && !keywordImage);
   const altText = imageAlt && !usingPlaceholder
     ? imageAlt
     : generateEventAltText(title, venueName, cityName, usingPlaceholder);
 
-  const fallbackImage = getCategoryPlaceholder(categorySlug || "events");
+  const fallbackImage = getCategoryPlaceholder(categorySlug || "events", title, tags);
 
   const handleImageError = useCallback((e: React.SyntheticEvent<HTMLImageElement>) => {
     const img = e.currentTarget;
@@ -98,7 +98,6 @@ export const EventCard = ({
             height={375}
             onError={handleImageError}
           />
-          {/* Date badge */}
           <div className="absolute top-2.5 left-2.5 bg-card/95 backdrop-blur-sm rounded-md px-2.5 py-1.5 text-center">
             <span className="block text-xs font-bold text-accent leading-tight">
               {new Date(dateStart + "T00:00:00").toLocaleDateString("en-GB", { day: "numeric" })}

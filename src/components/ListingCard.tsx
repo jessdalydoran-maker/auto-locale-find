@@ -46,13 +46,13 @@ export const ListingCard = ({
   isFeatured,
   index = 0,
 }: ListingCardProps) => {
-  const resolvedImage = getImageUrl(imageUrl, imageSource, categorySlug, citySlug, imageStatus);
+  const resolvedImage = getImageUrl(imageUrl, imageSource, categorySlug, citySlug, imageStatus, name);
   const usingPlaceholder = isPlaceholderImage(resolvedImage) || imageStatus !== "verified";
   const altText = imageAlt && !usingPlaceholder
     ? imageAlt
     : generateListingAltText(name, categoryName, neighbourhoodName, cityName, usingPlaceholder);
 
-  const fallbackImage = getCategoryPlaceholder(categorySlug, citySlug);
+  const fallbackImage = getCategoryPlaceholder(categorySlug, name);
 
   const handleImageError = useCallback((e: React.SyntheticEvent<HTMLImageElement>) => {
     const img = e.currentTarget;
