@@ -1,0 +1,1 @@
+INSERT INTO storage.buckets (id, name, public) VALUES ('venue-images', 'venue-images', true) ON CONFLICT DO NOTHING;
