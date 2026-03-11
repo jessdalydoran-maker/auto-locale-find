@@ -515,13 +515,13 @@ const Index = () => {
             <Link
               key={mood.to}
               to={mood.to}
-              className="group bg-card border border-border rounded-xl p-4 text-center card-shadow hover:card-shadow-hover hover:border-accent/40 transition-all duration-200 animate-fade-in flex flex-col items-center gap-2.5"
+              className="group bg-card border border-border rounded-xl p-4 text-center card-shadow hover:card-shadow-hover hover:border-primary/40 transition-all duration-200 animate-fade-in flex flex-col items-center gap-2.5"
               style={{ animationDelay: `${i * 60}ms` }}
             >
-              <div className="w-11 h-11 rounded-full bg-accent/10 flex items-center justify-center group-hover:bg-accent/20 transition-colors">
-                <mood.icon className="h-5 w-5 text-accent" />
+              <div className="w-11 h-11 rounded-full bg-teal/10 flex items-center justify-center group-hover:bg-teal/20 transition-colors">
+                <mood.icon className="h-5 w-5 text-teal" />
               </div>
-              <h3 className="font-display font-semibold text-sm text-foreground group-hover:text-accent transition-colors">
+              <h3 className="font-display font-semibold text-sm text-foreground group-hover:text-primary transition-colors">
                 {mood.label}
               </h3>
               <p className="text-[11px] text-muted-foreground leading-snug line-clamp-2">
