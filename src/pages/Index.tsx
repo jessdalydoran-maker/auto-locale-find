@@ -274,7 +274,7 @@ const Index = () => {
                         if (img.src !== fb) img.src = fb;
                       }}
                     />
-                    <span className="absolute top-3 left-3 bg-accent text-accent-foreground text-[11px] font-semibold px-2.5 py-1 rounded-md">
+                    <span className="absolute top-3 left-3 bg-teal text-teal-foreground text-[11px] font-semibold px-2.5 py-1 rounded-md">
                       {catName}
                     </span>
                     {listing.rating && listing.rating > 0 && (
