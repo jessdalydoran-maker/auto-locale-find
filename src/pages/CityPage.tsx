@@ -219,43 +219,92 @@ const CityPage = () => {
           </div>
         )}
 
-        {/* Listings grid — uses deduplicated list */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-          {dedupedListings.map((listing: any, i: number) => (
-            <ListingCard
-              key={listing.id}
-              name={listing.name}
-              slug={listing.slug}
-              citySlug={resolvedCitySlug}
-              shortDescription={listing.short_description || ""}
-              rating={listing.rating}
-              reviewCount={listing.review_count || 0}
-              imageUrl={listing.image_url}
-              imageSource={(listing as any).image_source}
-              imageAlt={(listing as any).image_alt}
-              imageStatus={(listing as any).image_status}
-              categorySlug={(listing.categories as any)?.slug}
-              categoryName={(listing.categories as any)?.name}
-              cityName={(listing.cities as any)?.name}
-              address={listing.address}
-              priceLevel={listing.price_level}
-              googleMapsLink={listing.google_maps_link}
-              isFeatured={listing.is_featured}
-              audienceTags={(listing as any).audience_tags}
-              description={(listing as any).description}
-              index={i}
-            />
-          ))}
-        </div>
+        {/* Upcoming Events — shown first when category filter is active to prioritise live content */}
+        {cityEvents && cityEvents.length > 0 && categoryFilter && (
+          <section className="mb-10">
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center gap-2">
+                <Calendar className="h-5 w-5 text-teal" />
+                <h2 className="font-display font-semibold text-lg text-foreground">
+                  Upcoming {activeCategory?.name || ""} Events in {city.name}
+                </h2>
+              </div>
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+              {cityEvents.map((event: any, i: number) => (
+                <EventCard
+                  key={event.id}
+                  title={event.title}
+                  slug={event.slug}
+                  shortDescription={event.short_description}
+                  dateStart={event.date_start}
+                  dateEnd={event.date_end}
+                  timeStart={event.time_start}
+                  venueName={event.venue_name}
+                  venueAddress={event.venue_address}
+                  imageUrl={event.image_url}
+                  imageSource={event.image_source}
+                  imageAlt={event.image_alt}
+                  imageStatus={event.image_status}
+                  cityName={(event.cities as any)?.name}
+                  isFree={event.is_free}
+                  isFamilyFriendly={event.is_family_friendly}
+                  ticketUrl={event.ticket_url}
+                  price={event.price}
+                  tags={event.tags || []}
+                  index={i}
+                />
+              ))}
+            </div>
+          </section>
+        )}
 
-        {dedupedListings.length === 0 && (
+        {/* Listings grid — uses deduplicated list */}
+        {dedupedListings.length > 0 && (
+          <>
+            {categoryFilter && cityEvents && cityEvents.length > 0 && (
+              <h2 className="font-display font-semibold text-lg text-foreground mb-4">
+                {activeCategory?.name || ""} Venues & Organisations
+              </h2>
+            )}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+              {dedupedListings.map((listing: any, i: number) => (
+                <ListingCard
+                  key={listing.id}
+                  name={listing.name}
+                  slug={listing.slug}
+                  citySlug={resolvedCitySlug}
+                  shortDescription={listing.short_description || ""}
+                  rating={listing.rating}
+                  reviewCount={listing.review_count || 0}
+                  imageUrl={listing.image_url}
+                  imageSource={(listing as any).image_source}
+                  imageAlt={(listing as any).image_alt}
+                  imageStatus={(listing as any).image_status}
+                  categorySlug={(listing.categories as any)?.slug}
+                  categoryName={(listing.categories as any)?.name}
+                  cityName={(listing.cities as any)?.name}
+                  address={listing.address}
+                  priceLevel={listing.price_level}
+                  googleMapsLink={listing.google_maps_link}
+                  isFeatured={listing.is_featured}
+                  audienceTags={(listing as any).audience_tags}
+                  description={(listing as any).description}
+                  index={i}
+                />
+              ))}
+            </div>
+          </>
+        )}
+
+        {dedupedListings.length === 0 && (!cityEvents || cityEvents.length === 0) && (
           <div className="text-center py-20 text-muted-foreground">
             <p>No listings found. Check back soon!</p>
           </div>
         )}
 
-        {/* Upcoming Events */}
-        {cityEvents && cityEvents.length > 0 && (
+        {/* Upcoming Events — bottom position when no category filter */}
+        {cityEvents && cityEvents.length > 0 && !categoryFilter && (
           <section className="mt-12">
             <div className="flex items-center justify-between mb-4">
               <div className="flex items-center gap-2">
