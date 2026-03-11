@@ -143,8 +143,11 @@ const ProgrammaticPage = () => {
   const cityName = (neighbourhood || isLandmarkPage) ? city?.name : undefined;
   const showEvents = parsed ? isEventCategory(parsed.categorySlug) : false;
   const isWeekendPage = parsed?.categorySlug === "things-to-do" && !!parsed?.timeIntent;
-  const dateRange = parsed ? getTimeIntentDateRange(parsed.timeIntent || null) : null;
-  const currentUrl = "/" + slug;
+  const baseRange = parsed ? getTimeIntentDateRange(parsed.timeIntent || null) : null;
+  // Override date range if custom date is selected
+  const dateRange = customDate
+    ? { start: customDate.toISOString().split("T")[0], end: customDate.toISOString().split("T")[0] }
+    : baseRange;
 
   // Location filter state for NI-wide pages
   const [locationFilter, setLocationFilter] = useState<string | null>(null);
