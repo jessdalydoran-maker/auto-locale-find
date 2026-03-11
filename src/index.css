@@ -18,17 +18,20 @@
     --primary: 262 53% 50%;
     --primary-foreground: 0 0% 100%;
 
-    --secondary: 179 44% 33%;
-    --secondary-foreground: 0 0% 100%;
+    --secondary: 168 30% 95%;
+    --secondary-foreground: 220 20% 14%;
 
     --muted: 216 12% 95%;
     --muted-foreground: 220 10% 46%;
 
     --accent: 38 92% 50%;
-    --accent-foreground: 0 0% 100%;
+    --accent-foreground: 220 20% 14%;
 
     --destructive: 0 84% 60%;
     --destructive-foreground: 0 0% 100%;
+
+    --teal: 179 44% 33%;
+    --teal-foreground: 0 0% 100%;
 
     --border: 220 13% 91%;
     --input: 220 13% 91%;
