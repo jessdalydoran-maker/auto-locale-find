@@ -60,6 +60,40 @@ const CityPage = () => {
     enabled: !!resolvedCitySlug,
   });
 
+  // Deduplicate and validate
+  const dedupedListings = useMemo(() => {
+    if (!listings) return [];
+    const { unique } = deduplicateListings(listings as any);
+    return filterCompleteListings(unique);
+  }, [listings]);
+
+  const validation = useMemo(() => {
+    return validatePage({
+      listings: (dedupedListings || []) as any,
+      pageType: detectPageType({ isNeighbourhood: false, isLandmark: false, isEvents: false, hasModifier: !!categoryFilter, categorySlug: categoryFilter }),
+      hasIntro: !!city?.description,
+      hasSectionHeading: true,
+      hasFaq: false,
+      isNicheModifier: false,
+    });
+  }, [dedupedListings, city, categoryFilter]);
+
+  // SEO: noindex thin city pages
+  useEffect(() => {
+    const robotsDirective = getRobotsDirective(validation);
+    let robotsEl = document.querySelector('meta[name="robots"]') as HTMLMetaElement;
+    if (robotsDirective) {
+      if (!robotsEl) {
+        robotsEl = document.createElement("meta");
+        robotsEl.name = "robots";
+        document.head.appendChild(robotsEl);
+      }
+      robotsEl.content = robotsDirective;
+    } else if (robotsEl) {
+      robotsEl.remove();
+    }
+  }, [validation]);
+
   if (!city) return <Layout><div className="container mx-auto px-4 py-20 text-center text-muted-foreground">Loading...</div></Layout>;
 
   const activeCategory = categories?.find((c) => c.slug === categoryFilter);
