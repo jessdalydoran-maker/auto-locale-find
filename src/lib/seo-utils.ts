@@ -406,6 +406,8 @@ export function formatTimeIntent(timeIntent?: string | null): string {
     "this-week": "This Week",
     "this-weekend": "This Weekend",
     "rainy-day": "Rainy Day",
+    "next-7-days": "Next 7 Days",
+    "next-30-days": "Upcoming",
   };
   return map[timeIntent] || "";
 }
