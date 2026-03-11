@@ -7,7 +7,7 @@ import { ListingCard } from "@/components/ListingCard";
 import { EventCard } from "@/components/EventCard";
 import { NeighbourhoodCard } from "@/components/NeighbourhoodCard";
 import { AdPlaceholder } from "@/components/AdPlaceholder";
-import { ArrowRight, Calendar, Utensils, MapPin, Star, Sparkles, Heart, TrendingUp, Moon, Users, CloudRain, Coins, PartyPopper, Coffee, Plus, Rainbow, Zap } from "lucide-react";
+import { ArrowRight, Calendar, Utensils, MapPin, Star, Sparkles, Heart, TrendingUp, Moon, Users, CloudRain, Coins, PartyPopper, Coffee, Plus, Rainbow, Zap, Music } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { getImageUrl, getCategoryPlaceholder, buildImageErrorHandler } from "@/lib/image-utils";
 import { Link } from "react-router-dom";
