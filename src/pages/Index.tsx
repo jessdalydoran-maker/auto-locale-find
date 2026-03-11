@@ -563,6 +563,70 @@ const Index = () => {
         </section>
       )}
 
+      {/* Live Music Tonight */}
+      {liveMusicItems && liveMusicItems.length > 0 && (
+        <section className="container mx-auto px-4 py-8">
+          <div className="flex items-center justify-between mb-5">
+            <h2 className="font-display font-semibold text-lg text-foreground flex items-center gap-2">
+              <Music className="h-5 w-5 text-teal" />
+              Live Music Tonight
+            </h2>
+            <Link to="/live-music-tonight" className="text-[13px] text-primary font-medium flex items-center gap-1 hover:underline">
+              See all <ArrowRight className="h-3.5 w-3.5" />
+            </Link>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            {liveMusicItems.slice(0, 8).map((item, i) => (
+              <Link
+                key={item.id}
+                to={item.link}
+                className="group bg-card rounded-lg border border-border overflow-hidden card-shadow hover:card-shadow-hover transition-all duration-200 animate-fade-in"
+                style={{ animationDelay: `${i * 60}ms` }}
+              >
+                <div className="relative aspect-[16/10] overflow-hidden">
+                  <img
+                    src={item.imageUrl || getCategoryPlaceholder("live-music", item.title)}
+                    alt={item.imageAlt || `${item.title} — Live Music Tonight`}
+                    className="w-full h-full object-cover group-hover:scale-[1.03] transition-transform duration-300"
+                    loading="lazy"
+                    decoding="async"
+                    width={400}
+                    height={250}
+                    onError={buildImageErrorHandler("live-music", item.title)}
+                  />
+                  <span className="absolute top-2 left-2 bg-card/90 backdrop-blur-sm text-foreground text-[10px] font-semibold px-2 py-0.5 rounded">
+                    Live Music
+                  </span>
+                  {item.badge && (
+                    <span className="absolute top-2 right-2 bg-teal text-teal-foreground text-[10px] font-semibold px-2 py-0.5 rounded">
+                      {item.badge}
+                    </span>
+                  )}
+                  {item.time && (
+                    <span className="absolute bottom-2 left-2 bg-primary/90 text-primary-foreground text-[10px] font-semibold px-2 py-0.5 rounded">
+                      {item.time.slice(0, 5)}
+                    </span>
+                  )}
+                </div>
+                <div className="p-3">
+                  <h3 className="font-display font-semibold text-sm text-foreground line-clamp-1 group-hover:text-primary transition-colors">
+                    {item.title}
+                  </h3>
+                  {item.venueName && (
+                    <p className="text-xs text-muted-foreground mt-1 line-clamp-1">{item.venueName}</p>
+                  )}
+                  {item.cityName && (
+                    <p className="text-[11px] text-muted-foreground mt-1 flex items-center gap-1">
+                      <MapPin className="h-3 w-3" /> {item.cityName}
+                    </p>
+                  )}
+                </div>
+              </Link>
+            ))}
+          </div>
+        </section>
+      )}
+
 
       {upcomingEvents && upcomingEvents.length > 0 && (
         <section className="container mx-auto px-4 py-8">
