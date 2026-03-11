@@ -4,6 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Layout } from "@/components/Layout";
 import { EventCard } from "@/components/EventCard";
 import { getImageUrl, getEventImageByKeywords, isPlaceholderImage, generateEventAltText, buildImageErrorHandler } from "@/lib/image-utils";
+import { setPageCanonical, getCanonicalUrl } from "@/lib/canonical";
 import {
   Calendar, Clock, MapPin, Ticket, ExternalLink, ChevronRight,
   ArrowLeft, Users, Tag, Globe,
