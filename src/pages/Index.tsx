@@ -16,7 +16,7 @@ import { setPageCanonical } from "@/lib/canonical";
 import { useEffect } from "react";
 
 const QUICK_LINKS = [
-  { label: "What's On", to: "/events", icon: Calendar },
+  { label: "What's On", to: "/whats-on-belfast", icon: Calendar },
   { label: "Things To Do", to: "/things-to-do", icon: Sparkles },
   { label: "LGBT+", to: "/belfast?category=lgbtq", icon: Rainbow },
   { label: "Live Music", to: "/live-music-tonight", icon: Music },
