@@ -192,7 +192,7 @@ const Index = () => {
               <Link
                 key={link.to}
                 to={link.to}
-                className="flex items-center gap-1.5 px-3.5 py-2 bg-secondary text-muted-foreground rounded-full text-[13px] font-medium hover:text-accent hover:bg-accent/8 transition-colors"
+                className="flex items-center gap-1.5 px-3.5 py-2 bg-secondary text-foreground rounded-full text-[13px] font-medium hover:text-primary hover:bg-primary/10 transition-colors"
               >
                 <link.icon className="h-3.5 w-3.5" />
                 {link.label}
