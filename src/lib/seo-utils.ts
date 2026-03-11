@@ -296,8 +296,8 @@ export function generateMetaDescription(
 
   // Live Music cluster
   if (["live music", "live-music"].includes(catLower)) {
-    if (timeLabel) return `Live music in ${location} ${timeLabel.toLowerCase()}. Find gigs, bands, acoustic sessions, open mic nights and concerts happening near you.`;
-    return `Discover live music in ${location}. Browse gigs, bands, acoustic sessions, DJ sets and concerts at the best venues.`;
+    if (timeLabel) return `Live music in ${location} ${timeLabel.toLowerCase()}. Find pub sessions, acoustic nights, trad music, open mics, gigs and bar music happening near you.`;
+    return `Discover live music in ${location}. Browse pub sessions, acoustic nights, trad sessions, open mic nights, gigs and bar music at the best local venues.`;
   }
 
   // Generic fallback
