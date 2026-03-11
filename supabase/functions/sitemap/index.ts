@@ -24,7 +24,7 @@ Deno.serve(async (req) => {
   const supabase = createClient(supabaseUrl, supabaseKey);
 
   const url = new URL(req.url);
-  const baseUrl = url.searchParams.get("base") || "https://bestlocal.co.uk";
+  const baseUrl = url.searchParams.get("base") || "https://cityscoutguide.co.uk";
 
   const [citiesRes, categoriesRes, modifiersRes, neighbourhoodsRes, listingsRes, eventsRes] =
     await Promise.all([
