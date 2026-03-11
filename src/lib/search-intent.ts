@@ -404,6 +404,22 @@ const STATIC_SUGGESTIONS = [
   "things to do Newry",
   "live music Derry",
   "markets Belfast",
+  "things to do Ballymena",
+  "things to do Cookstown",
+  "things to do Magherafelt",
+  "things to do Dungiven",
+  "things to do Enniskillen",
+  "things to do Coleraine",
+  "things to do Dungannon",
+  "things to do Strabane",
+  "things to do Lisburn",
+  "things to do Craigavon",
+  "things to do Downpatrick",
+  "restaurants Ballymena",
+  "restaurants Newry",
+  "live music Ballymena",
+  "events Ballymena",
+  "events Cookstown",
 ];
 
 export function getAutocompleteSuggestions(partial: string): string[] {
