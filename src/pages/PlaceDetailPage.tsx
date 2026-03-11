@@ -314,8 +314,8 @@ const PlaceDetailPage = () => {
 
               {listing.phone && (
                 <div className="flex items-start gap-2.5 text-sm">
-                  <Phone className="h-4 w-4 text-accent shrink-0 mt-0.5" />
-                  <a href={`tel:${listing.phone}`} className="text-muted-foreground hover:text-accent transition-colors">
+                  <Phone className="h-4 w-4 text-teal shrink-0 mt-0.5" />
+                  <a href={`tel:${listing.phone}`} className="text-muted-foreground hover:text-primary transition-colors">
                     {listing.phone}
                   </a>
                 </div>
