@@ -178,6 +178,11 @@ const KNOWN_LOCATIONS: { pattern: string; city: string; neighbourhood?: string }
   { pattern: "warrenpoint", city: "warrenpoint" },
   { pattern: "newcastle", city: "newcastle" },
   { pattern: "ballynahinch", city: "ballynahinch" },
+  { pattern: "randalstown", city: "randalstown" },
+  { pattern: "templepatrick", city: "templepatrick" },
+  { pattern: "dungiven", city: "dungiven" },
+  { pattern: "ballyclare", city: "ballyclare" },
+  { pattern: "clogher", city: "clogher" },
   { pattern: "northern ireland", city: "__region_ni" },
 ];
 
