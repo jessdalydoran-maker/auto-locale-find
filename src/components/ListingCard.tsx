@@ -52,14 +52,10 @@ export const ListingCard = ({
     ? imageAlt
     : generateListingAltText(name, categoryName, neighbourhoodName, cityName, usingPlaceholder);
 
-  const fallbackImage = getCategoryPlaceholder(categorySlug, name);
-
-  const handleImageError = useCallback((e: React.SyntheticEvent<HTMLImageElement>) => {
-    const img = e.currentTarget;
-    if (img.src !== fallbackImage) {
-      img.src = fallbackImage;
-    }
-  }, [fallbackImage]);
+  const handleImageError = useMemo(
+    () => buildImageErrorHandler(categorySlug, name),
+    [categorySlug, name]
+  );
 
   const detailUrl = `/place/${slug}`;
 

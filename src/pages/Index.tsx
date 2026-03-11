@@ -346,11 +346,7 @@ const Index = () => {
                     decoding="async"
                     width={400}
                     height={250}
-                    onError={(e) => {
-                      const img = e.currentTarget;
-                      const fb = getCategoryPlaceholder(item.category.toLowerCase(), item.title);
-                      if (img.src !== fb) img.src = fb;
-                    }}
+                    onError={buildImageErrorHandler(item.category.toLowerCase(), item.title)}
                   />
                   <span className="absolute top-2 left-2 bg-card/90 backdrop-blur-sm text-foreground text-[10px] font-semibold px-2 py-0.5 rounded">
                     {item.category}

@@ -57,14 +57,10 @@ export const EventCard = ({
     ? imageAlt
     : generateEventAltText(title, venueName, cityName, usingPlaceholder);
 
-  const fallbackImage = getCategoryPlaceholder(categorySlug || "events", title, tags);
-
-  const handleImageError = useCallback((e: React.SyntheticEvent<HTMLImageElement>) => {
-    const img = e.currentTarget;
-    if (img.src !== fallbackImage) {
-      img.src = fallbackImage;
-    }
-  }, [fallbackImage]);
+  const handleImageError = useMemo(
+    () => buildImageErrorHandler(categorySlug || "events", title, tags),
+    [categorySlug, title, tags]
+  );
 
   const detailUrl = `/event/${slug}`;
 
