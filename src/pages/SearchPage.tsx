@@ -412,11 +412,67 @@ const SearchPage = () => {
     enabled: !!query && intent.suggestedPages.length > 0,
   });
 
+  const localEvents = eventResults?.local || [];
+  const nearbyEvents = eventResults?.nearby || [];
   const hasExactResults = rankedExact.length > 0;
   const hasNearbyResults = rankedNearby.length > 0;
-  const hasEvents = eventResults && eventResults.length > 0;
+  const hasNiWideResults = rankedNiWide.length > 0;
+  const hasLocalEvents = localEvents.length > 0;
+  const hasNearbyEvents = nearbyEvents.length > 0;
   const hasRelatedPages = relatedPages && relatedPages.length > 0;
   const locationName = resolvedCity?.name || intent.city;
+  const hasAnyResults = hasExactResults || hasNearbyResults || hasNiWideResults || hasLocalEvents || hasNearbyEvents;
+
+  // Helper to render a listing card
+  const renderListingCard = (listing: any, i: number) => (
+    <ListingCard
+      key={listing.id}
+      name={listing.name}
+      slug={listing.slug}
+      citySlug={(listing.cities as any)?.slug || ""}
+      shortDescription={listing.short_description || ""}
+      rating={listing.rating}
+      reviewCount={listing.review_count || 0}
+      imageUrl={listing.image_url}
+      imageSource={(listing as any).image_source}
+      imageStatus={(listing as any).image_status}
+      imageAlt={(listing as any).image_alt}
+      categorySlug={(listing.categories as any)?.slug}
+      categoryName={(listing.categories as any)?.name}
+      cityName={(listing.cities as any)?.name}
+      address={listing.address}
+      priceLevel={listing.price_level}
+      googleMapsLink={listing.google_maps_link}
+      audienceTags={(listing as any).audience_tags}
+      description={(listing as any).description}
+      index={i}
+    />
+  );
+
+  const renderEventCard = (event: any, i: number) => (
+    <EventCard
+      key={event.id}
+      title={event.title}
+      slug={event.slug}
+      shortDescription={event.short_description}
+      dateStart={event.date_start}
+      dateEnd={event.date_end}
+      timeStart={event.time_start}
+      venueName={event.venue_name}
+      venueAddress={event.venue_address}
+      imageUrl={event.image_url}
+      imageSource={event.image_source}
+      imageAlt={event.image_alt}
+      imageStatus={event.image_status}
+      cityName={(event.cities as any)?.name}
+      isFree={event.is_free}
+      isFamilyFriendly={event.is_family_friendly}
+      ticketUrl={event.ticket_url}
+      price={event.price}
+      tags={event.tags || []}
+      index={i}
+    />
+  );
 
   return (
     <Layout>
@@ -462,7 +518,8 @@ const SearchPage = () => {
           </div>
         )}
 
-        {hasEvents && (
+        {/* Local events — Tier 1 */}
+        {hasLocalEvents && (
           <section className="mb-10">
             <div className="flex items-center gap-2 mb-4">
               <Calendar className="h-5 w-5 text-teal" />
@@ -471,30 +528,22 @@ const SearchPage = () => {
               </h2>
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-              {eventResults!.map((event: any, i: number) => (
-                <EventCard
-                  key={event.id}
-                  title={event.title}
-                  slug={event.slug}
-                  shortDescription={event.short_description}
-                  dateStart={event.date_start}
-                  dateEnd={event.date_end}
-                  timeStart={event.time_start}
-                  venueName={event.venue_name}
-                  venueAddress={event.venue_address}
-                  imageUrl={event.image_url}
-                  imageSource={event.image_source}
-                  imageAlt={event.image_alt}
-                  imageStatus={event.image_status}
-                  cityName={(event.cities as any)?.name}
-                  isFree={event.is_free}
-                  isFamilyFriendly={event.is_family_friendly}
-                  ticketUrl={event.ticket_url}
-                  price={event.price}
-                  tags={event.tags || []}
-                  index={i}
-                />
-              ))}
+              {localEvents.map(renderEventCard)}
+            </div>
+          </section>
+        )}
+
+        {/* Nearby events — Tier 2 */}
+        {hasNearbyEvents && (
+          <section className="mb-10">
+            <div className="flex items-center gap-2 mb-4">
+              <Calendar className="h-5 w-5 text-muted-foreground" />
+              <h2 className="font-display font-semibold text-lg text-foreground">
+                Events nearby {locationName}
+              </h2>
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+              {nearbyEvents.map(renderEventCard)}
             </div>
           </section>
         )}
@@ -505,37 +554,14 @@ const SearchPage = () => {
             : `${rankedExact.length} places found${locationName ? ` in ${locationName}` : ""}`}
         </p>
 
-        {/* Exact location results */}
+        {/* Exact location results — Tier 1 */}
         {hasExactResults && (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-            {rankedExact.map((listing: any, i: number) => (
-              <ListingCard
-                key={listing.id}
-                name={listing.name}
-                slug={listing.slug}
-                citySlug={(listing.cities as any)?.slug || ""}
-                shortDescription={listing.short_description || ""}
-                rating={listing.rating}
-                reviewCount={listing.review_count || 0}
-                imageUrl={listing.image_url}
-                imageSource={(listing as any).image_source}
-                imageStatus={(listing as any).image_status}
-                imageAlt={(listing as any).image_alt}
-                categorySlug={(listing.categories as any)?.slug}
-                categoryName={(listing.categories as any)?.name}
-                cityName={(listing.cities as any)?.name}
-                address={listing.address}
-                priceLevel={listing.price_level}
-                googleMapsLink={listing.google_maps_link}
-                audienceTags={(listing as any).audience_tags}
-                description={(listing as any).description}
-                index={i}
-              />
-            ))}
+            {rankedExact.map(renderListingCard)}
           </div>
         )}
 
-        {/* Nearby fallback results — clearly labelled */}
+        {/* Nearby fallback results — Tier 2 */}
         {hasNearbyResults && (
           <section className="mt-10">
             <div className="flex items-center gap-2 mb-4">
@@ -545,36 +571,28 @@ const SearchPage = () => {
               </h2>
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-              {rankedNearby.map((listing: any, i: number) => (
-                <ListingCard
-                  key={listing.id}
-                  name={listing.name}
-                  slug={listing.slug}
-                  citySlug={(listing.cities as any)?.slug || ""}
-                  shortDescription={listing.short_description || ""}
-                  rating={listing.rating}
-                  reviewCount={listing.review_count || 0}
-                  imageUrl={listing.image_url}
-                  imageSource={(listing as any).image_source}
-                  imageStatus={(listing as any).image_status}
-                  imageAlt={(listing as any).image_alt}
-                  categorySlug={(listing.categories as any)?.slug}
-                  categoryName={(listing.categories as any)?.name}
-                  cityName={(listing.cities as any)?.name}
-                  address={listing.address}
-                  priceLevel={listing.price_level}
-                  googleMapsLink={listing.google_maps_link}
-                  audienceTags={(listing as any).audience_tags}
-                  description={(listing as any).description}
-                  index={i}
-                />
-              ))}
+              {rankedNearby.map(renderListingCard)}
+            </div>
+          </section>
+        )}
+
+        {/* NI-wide results — Tier 3 */}
+        {hasNiWideResults && (
+          <section className="mt-10">
+            <div className="flex items-center gap-2 mb-4">
+              <MapPin className="h-5 w-5 text-muted-foreground" />
+              <h2 className="font-display font-semibold text-lg text-foreground">
+                More results across Northern Ireland
+              </h2>
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+              {rankedNiWide.map(renderListingCard)}
             </div>
           </section>
         )}
 
         {/* Zero results */}
-        {!isLoading && !hasExactResults && !hasNearbyResults && !hasEvents && query && (
+        {!isLoading && !hasAnyResults && query && (
           <div className="text-center py-12">
             <Search className="h-10 w-10 text-muted-foreground/30 mx-auto mb-4" />
             <p className="text-muted-foreground mb-6">
