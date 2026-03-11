@@ -1,11 +1,13 @@
 import { Layout } from "@/components/Layout";
 import { Calendar, Send } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { toast } from "sonner";
+import { setPageCanonical } from "@/lib/canonical";
 
 const SuggestEventPage = () => {
   const [submitted, setSubmitted] = useState(false);
+  useEffect(() => { setPageCanonical("/suggest-event"); }, []);
 
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();

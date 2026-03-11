@@ -1,4 +1,5 @@
 import { useSearchParams, Link } from "react-router-dom";
+import { setPageCanonical } from "@/lib/canonical";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Layout } from "@/components/Layout";
@@ -9,12 +10,14 @@ import { parseSearchIntent } from "@/lib/search-intent";
 import { scoreListing, scoreEvent, rankAndFilter } from "@/lib/search-scoring";
 import { Search, Calendar, MapPin } from "lucide-react";
 import { deduplicateListings, filterCompleteListings } from "@/lib/page-validation";
-import { useMemo } from "react";
+import { useMemo, useEffect } from "react";
 
 const SearchPage = () => {
   const [searchParams] = useSearchParams();
   const query = searchParams.get("q") || "";
   const intent = parseSearchIntent(query);
+
+  useEffect(() => { setPageCanonical(`/search${query ? `?q=${encodeURIComponent(query)}` : ""}`); }, [query]);
 
   // Resolve city ID from slug
   const { data: resolvedCity } = useQuery({

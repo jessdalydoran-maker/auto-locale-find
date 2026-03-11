@@ -2,6 +2,8 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Layout } from "@/components/Layout";
 import { Link } from "react-router-dom";
+import { setPageCanonical } from "@/lib/canonical";
+import { useEffect } from "react";
 import { Utensils, Coffee, Wine, Compass, Dumbbell, Egg, Pizza, Store, Rainbow } from "lucide-react";
 
 const iconMap: Record<string, React.ReactNode> = {
@@ -34,6 +36,8 @@ const CategoriesPage = () => {
       return data;
     },
   });
+
+  useEffect(() => { setPageCanonical("/categories"); }, []);
 
   return (
     <Layout>

@@ -1,4 +1,5 @@
 import { useParams, Link } from "react-router-dom";
+import { SITE_DOMAIN } from "@/lib/canonical";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Layout } from "@/components/Layout";
@@ -840,7 +841,7 @@ const ProgrammaticPage = () => {
         canonicalEl.rel = "canonical";
         document.head.appendChild(canonicalEl);
       }
-      canonicalEl.href = `https://cityscoutguide.com${canonicalSlug || currentUrl}`;
+      canonicalEl.href = `${SITE_DOMAIN}${canonicalSlug || currentUrl}`;
 
       // Noindex pages that don't meet quality threshold
       const robotsDirective = getRobotsDirective(validation);
@@ -986,7 +987,7 @@ const ProgrammaticPage = () => {
                 "@type": "ListItem",
                 position: i + 1,
                 name: c.label,
-                ...(c.url ? { item: `https://cityscoutguide.com${c.url}` } : {}),
+                ...(c.url ? { item: `${SITE_DOMAIN}${c.url}` } : {}),
               })),
             }),
           }}

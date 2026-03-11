@@ -4,6 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Layout } from "@/components/Layout";
 import { EventCard } from "@/components/EventCard";
 import { getImageUrl, getEventImageByKeywords, isPlaceholderImage, generateEventAltText, buildImageErrorHandler } from "@/lib/image-utils";
+import { setPageCanonical, getCanonicalUrl } from "@/lib/canonical";
 import {
   Calendar, Clock, MapPin, Ticket, ExternalLink, ChevronRight,
   ArrowLeft, Users, Tag, Globe,
@@ -81,12 +82,15 @@ const EventDetailPage = () => {
     if (!meta) { meta = document.createElement("meta"); meta.setAttribute("name", "description"); document.head.appendChild(meta); }
     meta.setAttribute("content", metaDesc.slice(0, 160));
 
+    // Canonical + og:url
+    setPageCanonical(window.location.pathname);
+
     // OG tags
     const ogTags: Record<string, string> = {
       "og:title": event.title,
       "og:description": metaDesc.slice(0, 160),
       "og:type": "event",
-      "og:url": window.location.href,
+      "og:url": getCanonicalUrl(window.location.pathname),
     };
     if (resolvedImage) ogTags["og:image"] = resolvedImage;
     Object.entries(ogTags).forEach(([prop, content]) => {
@@ -104,7 +108,7 @@ const EventDetailPage = () => {
       startDate: event.date_start + (event.time_start ? `T${event.time_start}` : ""),
       endDate: event.date_end ? event.date_end + (event.time_end ? `T${event.time_end}` : "") : undefined,
       image: resolvedImage,
-      url: window.location.href,
+      url: getCanonicalUrl(window.location.pathname),
       isAccessibleForFree: event.is_free,
       location: event.venue_name ? {
         "@type": "Place",

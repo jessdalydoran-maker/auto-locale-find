@@ -9,6 +9,7 @@ import { AdPlaceholder } from "@/components/AdPlaceholder";
 import { MapPin, Info, Calendar } from "lucide-react";
 import { deduplicateListings, filterCompleteListings, validatePage, detectPageType, getRobotsDirective, generateSupportingIntro } from "@/lib/page-validation";
 import { useEffect, useMemo } from "react";
+import { setPageCanonical } from "@/lib/canonical";
 
 const CityPage = () => {
   const { citySlug, "*": wildcard } = useParams();
@@ -125,6 +126,11 @@ const CityPage = () => {
       isNicheModifier: false,
     });
   }, [dedupedListings, city, categoryFilter]);
+
+  // SEO: canonical
+  useEffect(() => {
+    setPageCanonical(window.location.pathname);
+  }, [resolvedCitySlug, categoryFilter]);
 
   // SEO: noindex thin city pages
   useEffect(() => {
