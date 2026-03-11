@@ -4,7 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Layout } from "@/components/Layout";
 import { ListingCard } from "@/components/ListingCard";
 import { EventCard } from "@/components/EventCard";
-import { getImageUrl, isPlaceholderImage, generateListingAltText, getCategoryPlaceholder } from "@/lib/image-utils";
+import { getImageUrl, isPlaceholderImage, generateListingAltText, buildImageErrorHandler } from "@/lib/image-utils";
 import {
   Star, MapPin, ExternalLink, Globe, ChevronRight, ArrowLeft,
   Clock, Tag, DollarSign, Phone, Navigation, CalendarDays,
@@ -203,11 +203,7 @@ const PlaceDetailPage = () => {
             className="w-full h-full object-cover"
             width={1200}
             height={400}
-            onError={(e) => {
-              const img = e.currentTarget;
-              const fb = getCategoryPlaceholder(catSlug, listing?.name);
-              if (img.src !== fb) img.src = fb;
-            }}
+            onError={buildImageErrorHandler(catSlug, listing?.name)}
           />
           <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent" />
           <div className="absolute bottom-0 left-0 right-0 p-6 md:p-8">

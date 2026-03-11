@@ -1,7 +1,7 @@
 import { Link } from "react-router-dom";
 import { MapPin } from "lucide-react";
-import { getImageUrl, generateCityAltText, getCategoryPlaceholder } from "@/lib/image-utils";
-import { useCallback } from "react";
+import { getImageUrl, generateCityAltText, buildImageErrorHandler } from "@/lib/image-utils";
+import { useMemo } from "react";
 
 interface CityCardProps {
   name: string;
@@ -16,14 +16,10 @@ interface CityCardProps {
 export const CityCard = ({ name, slug, imageUrl, imageAlt, description, listingCount, index = 0 }: CityCardProps) => {
   const resolvedImage = getImageUrl(imageUrl, "manual", undefined, slug);
   const altText = imageAlt || generateCityAltText(name);
-  const fallback = getCategoryPlaceholder("things-to-do");
-
-  const handleImageError = useCallback((e: React.SyntheticEvent<HTMLImageElement>) => {
-    const img = e.currentTarget;
-    if (img.src !== fallback) {
-      img.src = fallback;
-    }
-  }, [fallback]);
+  const handleImageError = useMemo(
+    () => buildImageErrorHandler("things-to-do", name),
+    [name]
+  );
 
   return (
     <Link

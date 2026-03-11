@@ -1,8 +1,8 @@
 import { Link } from "react-router-dom";
 import { Calendar, MapPin, Clock, Ticket } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
-import { getImageUrl, generateEventAltText, isPlaceholderImage, getEventImageByKeywords, getCategoryPlaceholder } from "@/lib/image-utils";
-import { useCallback } from "react";
+import { getImageUrl, generateEventAltText, isPlaceholderImage, getEventImageByKeywords, buildImageErrorHandler } from "@/lib/image-utils";
+import { useMemo } from "react";
 
 interface EventCardProps {
   title: string;
@@ -57,14 +57,10 @@ export const EventCard = ({
     ? imageAlt
     : generateEventAltText(title, venueName, cityName, usingPlaceholder);
 
-  const fallbackImage = getCategoryPlaceholder(categorySlug || "events", title, tags);
-
-  const handleImageError = useCallback((e: React.SyntheticEvent<HTMLImageElement>) => {
-    const img = e.currentTarget;
-    if (img.src !== fallbackImage) {
-      img.src = fallbackImage;
-    }
-  }, [fallbackImage]);
+  const handleImageError = useMemo(
+    () => buildImageErrorHandler(categorySlug || "events", title, tags),
+    [categorySlug, title, tags]
+  );
 
   const detailUrl = `/event/${slug}`;
 

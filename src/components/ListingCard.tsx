@@ -1,7 +1,7 @@
 import { Link } from "react-router-dom";
 import { Star, MapPin, ExternalLink } from "lucide-react";
-import { getImageUrl, generateListingAltText, isPlaceholderImage, getCategoryPlaceholder } from "@/lib/image-utils";
-import { useCallback } from "react";
+import { getImageUrl, generateListingAltText, isPlaceholderImage, buildImageErrorHandler } from "@/lib/image-utils";
+import { useMemo } from "react";
 
 interface ListingCardProps {
   name: string;
@@ -52,14 +52,10 @@ export const ListingCard = ({
     ? imageAlt
     : generateListingAltText(name, categoryName, neighbourhoodName, cityName, usingPlaceholder);
 
-  const fallbackImage = getCategoryPlaceholder(categorySlug, name);
-
-  const handleImageError = useCallback((e: React.SyntheticEvent<HTMLImageElement>) => {
-    const img = e.currentTarget;
-    if (img.src !== fallbackImage) {
-      img.src = fallbackImage;
-    }
-  }, [fallbackImage]);
+  const handleImageError = useMemo(
+    () => buildImageErrorHandler(categorySlug, name),
+    [categorySlug, name]
+  );
 
   const detailUrl = `/place/${slug}`;
 

@@ -9,7 +9,7 @@ import { NeighbourhoodCard } from "@/components/NeighbourhoodCard";
 import { AdPlaceholder } from "@/components/AdPlaceholder";
 import { ArrowRight, Calendar, Utensils, MapPin, Star, Sparkles, Heart, TrendingUp, Moon, Users, CloudRain, Coins, PartyPopper, Coffee, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { getImageUrl, getCategoryPlaceholder } from "@/lib/image-utils";
+import { getImageUrl, getCategoryPlaceholder, buildImageErrorHandler } from "@/lib/image-utils";
 import { Link } from "react-router-dom";
 
 const QUICK_LINKS = [
@@ -268,11 +268,7 @@ const Index = () => {
                       decoding="async"
                       width={600}
                       height={400}
-                      onError={(e) => {
-                        const img = e.currentTarget;
-                        const fb = getCategoryPlaceholder(catSlug, listing.name);
-                        if (img.src !== fb) img.src = fb;
-                      }}
+                      onError={buildImageErrorHandler(catSlug, listing.name)}
                     />
                     <span className="absolute top-3 left-3 bg-teal text-teal-foreground text-[11px] font-semibold px-2.5 py-1 rounded-md">
                       {catName}
@@ -350,11 +346,7 @@ const Index = () => {
                     decoding="async"
                     width={400}
                     height={250}
-                    onError={(e) => {
-                      const img = e.currentTarget;
-                      const fb = getCategoryPlaceholder(item.category.toLowerCase(), item.title);
-                      if (img.src !== fb) img.src = fb;
-                    }}
+                    onError={buildImageErrorHandler(item.category.toLowerCase(), item.title)}
                   />
                   <span className="absolute top-2 left-2 bg-card/90 backdrop-blur-sm text-foreground text-[10px] font-semibold px-2 py-0.5 rounded">
                     {item.category}

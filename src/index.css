@@ -87,3 +87,15 @@
     box-shadow: var(--card-shadow-hover);
   }
 }
+
+/* Safety net: hide broken image icons */
+img[data-fallback-attempt="2"]:not([src]) {
+  display: none;
+}
+img::after {
+  content: "";
+  display: block;
+  position: absolute;
+  inset: 0;
+  background: hsl(var(--muted));
+}
