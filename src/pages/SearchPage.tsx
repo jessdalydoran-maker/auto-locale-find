@@ -53,13 +53,22 @@ const SearchPage = () => {
     queryFn: async () => {
       if (!intent.city) return null;
       const townNameGuess = intent.city.replace(/-/g, " ");
-      const { data } = await supabase
+
+      const { data: bySlug } = await supabase
         .from("cities")
         .select("id, slug, name, nearby_city_slugs, latitude, longitude")
-        .or(`slug.eq.${intent.city},name.ilike.${townNameGuess}`)
+        .eq("slug", intent.city)
+        .maybeSingle();
+      if (bySlug) return bySlug;
+
+      const { data: byName } = await supabase
+        .from("cities")
+        .select("id, slug, name, nearby_city_slugs, latitude, longitude")
+        .ilike("name", townNameGuess)
         .limit(1)
         .maybeSingle();
-      return data;
+
+      return byName;
     },
     enabled: !!intent.city,
     staleTime: 1000 * 60 * 10,
