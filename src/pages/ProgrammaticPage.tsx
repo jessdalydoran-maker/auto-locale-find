@@ -1719,7 +1719,7 @@ const ProgrammaticPage = () => {
                   <Link
                     key={cat.slug}
                     to={buildPageUrl(parsed.modifierSlug, cat.slug, parsed.neighbourhoodSlug, parsed.citySlug, parsed.timeIntent)}
-                    className="text-xs px-3 py-1.5 bg-card border border-border text-muted-foreground rounded-full hover:border-accent hover:text-accent transition-colors"
+                    className="text-xs px-3 py-1.5 bg-card border border-border text-muted-foreground rounded-full hover:border-primary hover:text-primary transition-colors"
                   >
                     {modifier?.name || ""} {cat.name} {neighbourhood?.name || city?.name || ""}
                   </Link>
