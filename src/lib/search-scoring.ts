@@ -203,7 +203,7 @@ function isLocationWord(word: string): boolean {
 
 /**
  * Sort items by score descending, filter out low/negative scores.
- * When location is explicit, use a higher minimum threshold.
+ * When location is explicit, hard-exclude items from wrong cities (negative scores).
  */
 export function rankAndFilter<T>(
   scored: ScoredItem<T>[],
@@ -215,4 +215,25 @@ export function rankAndFilter<T>(
     .filter(s => s.score >= threshold)
     .sort((a, b) => b.score - a.score)
     .map(s => s.item);
+}
+
+/**
+ * Hard-filter: remove items whose city doesn't match the intent.
+ * Use this BEFORE scoring to prevent wrong-city results from ever appearing.
+ */
+export function filterByCity<T extends { cities?: { slug: string } | null }>(
+  items: T[],
+  citySlug: string | null
+): { matched: T[]; excluded: T[] } {
+  if (!citySlug) return { matched: items, excluded: [] };
+  const matched: T[] = [];
+  const excluded: T[] = [];
+  for (const item of items) {
+    if ((item.cities as any)?.slug === citySlug) {
+      matched.push(item);
+    } else {
+      excluded.push(item);
+    }
+  }
+  return { matched, excluded };
 }

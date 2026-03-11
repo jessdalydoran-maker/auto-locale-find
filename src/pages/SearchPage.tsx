@@ -7,7 +7,7 @@ import { ListingCard } from "@/components/ListingCard";
 import { EventCard } from "@/components/EventCard";
 import { SearchBar } from "@/components/SearchBar";
 import { parseSearchIntent } from "@/lib/search-intent";
-import { scoreListing, scoreEvent, rankAndFilter } from "@/lib/search-scoring";
+import { scoreListing, scoreEvent, rankAndFilter, filterByCity } from "@/lib/search-scoring";
 import { Search, Calendar, MapPin } from "lucide-react";
 import { deduplicateListings, filterCompleteListings } from "@/lib/page-validation";
 import { useMemo, useEffect } from "react";
@@ -50,71 +50,106 @@ const SearchPage = () => {
     staleTime: 1000 * 60 * 10,
   });
 
-  // Main listings query — location-first
+  // Main listings query — strict 3-tier location hierarchy
   const { data: rawListings, isLoading } = useQuery({
-    queryKey: ["search", query, resolvedCity?.id],
+    queryKey: ["search", query, resolvedCity?.id, nearbyCities?.map(c => c.id).join(",")],
     queryFn: async () => {
-      if (!query.trim()) return { exact: [] as any[], nearby: [] as any[] };
+      if (!query.trim()) return { exact: [] as any[], nearby: [] as any[], niWide: [] as any[] };
 
+      const selectFields = "*, cities!inner(slug, name), categories!inner(slug, name)";
       const exactResults: any[] = [];
       const nearbyResults: any[] = [];
+      const niWideResults: any[] = [];
 
-      // ── TIER 1: Exact location match ──
-      if (resolvedCity) {
-        // 1a. Name search within city
+      // Helper to run category + audience + name queries within a set of city IDs
+      async function fetchForCities(cityIds: string[], limit: number) {
+        const results: any[] = [];
+
+        // Name match
         const { data: nameMatches } = await supabase
           .from("listings")
-          .select("*, cities!inner(slug, name), categories!inner(slug, name)")
-          .eq("city_id", resolvedCity.id)
+          .select(selectFields)
+          .in("city_id", cityIds)
           .ilike("name", `%${query.trim()}%`)
-          .limit(20);
-        if (nameMatches) exactResults.push(...nameMatches);
+          .limit(limit);
+        if (nameMatches) results.push(...nameMatches);
 
-        // 1b. Category intent within city
+        // Category intent
         if (intent.categorySlugs.length > 0) {
           const { data: cats } = await supabase
             .from("categories")
             .select("id, slug")
             .in("slug", intent.categorySlugs);
-
           if (cats?.length) {
             const catIds = cats.map(c => c.id);
             const { data } = await supabase
               .from("listings")
-              .select("*, cities!inner(slug, name), categories!inner(slug, name)")
+              .select(selectFields)
               .in("category_id", catIds)
-              .eq("city_id", resolvedCity.id)
+              .in("city_id", cityIds)
               .order("rating", { ascending: false })
-              .limit(40);
-            if (data) exactResults.push(...data);
+              .limit(limit);
+            if (data) results.push(...data);
           }
 
-          // Audience tags within city
-          for (const tag of intent.categorySlugs.slice(0, 3)) {
+          // Audience tags
+          for (const tag of intent.categorySlugs.slice(0, 2)) {
             const { data } = await supabase
               .from("listings")
-              .select("*, cities!inner(slug, name), categories!inner(slug, name)")
+              .select(selectFields)
               .contains("audience_tags", [tag])
-              .eq("city_id", resolvedCity.id)
-              .limit(20);
-            if (data) exactResults.push(...data);
+              .in("city_id", cityIds)
+              .limit(Math.ceil(limit / 2));
+            if (data) results.push(...data);
           }
         }
 
-        // 1c. If no category intent, show top-rated in city
-        if (intent.categorySlugs.length === 0 && exactResults.length === 0) {
+        // Text search within cities
+        const textTerms = intent.keywords.filter(w => w.length > 2);
+        if (textTerms.length > 0 && results.length < 5) {
+          const orClauses = textTerms
+            .map(t => `name.ilike.%${t}%,short_description.ilike.%${t}%`)
+            .join(",");
           const { data } = await supabase
             .from("listings")
-            .select("*, cities!inner(slug, name), categories!inner(slug, name)")
-            .eq("city_id", resolvedCity.id)
-            .order("rating", { ascending: false })
-            .limit(30);
-          if (data) exactResults.push(...data);
+            .select(selectFields)
+            .in("city_id", cityIds)
+            .or(orClauses)
+            .limit(limit);
+          if (data) results.push(...data);
         }
 
-        // ── TIER 2: Nearby fallback (only if exact results < 5) ──
+        // If generic "things to do" with no specific matches, show top-rated
+        if (results.length === 0 && (intent.categorySlugs.length === 0 || intent.categorySlugs.includes("things-to-do"))) {
+          const { data } = await supabase
+            .from("listings")
+            .select(selectFields)
+            .in("city_id", cityIds)
+            .order("rating", { ascending: false })
+            .limit(limit);
+          if (data) results.push(...data);
+        }
+
+        return results;
+      }
+
+      if (resolvedCity) {
+        // ── TIER 1: Exact town match ──
+        const tier1 = await fetchForCities([resolvedCity.id], 40);
+        exactResults.push(...tier1);
+
+        // ── TIER 2: Nearby towns (only if exact < 5) ──
         if (exactResults.length < 5 && nearbyCities?.length) {
           const nearbyIds = nearbyCities.map(c => c.id);
+          const tier2 = await fetchForCities(nearbyIds, 15);
+          nearbyResults.push(...tier2);
+        }
+
+        // ── TIER 3: NI-wide (only if exact + nearby < 3) ──
+        if (exactResults.length + nearbyResults.length < 3) {
+          const excludeIds = [resolvedCity.id, ...(nearbyCities?.map(c => c.id) || [])];
+          const textTerms = intent.keywords.filter(w => w.length > 2);
+
           if (intent.categorySlugs.length > 0) {
             const { data: cats } = await supabase
               .from("categories")
@@ -122,36 +157,43 @@ const SearchPage = () => {
               .in("slug", intent.categorySlugs);
             if (cats?.length) {
               const catIds = cats.map(c => c.id);
-              const { data } = await supabase
+              let q = supabase
                 .from("listings")
-                .select("*, cities!inner(slug, name), categories!inner(slug, name)")
+                .select(selectFields)
                 .in("category_id", catIds)
-                .in("city_id", nearbyIds)
                 .order("rating", { ascending: false })
-                .limit(15);
-              if (data) nearbyResults.push(...data);
+                .limit(10);
+              const { data } = await q;
+              if (data) {
+                // Exclude already-fetched cities
+                const filtered = data.filter(d => !excludeIds.includes(d.city_id));
+                niWideResults.push(...filtered);
+              }
             }
-          } else {
+          } else if (textTerms.length > 0) {
+            const orClauses = textTerms
+              .map(t => `name.ilike.%${t}%,short_description.ilike.%${t}%`)
+              .join(",");
             const { data } = await supabase
               .from("listings")
-              .select("*, cities!inner(slug, name), categories!inner(slug, name)")
-              .in("city_id", nearbyIds)
-              .order("rating", { ascending: false })
-              .limit(15);
-            if (data) nearbyResults.push(...data);
+              .select(selectFields)
+              .or(orClauses)
+              .limit(10);
+            if (data) {
+              const filtered = data.filter(d => !excludeIds.includes(d.city_id));
+              niWideResults.push(...filtered);
+            }
           }
         }
       } else {
         // ── No location specified: broad search ──
-        // 1. Exact name search
         const { data: nameMatches } = await supabase
           .from("listings")
-          .select("*, cities!inner(slug, name), categories!inner(slug, name)")
+          .select(selectFields)
           .ilike("name", `%${query.trim()}%`)
           .limit(20);
         if (nameMatches) exactResults.push(...nameMatches);
 
-        // 2. Category intent (no city filter)
         if (intent.categorySlugs.length > 0) {
           const { data: cats } = await supabase
             .from("categories")
@@ -161,7 +203,7 @@ const SearchPage = () => {
             const catIds = cats.map(c => c.id);
             const { data } = await supabase
               .from("listings")
-              .select("*, cities!inner(slug, name), categories!inner(slug, name)")
+              .select(selectFields)
               .in("category_id", catIds)
               .order("rating", { ascending: false })
               .limit(30);
@@ -169,7 +211,6 @@ const SearchPage = () => {
           }
         }
 
-        // 3. Text search fallback
         const textTerms = intent.keywords.filter(w => w.length > 2);
         if (textTerms.length > 0) {
           const orClauses = textTerms
@@ -177,35 +218,35 @@ const SearchPage = () => {
             .join(",");
           const { data } = await supabase
             .from("listings")
-            .select("*, cities!inner(slug, name), categories!inner(slug, name)")
+            .select(selectFields)
             .or(orClauses)
             .limit(20);
           if (data) exactResults.push(...data);
         }
       }
 
-      // Deduplicate
-      const seenExact = new Set<string>();
-      const uniqueExact = exactResults.filter(item => {
-        if (seenExact.has(item.id)) return false;
-        seenExact.add(item.id);
-        return true;
-      });
-      const uniqueNearby = nearbyResults.filter(item => {
-        if (seenExact.has(item.id)) return false;
-        seenExact.add(item.id);
+      // Deduplicate across all tiers
+      const seenIds = new Set<string>();
+      const dedup = (arr: any[]) => arr.filter(item => {
+        if (seenIds.has(item.id)) return false;
+        seenIds.add(item.id);
         return true;
       });
 
-      return { exact: uniqueExact, nearby: uniqueNearby };
+      return {
+        exact: dedup(exactResults),
+        nearby: dedup(nearbyResults),
+        niWide: dedup(niWideResults),
+      };
     },
     enabled: !!query && (intent.city ? resolvedCity !== undefined : true),
   });
 
-  // Score and rank listings
-  const { rankedExact, rankedNearby } = useMemo(() => {
-    if (!rawListings) return { rankedExact: [], rankedNearby: [] };
+  // Score and rank listings across all 3 tiers
+  const { rankedExact, rankedNearby, rankedNiWide } = useMemo(() => {
+    if (!rawListings) return { rankedExact: [], rankedNearby: [], rankedNiWide: [] };
 
+    // Tier 1: exact city — score with full location weight
     const scoredExact = rawListings.exact.map(item => ({
       item,
       score: scoreListing(item, query, intent),
@@ -214,6 +255,7 @@ const SearchPage = () => {
     const { unique: uniqueExact } = deduplicateListings(exact as any);
     const filteredExact = filterCompleteListings(uniqueExact);
 
+    // Tier 2: nearby — score without location penalty
     const scoredNearby = rawListings.nearby.map(item => ({
       item,
       score: scoreListing(item, query, { ...intent, city: null, hasExplicitLocation: false }),
@@ -222,81 +264,132 @@ const SearchPage = () => {
     const { unique: uniqueNearby } = deduplicateListings(nearby as any);
     const filteredNearby = filterCompleteListings(uniqueNearby);
 
-    return { rankedExact: filteredExact, rankedNearby: filteredNearby };
+    // Tier 3: NI-wide — only shown when exact + nearby are thin
+    const scoredNiWide = rawListings.niWide.map(item => ({
+      item,
+      score: scoreListing(item, query, { ...intent, city: null, hasExplicitLocation: false }),
+    }));
+    const niWide = rankAndFilter(scoredNiWide, 20, false);
+    const { unique: uniqueNiWide } = deduplicateListings(niWide as any);
+    const filteredNiWide = filterCompleteListings(uniqueNiWide);
+
+    return { rankedExact: filteredExact, rankedNearby: filteredNearby, rankedNiWide: filteredNiWide };
   }, [rawListings, query]);
 
-  // Search events — location-filtered
+  // Search events — strict location-first (same 3-tier hierarchy)
   const { data: eventResults } = useQuery({
-    queryKey: ["search-events", query, resolvedCity?.id],
+    queryKey: ["search-events", query, resolvedCity?.id, nearbyCities?.map(c => c.id).join(",")],
     queryFn: async () => {
-      if (!query.trim()) return [];
+      if (!query.trim()) return { local: [] as any[], nearby: [] as any[] };
       const today = new Date().toISOString().split("T")[0];
-      const allEvents: any[] = [];
 
-      let baseQuery = supabase
-        .from("events")
-        .select("*, cities!inner(slug, name)")
-        .eq("status", "active")
-        .gte("date_start", today);
+      async function fetchEventsForCities(cityIds: string[] | null, limit: number) {
+        const results: any[] = [];
 
-      // If location specified, filter events to that city
-      if (resolvedCity) {
-        baseQuery = baseQuery.eq("city_id", resolvedCity.id);
-      }
-
-      // Title match
-      const { data: titleMatches } = await baseQuery
-        .ilike("title", `%${query.trim()}%`)
-        .limit(12);
-      if (titleMatches) allEvents.push(...titleMatches);
-
-      // Text search
-      const textTerms = intent.keywords.filter(w => w.length > 2);
-      if (textTerms.length > 0) {
-        const orClauses = textTerms
-          .map(t => `title.ilike.%${t}%,short_description.ilike.%${t}%,venue_name.ilike.%${t}%`)
-          .join(",");
-        let q = supabase
+        // Title match
+        let q1 = supabase
           .from("events")
           .select("*, cities!inner(slug, name)")
           .eq("status", "active")
           .gte("date_start", today)
-          .or(orClauses)
-          .limit(12);
-        if (resolvedCity) q = q.eq("city_id", resolvedCity.id);
-        const { data } = await q;
-        if (data) allEvents.push(...data);
-      }
+          .ilike("title", `%${query.trim()}%`)
+          .limit(limit);
+        if (cityIds) q1 = q1.in("city_id", cityIds);
+        const { data: d1 } = await q1;
+        if (d1) results.push(...d1);
 
-      // Tag-based search
-      if (intent.categorySlugs.length > 0) {
-        for (const tag of intent.categorySlugs.slice(0, 3)) {
+        // Tag-based
+        if (intent.categorySlugs.length > 0) {
+          for (const tag of intent.categorySlugs.slice(0, 3)) {
+            let q = supabase
+              .from("events")
+              .select("*, cities!inner(slug, name)")
+              .eq("status", "active")
+              .gte("date_start", today)
+              .contains("tags", [tag])
+              .limit(Math.ceil(limit / 2));
+            if (cityIds) q = q.in("city_id", cityIds);
+            const { data } = await q;
+            if (data) results.push(...data);
+          }
+        }
+
+        // Text search
+        const textTerms = intent.keywords.filter(w => w.length > 2);
+        if (textTerms.length > 0) {
+          const orClauses = textTerms
+            .map(t => `title.ilike.%${t}%,short_description.ilike.%${t}%,venue_name.ilike.%${t}%`)
+            .join(",");
           let q = supabase
             .from("events")
             .select("*, cities!inner(slug, name)")
             .eq("status", "active")
             .gte("date_start", today)
-            .contains("tags", [tag])
-            .limit(10);
-          if (resolvedCity) q = q.eq("city_id", resolvedCity.id);
+            .or(orClauses)
+            .limit(limit);
+          if (cityIds) q = q.in("city_id", cityIds);
           const { data } = await q;
-          if (data) allEvents.push(...data);
+          if (data) results.push(...data);
         }
+
+        // For generic "events" / "things to do" queries, show upcoming events
+        if (results.length === 0 && (intent.categorySlugs.includes("events") || intent.categorySlugs.includes("things-to-do") || intent.categorySlugs.length === 0)) {
+          let q = supabase
+            .from("events")
+            .select("*, cities!inner(slug, name)")
+            .eq("status", "active")
+            .gte("date_start", today)
+            .order("date_start", { ascending: true })
+            .limit(limit);
+          if (cityIds) q = q.in("city_id", cityIds);
+          const { data } = await q;
+          if (data) results.push(...data);
+        }
+
+        return results;
       }
 
-      // Deduplicate + score
+      const localEvents: any[] = [];
+      const nearbyEvents: any[] = [];
+
+      if (resolvedCity) {
+        // Tier 1: exact city events
+        const tier1 = await fetchEventsForCities([resolvedCity.id], 15);
+        localEvents.push(...tier1);
+
+        // Tier 2: nearby city events (only if local < 3)
+        if (localEvents.length < 3 && nearbyCities?.length) {
+          const nearbyIds = nearbyCities.map(c => c.id);
+          const tier2 = await fetchEventsForCities(nearbyIds, 10);
+          nearbyEvents.push(...tier2);
+        }
+      } else {
+        // No location: broad search
+        const broad = await fetchEventsForCities(null, 15);
+        localEvents.push(...broad);
+      }
+
+      // Deduplicate
       const seen = new Set<string>();
-      const unique = allEvents.filter(e => {
+      const dedup = (arr: any[]) => arr.filter(e => {
         if (seen.has(e.id)) return false;
         seen.add(e.id);
         return true;
       });
 
-      const scored = unique.map(item => ({
+      const scoredLocal = dedup(localEvents).map(item => ({
         item,
         score: scoreEvent(item, query, intent),
       }));
-      return rankAndFilter(scored, 10, intent.hasExplicitLocation);
+      const scoredNearby = dedup(nearbyEvents).map(item => ({
+        item,
+        score: scoreEvent(item, query, { ...intent, city: null, hasExplicitLocation: false }),
+      }));
+
+      return {
+        local: rankAndFilter(scoredLocal, 10, intent.hasExplicitLocation),
+        nearby: rankAndFilter(scoredNearby, 10, false),
+      };
     },
     enabled: !!query && (intent.city ? resolvedCity !== undefined : true),
   });
@@ -319,11 +412,67 @@ const SearchPage = () => {
     enabled: !!query && intent.suggestedPages.length > 0,
   });
 
+  const localEvents = eventResults?.local || [];
+  const nearbyEvents = eventResults?.nearby || [];
   const hasExactResults = rankedExact.length > 0;
   const hasNearbyResults = rankedNearby.length > 0;
-  const hasEvents = eventResults && eventResults.length > 0;
+  const hasNiWideResults = rankedNiWide.length > 0;
+  const hasLocalEvents = localEvents.length > 0;
+  const hasNearbyEvents = nearbyEvents.length > 0;
   const hasRelatedPages = relatedPages && relatedPages.length > 0;
   const locationName = resolvedCity?.name || intent.city;
+  const hasAnyResults = hasExactResults || hasNearbyResults || hasNiWideResults || hasLocalEvents || hasNearbyEvents;
+
+  // Helper to render a listing card
+  const renderListingCard = (listing: any, i: number) => (
+    <ListingCard
+      key={listing.id}
+      name={listing.name}
+      slug={listing.slug}
+      citySlug={(listing.cities as any)?.slug || ""}
+      shortDescription={listing.short_description || ""}
+      rating={listing.rating}
+      reviewCount={listing.review_count || 0}
+      imageUrl={listing.image_url}
+      imageSource={(listing as any).image_source}
+      imageStatus={(listing as any).image_status}
+      imageAlt={(listing as any).image_alt}
+      categorySlug={(listing.categories as any)?.slug}
+      categoryName={(listing.categories as any)?.name}
+      cityName={(listing.cities as any)?.name}
+      address={listing.address}
+      priceLevel={listing.price_level}
+      googleMapsLink={listing.google_maps_link}
+      audienceTags={(listing as any).audience_tags}
+      description={(listing as any).description}
+      index={i}
+    />
+  );
+
+  const renderEventCard = (event: any, i: number) => (
+    <EventCard
+      key={event.id}
+      title={event.title}
+      slug={event.slug}
+      shortDescription={event.short_description}
+      dateStart={event.date_start}
+      dateEnd={event.date_end}
+      timeStart={event.time_start}
+      venueName={event.venue_name}
+      venueAddress={event.venue_address}
+      imageUrl={event.image_url}
+      imageSource={event.image_source}
+      imageAlt={event.image_alt}
+      imageStatus={event.image_status}
+      cityName={(event.cities as any)?.name}
+      isFree={event.is_free}
+      isFamilyFriendly={event.is_family_friendly}
+      ticketUrl={event.ticket_url}
+      price={event.price}
+      tags={event.tags || []}
+      index={i}
+    />
+  );
 
   return (
     <Layout>
@@ -369,7 +518,8 @@ const SearchPage = () => {
           </div>
         )}
 
-        {hasEvents && (
+        {/* Local events — Tier 1 */}
+        {hasLocalEvents && (
           <section className="mb-10">
             <div className="flex items-center gap-2 mb-4">
               <Calendar className="h-5 w-5 text-teal" />
@@ -378,30 +528,22 @@ const SearchPage = () => {
               </h2>
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-              {eventResults!.map((event: any, i: number) => (
-                <EventCard
-                  key={event.id}
-                  title={event.title}
-                  slug={event.slug}
-                  shortDescription={event.short_description}
-                  dateStart={event.date_start}
-                  dateEnd={event.date_end}
-                  timeStart={event.time_start}
-                  venueName={event.venue_name}
-                  venueAddress={event.venue_address}
-                  imageUrl={event.image_url}
-                  imageSource={event.image_source}
-                  imageAlt={event.image_alt}
-                  imageStatus={event.image_status}
-                  cityName={(event.cities as any)?.name}
-                  isFree={event.is_free}
-                  isFamilyFriendly={event.is_family_friendly}
-                  ticketUrl={event.ticket_url}
-                  price={event.price}
-                  tags={event.tags || []}
-                  index={i}
-                />
-              ))}
+              {localEvents.map(renderEventCard)}
+            </div>
+          </section>
+        )}
+
+        {/* Nearby events — Tier 2 */}
+        {hasNearbyEvents && (
+          <section className="mb-10">
+            <div className="flex items-center gap-2 mb-4">
+              <Calendar className="h-5 w-5 text-muted-foreground" />
+              <h2 className="font-display font-semibold text-lg text-foreground">
+                Events nearby {locationName}
+              </h2>
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+              {nearbyEvents.map(renderEventCard)}
             </div>
           </section>
         )}
@@ -412,37 +554,14 @@ const SearchPage = () => {
             : `${rankedExact.length} places found${locationName ? ` in ${locationName}` : ""}`}
         </p>
 
-        {/* Exact location results */}
+        {/* Exact location results — Tier 1 */}
         {hasExactResults && (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-            {rankedExact.map((listing: any, i: number) => (
-              <ListingCard
-                key={listing.id}
-                name={listing.name}
-                slug={listing.slug}
-                citySlug={(listing.cities as any)?.slug || ""}
-                shortDescription={listing.short_description || ""}
-                rating={listing.rating}
-                reviewCount={listing.review_count || 0}
-                imageUrl={listing.image_url}
-                imageSource={(listing as any).image_source}
-                imageStatus={(listing as any).image_status}
-                imageAlt={(listing as any).image_alt}
-                categorySlug={(listing.categories as any)?.slug}
-                categoryName={(listing.categories as any)?.name}
-                cityName={(listing.cities as any)?.name}
-                address={listing.address}
-                priceLevel={listing.price_level}
-                googleMapsLink={listing.google_maps_link}
-                audienceTags={(listing as any).audience_tags}
-                description={(listing as any).description}
-                index={i}
-              />
-            ))}
+            {rankedExact.map(renderListingCard)}
           </div>
         )}
 
-        {/* Nearby fallback results — clearly labelled */}
+        {/* Nearby fallback results — Tier 2 */}
         {hasNearbyResults && (
           <section className="mt-10">
             <div className="flex items-center gap-2 mb-4">
@@ -452,36 +571,28 @@ const SearchPage = () => {
               </h2>
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-              {rankedNearby.map((listing: any, i: number) => (
-                <ListingCard
-                  key={listing.id}
-                  name={listing.name}
-                  slug={listing.slug}
-                  citySlug={(listing.cities as any)?.slug || ""}
-                  shortDescription={listing.short_description || ""}
-                  rating={listing.rating}
-                  reviewCount={listing.review_count || 0}
-                  imageUrl={listing.image_url}
-                  imageSource={(listing as any).image_source}
-                  imageStatus={(listing as any).image_status}
-                  imageAlt={(listing as any).image_alt}
-                  categorySlug={(listing.categories as any)?.slug}
-                  categoryName={(listing.categories as any)?.name}
-                  cityName={(listing.cities as any)?.name}
-                  address={listing.address}
-                  priceLevel={listing.price_level}
-                  googleMapsLink={listing.google_maps_link}
-                  audienceTags={(listing as any).audience_tags}
-                  description={(listing as any).description}
-                  index={i}
-                />
-              ))}
+              {rankedNearby.map(renderListingCard)}
+            </div>
+          </section>
+        )}
+
+        {/* NI-wide results — Tier 3 */}
+        {hasNiWideResults && (
+          <section className="mt-10">
+            <div className="flex items-center gap-2 mb-4">
+              <MapPin className="h-5 w-5 text-muted-foreground" />
+              <h2 className="font-display font-semibold text-lg text-foreground">
+                More results across Northern Ireland
+              </h2>
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+              {rankedNiWide.map(renderListingCard)}
             </div>
           </section>
         )}
 
         {/* Zero results */}
-        {!isLoading && !hasExactResults && !hasNearbyResults && !hasEvents && query && (
+        {!isLoading && !hasAnyResults && query && (
           <div className="text-center py-12">
             <Search className="h-10 w-10 text-muted-foreground/30 mx-auto mb-4" />
             <p className="text-muted-foreground mb-6">
