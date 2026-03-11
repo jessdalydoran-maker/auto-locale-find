@@ -1,5 +1,5 @@
 import { useParams, Link } from "react-router-dom";
-import { isLiveMusicEvent, isLiveMusicVenue } from "@/lib/live-music-utils";
+import { isLiveMusicEvent, isLiveMusicVenue, liveMusicVenueScore } from "@/lib/live-music-utils";
 import { SITE_DOMAIN } from "@/lib/canonical";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -528,6 +528,13 @@ const ProgrammaticPage = () => {
             is_event_venue: l.is_event_venue,
           });
         });
+
+        // Sort by music venue relevance score
+        results.sort((a: any, b: any) => {
+          const aScore = liveMusicVenueScore({ categorySlug: (a.categories as any)?.slug, audience_tags: a.audience_tags, is_event_venue: a.is_event_venue, rating: a.rating });
+          const bScore = liveMusicVenueScore({ categorySlug: (b.categories as any)?.slug, audience_tags: b.audience_tags, is_event_venue: b.is_event_venue, rating: b.rating });
+          return bScore - aScore;
+        });
       }
 
       return results;
@@ -598,15 +605,17 @@ const ProgrammaticPage = () => {
 
     // LIVE MUSIC filtering — use shared detection logic
     if (parsed?.categorySlug === "live-music") {
-      return rawEvents.filter(event => {
-        const catSlug = (event as any).category_id ? "" : ""; // category not joined on events query
+      const filtered = rawEvents.filter(event => {
         return isLiveMusicEvent({
           title: event.title,
           tags: event.tags,
           short_description: event.short_description,
           description: event.description,
+          venue_name: event.venue_name,
         });
       });
+      // Sort by date ascending (nearest first)
+      return filtered.sort((a, b) => a.date_start.localeCompare(b.date_start));
     }
 
     // DATE NIGHT filtering

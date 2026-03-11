@@ -279,7 +279,7 @@ const Index = () => {
       // Filter events using shared logic
       for (const e of (eventRes.data || [])) {
         const catSlug = (e.categories as any)?.slug || "";
-        if (isLiveMusicEvent({ title: e.title, tags: e.tags, short_description: e.short_description, description: e.description, categorySlug: catSlug })) {
+        if (isLiveMusicEvent({ title: e.title, tags: e.tags, short_description: e.short_description, description: e.description, categorySlug: catSlug, venue_name: e.venue_name })) {
           items.push({
             id: e.id, title: e.title, slug: e.slug,
             description: e.short_description || "",
