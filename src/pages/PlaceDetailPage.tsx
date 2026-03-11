@@ -184,11 +184,11 @@ const PlaceDetailPage = () => {
       {/* Breadcrumb */}
       <nav className="container mx-auto px-4 pt-4 pb-2">
         <ol className="flex items-center gap-1.5 text-xs text-muted-foreground flex-wrap">
-          <li><Link to="/" className="hover:text-accent transition-colors">Home</Link></li>
+          <li><Link to="/" className="hover:text-primary transition-colors">Home</Link></li>
           <ChevronRight className="h-3 w-3" />
-          <li><Link to={`/${citySlug}`} className="hover:text-accent transition-colors">{cityName}</Link></li>
+          <li><Link to={`/${citySlug}`} className="hover:text-primary transition-colors">{cityName}</Link></li>
           <ChevronRight className="h-3 w-3" />
-          <li><Link to={`/best-${catSlug}-${citySlug}`} className="hover:text-accent transition-colors">{catName}</Link></li>
+          <li><Link to={`/best-${catSlug}-${citySlug}`} className="hover:text-primary transition-colors">{catName}</Link></li>
           <ChevronRight className="h-3 w-3" />
           <li className="text-foreground font-medium truncate max-w-[200px]">{listing.name}</li>
         </ol>
