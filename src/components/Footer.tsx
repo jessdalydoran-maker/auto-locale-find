@@ -91,11 +91,16 @@ export const Footer = () => {
             </nav>
           </div>
           <div>
-            <h4 className="font-display font-semibold text-[13px] text-foreground mb-3">About</h4>
+            <h4 className="font-display font-semibold text-[13px] text-foreground mb-3">Contribute</h4>
             <nav className="flex flex-col gap-1.5">
+              <Link to="/submit-venue" className="text-[13px] text-muted-foreground hover:text-foreground transition-colors">
+                Submit a Venue
+              </Link>
+              <Link to="/suggest-event" className="text-[13px] text-muted-foreground hover:text-foreground transition-colors">
+                Suggest an Event
+              </Link>
               <span className="text-[13px] text-muted-foreground">Contact</span>
               <span className="text-[13px] text-muted-foreground">Privacy Policy</span>
-              <span className="text-[13px] text-muted-foreground">Terms of Service</span>
               <Link to="/admin" className="text-[13px] text-muted-foreground hover:text-foreground transition-colors">
                 Admin
               </Link>

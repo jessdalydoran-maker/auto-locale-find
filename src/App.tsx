@@ -32,6 +32,8 @@ const App = () => (
           <Route path="/categories" element={<CategoriesPage />} />
           <Route path="/search" element={<SearchPage />} />
           <Route path="/admin" element={<AdminPage />} />
+          <Route path="/submit-venue" element={<SubmitVenuePage />} />
+          <Route path="/suggest-event" element={<SuggestEventPage />} />
           <Route path="/place/:slug" element={<PlaceDetailPage />} />
           <Route path="/event/:slug" element={<EventDetailPage />} />
           {/* City/slug detail pages: /:citySlug/:listingSlug */}
