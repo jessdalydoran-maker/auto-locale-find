@@ -172,6 +172,8 @@ const Index = () => {
     },
   });
 
+  useEffect(() => { setPageCanonical("/"); }, []);
+
   return (
     <Layout>
       {/* Hero */}
