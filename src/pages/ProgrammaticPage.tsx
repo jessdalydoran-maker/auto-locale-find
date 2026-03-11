@@ -1114,20 +1114,38 @@ const ProgrammaticPage = () => {
           </div>
         )}
 
-        {introText && hasEnoughContent && (
-          <p className="text-muted-foreground text-[14px] leading-relaxed max-w-3xl my-6">{introText}</p>
+        {/* Auto-generated intro — always show if we have content */}
+        {hasEnoughContent && (
+          <div className="my-6 max-w-3xl">
+            <p className="text-muted-foreground text-[14px] leading-relaxed">
+              {introText || generateSupportingIntro(
+                category?.name || "Places",
+                locationName,
+                itemCount,
+                pageType,
+                modifier?.name?.toLowerCase()
+              )}
+            </p>
+            {/* Area description for neighbourhood/city pages */}
+            {(() => {
+              const areaDesc = generateSupportingAreaDescription(locationName, category?.name || "Places", pageType);
+              return areaDesc ? (
+                <p className="text-muted-foreground text-[13px] leading-relaxed mt-3">{areaDesc}</p>
+              ) : null;
+            })()}
+          </div>
         )}
 
-        {/* Thin content warning — noindex + helpful redirect */}
-        {!hasEnoughContent && itemCount === 0 && (
+        {/* Validation: needs-more-data — limited results notice */}
+        {validation.status === "needs-more-data" && (
           <div className="my-8 p-6 bg-card border border-border rounded-lg text-center card-shadow">
-            <AlertCircle className="h-6 w-6 text-muted-foreground mx-auto mb-3" />
+            <Info className="h-6 w-6 text-muted-foreground mx-auto mb-3" />
             <h2 className="font-display font-semibold text-base text-foreground mb-2">
-              Not enough content yet
+              Limited Results in This Area
             </h2>
             <p className="text-[13px] text-muted-foreground mb-4 max-w-md mx-auto leading-relaxed">
-              We don't have enough {showEvents ? "events" : "listings"} for this page yet.
-              Try one of these popular alternatives instead:
+              {validation.message || `We're curating more ${showEvents ? "events" : "recommendations"} for this area.`}
+              {" "}Try one of these popular alternatives:
             </p>
             <div className="flex flex-wrap justify-center gap-2">
               {siblingPages.slice(0, 5).map((page) => (
@@ -1151,12 +1169,46 @@ const ProgrammaticPage = () => {
           </div>
         )}
 
-        {/* Thin content notice — page exists but borderline */}
-        {isThin && hasEnoughContent && (
+        {/* Validation: hidden-from-index — no content at all */}
+        {validation.status === "hidden-from-index" && (
+          <div className="my-8 p-6 bg-card border border-border rounded-lg text-center card-shadow">
+            <AlertCircle className="h-6 w-6 text-muted-foreground mx-auto mb-3" />
+            <h2 className="font-display font-semibold text-base text-foreground mb-2">
+              No Content Available Yet
+            </h2>
+            <p className="text-[13px] text-muted-foreground mb-4 max-w-md mx-auto leading-relaxed">
+              We don't have any {showEvents ? "events" : "listings"} for this page yet.
+              Explore these alternatives instead:
+            </p>
+            <div className="flex flex-wrap justify-center gap-2">
+              {siblingPages.slice(0, 5).map((page) => (
+                <Link
+                  key={page.url}
+                  to={page.url}
+                  className="px-3 py-1.5 text-[12px] font-medium bg-secondary text-foreground rounded-full hover:bg-accent hover:text-accent-foreground transition-colors"
+                >
+                  {page.label}
+                </Link>
+              ))}
+              {city && !isNIWide && (
+                <Link
+                  to={`/${city.slug}`}
+                  className="px-3 py-1.5 text-[12px] font-medium bg-accent text-accent-foreground rounded-full"
+                >
+                  Explore {city.name}
+                </Link>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* Thin content notice — page has content but is borderline */}
+        {isThin && (
           <div className="my-4 px-4 py-3 bg-secondary rounded-lg flex items-start gap-2">
-            <AlertCircle className="h-4 w-4 text-muted-foreground shrink-0 mt-0.5" />
+            <Info className="h-4 w-4 text-muted-foreground shrink-0 mt-0.5" />
             <p className="text-[12px] text-muted-foreground leading-relaxed">
-              We're still growing our {showEvents ? "events" : "listings"} for this area. Check back soon for more — or explore related pages below.
+              {validation.message || `We're still growing our ${showEvents ? "events" : "listings"} for this area. Check back soon for more — or explore related pages below.`}
+              {validation.duplicatesRemoved > 0 && ` (${validation.duplicatesRemoved} duplicate${validation.duplicatesRemoved > 1 ? "s" : ""} removed)`}
             </p>
           </div>
         )}
