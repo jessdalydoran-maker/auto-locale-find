@@ -253,7 +253,7 @@ const Index = () => {
                       height={400}
                       onError={(e) => {
                         const img = e.currentTarget;
-                        const fb = getCategoryPlaceholder(catSlug);
+                        const fb = getCategoryPlaceholder(catSlug, listing.name);
                         if (img.src !== fb) img.src = fb;
                       }}
                     />
