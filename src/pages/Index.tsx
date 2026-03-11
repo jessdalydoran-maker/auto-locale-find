@@ -238,6 +238,59 @@ const Index = () => {
     },
   });
 
+  // Live Music Tonight: music events happening today across NI
+  const { data: liveMusicItems } = useQuery({
+    queryKey: ["live-music-tonight"],
+    queryFn: async () => {
+      const today = new Date().toISOString().split("T")[0];
+
+      // Fetch events with music-related categories or tags
+      const { data: musicEvents } = await supabase
+        .from("events")
+        .select("id, title, slug, short_description, date_start, time_start, image_url, image_source, image_alt, image_status, is_free, venue_name, tags, cities!inner(slug, name), categories!inner(slug, name)")
+        .eq("status", "active")
+        .eq("date_start", today)
+        .order("time_start", { ascending: true })
+        .limit(20);
+
+      const MUSIC_CATEGORY_SLUGS = ["live-music", "music", "gigs", "concerts"];
+      const MUSIC_TAG_KEYWORDS = ["live music", "gig", "acoustic", "band", "dj", "open mic", "concert", "singer", "songwriter", "jam", "session"];
+
+      const items: Array<{
+        id: string; title: string; slug: string; description: string;
+        imageUrl: string | null; imageAlt: string | null;
+        cityName: string; citySlug: string; link: string;
+        venueName: string | null; time: string | null; badge?: string;
+      }> = [];
+
+      for (const e of (musicEvents || [])) {
+        const catSlug = (e.categories as any)?.slug || "";
+        const tags = (e.tags || []).map((t: string) => t.toLowerCase());
+        const titleLower = e.title.toLowerCase();
+
+        const isMusicCategory = MUSIC_CATEGORY_SLUGS.includes(catSlug);
+        const hasMusicTag = tags.some((t: string) => MUSIC_TAG_KEYWORDS.some(k => t.includes(k)));
+        const hasMusicTitle = MUSIC_TAG_KEYWORDS.some(k => titleLower.includes(k));
+
+        if (isMusicCategory || hasMusicTag || hasMusicTitle) {
+          items.push({
+            id: e.id, title: e.title, slug: e.slug,
+            description: e.short_description || "",
+            imageUrl: e.image_url, imageAlt: e.image_alt as string | null,
+            cityName: (e.cities as any)?.name || "",
+            citySlug: (e.cities as any)?.slug || "",
+            link: `/event/${e.slug}`,
+            venueName: e.venue_name,
+            time: e.time_start,
+            badge: e.is_free ? "Free" : undefined,
+          });
+        }
+      }
+
+      return items.slice(0, 10);
+    },
+  });
+
   useEffect(() => { setPageCanonical("/"); }, []);
 
   return (
