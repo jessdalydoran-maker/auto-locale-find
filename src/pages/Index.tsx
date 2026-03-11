@@ -252,8 +252,8 @@ const Index = () => {
               const catSlug = (listing.categories as any)?.slug;
               const catName = (listing.categories as any)?.name || "Place";
               const citySlug = (listing.cities as any)?.slug || "belfast";
-              const imgSrc = getImageUrl(listing.image_url, (listing as any).image_source, catSlug, citySlug, (listing as any).image_status, listing.name);
-              return (
+               const imgSrc = getImageUrl(listing.image_url, (listing as any).image_source, catSlug, citySlug, (listing as any).image_status, listing.name, (listing as any).audience_tags, listing.description);
+               return (
                 <Link
                   key={listing.id}
                   to={`/${citySlug}/${listing.slug}`}
@@ -269,7 +269,7 @@ const Index = () => {
                       decoding="async"
                       width={600}
                       height={400}
-                      onError={buildImageErrorHandler(catSlug, listing.name)}
+                      onError={buildImageErrorHandler(catSlug, listing.name, (listing as any).audience_tags, listing.description)}
                     />
                     <span className="absolute top-3 left-3 bg-teal text-teal-foreground text-[11px] font-semibold px-2.5 py-1 rounded-md">
                       {catName}
