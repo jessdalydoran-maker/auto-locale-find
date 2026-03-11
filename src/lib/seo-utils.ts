@@ -54,6 +54,10 @@ const CATEGORY_ALIASES: Record<string, string> = {
   "day-out": "things-to-do",
   "rainy-day-activities": "things-to-do",
   "cheap-things-to-do": "things-to-do",
+  "gigs": "live-music",
+  "acoustic": "live-music",
+  "concerts": "live-music",
+  "bands": "live-music",
 };
 
 /** City slug aliases — allows short forms like "ni" for "northern-ireland" */
@@ -213,6 +217,13 @@ export function generateTitle(
     return `${categoryName} in ${location} | Find the Best ${categoryName}`;
   }
 
+  // Live Music cluster
+  if (["live music", "live-music"].includes(categoryName.toLowerCase())) {
+    if (timeLabel) return `Live Music in ${location} ${timeLabel} | Gigs, Bands & Acoustic Sessions`;
+    if (modifier === "best") return `Best Live Music Venues in ${location} | Gigs & Concerts`;
+    return `Live Music in ${location} | Gigs, Bands & Live Sessions`;
+  }
+
   // Generic fallback
   const timeSuffix = timeLabel ? ` ${timeLabel}` : "";
   if (modifier) {
@@ -268,6 +279,12 @@ export function generateMetaDescription(
     if (modifier === "cheap") return `Cheap ${catLower} in ${location}. Budget-friendly dining spots that don't compromise on quality or taste.`;
     if (modifier === "vegan") return `Vegan-friendly ${catLower} in ${location}. Plant-based dining options with reviews and ratings.`;
     return `Find the best ${catLower} in ${location}. Browse ratings, reviews and directions for top ${catLower} near you.`;
+  }
+
+  // Live Music cluster
+  if (["live music", "live-music"].includes(catLower)) {
+    if (timeLabel) return `Live music in ${location} ${timeLabel.toLowerCase()}. Find gigs, bands, acoustic sessions, open mic nights and concerts happening near you.`;
+    return `Discover live music in ${location}. Browse gigs, bands, acoustic sessions, DJ sets and concerts at the best venues.`;
   }
 
   // Generic fallback

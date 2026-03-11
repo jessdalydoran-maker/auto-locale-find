@@ -7,7 +7,7 @@ import { ListingCard } from "@/components/ListingCard";
 import { EventCard } from "@/components/EventCard";
 import { NeighbourhoodCard } from "@/components/NeighbourhoodCard";
 import { AdPlaceholder } from "@/components/AdPlaceholder";
-import { ArrowRight, Calendar, Utensils, MapPin, Star, Sparkles, Heart, TrendingUp, Moon, Users, CloudRain, Coins, PartyPopper, Coffee, Plus, Rainbow, Zap } from "lucide-react";
+import { ArrowRight, Calendar, Utensils, MapPin, Star, Sparkles, Heart, TrendingUp, Moon, Users, CloudRain, Coins, PartyPopper, Coffee, Plus, Rainbow, Zap, Music } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { getImageUrl, getCategoryPlaceholder, buildImageErrorHandler } from "@/lib/image-utils";
 import { Link } from "react-router-dom";
@@ -18,6 +18,7 @@ const QUICK_LINKS = [
   { label: "What's On", to: "/events", icon: Calendar },
   { label: "Things To Do", to: "/things-to-do", icon: Sparkles },
   { label: "LGBT+", to: "/belfast?category=lgbtq", icon: Rainbow },
+  { label: "Live Music", to: "/live-music-tonight", icon: Music },
   { label: "Restaurants", to: "/best-restaurants-belfast", icon: Utensils },
   { label: "Free", to: "/free-things-to-do", icon: Star },
   { label: "Date Night", to: "/date-night", icon: Heart },
@@ -235,6 +236,59 @@ const Index = () => {
         seen.add(i.id);
         return true;
       }).slice(0, 8);
+    },
+  });
+
+  // Live Music Tonight: music events happening today across NI
+  const { data: liveMusicItems } = useQuery({
+    queryKey: ["live-music-tonight"],
+    queryFn: async () => {
+      const today = new Date().toISOString().split("T")[0];
+
+      // Fetch events with music-related categories or tags
+      const { data: musicEvents } = await supabase
+        .from("events")
+        .select("id, title, slug, short_description, date_start, time_start, image_url, image_source, image_alt, image_status, is_free, venue_name, tags, cities!inner(slug, name), categories!inner(slug, name)")
+        .eq("status", "active")
+        .eq("date_start", today)
+        .order("time_start", { ascending: true })
+        .limit(20);
+
+      const MUSIC_CATEGORY_SLUGS = ["live-music", "music", "gigs", "concerts"];
+      const MUSIC_TAG_KEYWORDS = ["live music", "gig", "acoustic", "band", "dj", "open mic", "concert", "singer", "songwriter", "jam", "session"];
+
+      const items: Array<{
+        id: string; title: string; slug: string; description: string;
+        imageUrl: string | null; imageAlt: string | null;
+        cityName: string; citySlug: string; link: string;
+        venueName: string | null; time: string | null; badge?: string;
+      }> = [];
+
+      for (const e of (musicEvents || [])) {
+        const catSlug = (e.categories as any)?.slug || "";
+        const tags = (e.tags || []).map((t: string) => t.toLowerCase());
+        const titleLower = e.title.toLowerCase();
+
+        const isMusicCategory = MUSIC_CATEGORY_SLUGS.includes(catSlug);
+        const hasMusicTag = tags.some((t: string) => MUSIC_TAG_KEYWORDS.some(k => t.includes(k)));
+        const hasMusicTitle = MUSIC_TAG_KEYWORDS.some(k => titleLower.includes(k));
+
+        if (isMusicCategory || hasMusicTag || hasMusicTitle) {
+          items.push({
+            id: e.id, title: e.title, slug: e.slug,
+            description: e.short_description || "",
+            imageUrl: e.image_url, imageAlt: e.image_alt as string | null,
+            cityName: (e.cities as any)?.name || "",
+            citySlug: (e.cities as any)?.slug || "",
+            link: `/event/${e.slug}`,
+            venueName: e.venue_name,
+            time: e.time_start,
+            badge: e.is_free ? "Free" : undefined,
+          });
+        }
+      }
+
+      return items.slice(0, 10);
     },
   });
 
@@ -500,6 +554,70 @@ const Index = () => {
                   </p>
                   {item.cityName && (
                     <p className="text-[11px] text-muted-foreground mt-1.5 flex items-center gap-1">
+                      <MapPin className="h-3 w-3" /> {item.cityName}
+                    </p>
+                  )}
+                </div>
+              </Link>
+            ))}
+          </div>
+        </section>
+      )}
+
+      {/* Live Music Tonight */}
+      {liveMusicItems && liveMusicItems.length > 0 && (
+        <section className="container mx-auto px-4 py-8">
+          <div className="flex items-center justify-between mb-5">
+            <h2 className="font-display font-semibold text-lg text-foreground flex items-center gap-2">
+              <Music className="h-5 w-5 text-teal" />
+              Live Music Tonight
+            </h2>
+            <Link to="/live-music-tonight" className="text-[13px] text-primary font-medium flex items-center gap-1 hover:underline">
+              See all <ArrowRight className="h-3.5 w-3.5" />
+            </Link>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            {liveMusicItems.slice(0, 8).map((item, i) => (
+              <Link
+                key={item.id}
+                to={item.link}
+                className="group bg-card rounded-lg border border-border overflow-hidden card-shadow hover:card-shadow-hover transition-all duration-200 animate-fade-in"
+                style={{ animationDelay: `${i * 60}ms` }}
+              >
+                <div className="relative aspect-[16/10] overflow-hidden">
+                  <img
+                    src={item.imageUrl || getCategoryPlaceholder("live-music", item.title)}
+                    alt={item.imageAlt || `${item.title} — Live Music Tonight`}
+                    className="w-full h-full object-cover group-hover:scale-[1.03] transition-transform duration-300"
+                    loading="lazy"
+                    decoding="async"
+                    width={400}
+                    height={250}
+                    onError={buildImageErrorHandler("live-music", item.title)}
+                  />
+                  <span className="absolute top-2 left-2 bg-card/90 backdrop-blur-sm text-foreground text-[10px] font-semibold px-2 py-0.5 rounded">
+                    Live Music
+                  </span>
+                  {item.badge && (
+                    <span className="absolute top-2 right-2 bg-teal text-teal-foreground text-[10px] font-semibold px-2 py-0.5 rounded">
+                      {item.badge}
+                    </span>
+                  )}
+                  {item.time && (
+                    <span className="absolute bottom-2 left-2 bg-primary/90 text-primary-foreground text-[10px] font-semibold px-2 py-0.5 rounded">
+                      {item.time.slice(0, 5)}
+                    </span>
+                  )}
+                </div>
+                <div className="p-3">
+                  <h3 className="font-display font-semibold text-sm text-foreground line-clamp-1 group-hover:text-primary transition-colors">
+                    {item.title}
+                  </h3>
+                  {item.venueName && (
+                    <p className="text-xs text-muted-foreground mt-1 line-clamp-1">{item.venueName}</p>
+                  )}
+                  {item.cityName && (
+                    <p className="text-[11px] text-muted-foreground mt-1 flex items-center gap-1">
                       <MapPin className="h-3 w-3" /> {item.cityName}
                     </p>
                   )}
