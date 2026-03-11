@@ -247,7 +247,7 @@ export interface SearchIntent {
  * Parse a natural language query into a structured search intent
  */
 export function parseSearchIntent(rawQuery: string): SearchIntent {
-  let query = rawQuery.toLowerCase().trim();
+  const query = rawQuery.toLowerCase().trim();
 
   // 1. Extract location
   let city: string | null = null;
@@ -279,12 +279,9 @@ export function parseSearchIntent(rawQuery: string): SearchIntent {
   // Strip location noise words
   queryWithoutLocation = queryWithoutLocation
     .split(/\s+/)
-    .filter(w => !LOCATION_NOISE_WORDS.has(w))
+    .filter((w) => !LOCATION_NOISE_WORDS.has(w))
     .join(" ")
     .trim();
-
-  // Do NOT default to Belfast — if no location found, leave city null
-  // This prevents cross-contamination of results
 
   // 2. Extract modifiers
   const modifiers: string[] = [];
@@ -298,16 +295,17 @@ export function parseSearchIntent(rawQuery: string): SearchIntent {
     }
   }
 
-  // 3. Match intents to categories
+  // 3. Match intents to categories (prefer cleaned query, fallback to full query)
   const categorySlugs = new Set<string>();
+  let intentLabel: string | null = null;
 
-  // Try matching intent phrases (longest first)
   const sortedIntents = Object.keys(INTENT_TO_CATEGORIES).sort(
     (a, b) => b.length - a.length
   );
 
   for (const intent of sortedIntents) {
-    if (query.includes(intent)) {
+    if (queryWithoutLocation.includes(intent) || query.includes(intent)) {
+      if (!intentLabel) intentLabel = intent;
       for (const cat of INTENT_TO_CATEGORIES[intent]) {
         categorySlugs.add(cat);
       }
@@ -317,11 +315,13 @@ export function parseSearchIntent(rawQuery: string): SearchIntent {
   // Also try individual remaining words
   if (categorySlugs.size === 0) {
     const words = queryWithoutModifiers
+      .replace(/[^a-z0-9\s'-]/g, " ")
       .split(/\s+/)
-      .filter((w) => !STOP_WORDS.has(w) && w.length > 2);
+      .filter((w) => !STOP_WORDS.has(w) && !FILLER_WORDS.has(w) && w.length > 2);
 
     for (const word of words) {
       if (INTENT_TO_CATEGORIES[word]) {
+        if (!intentLabel) intentLabel = word;
         for (const cat of INTENT_TO_CATEGORIES[word]) {
           categorySlugs.add(cat);
         }
@@ -331,8 +331,18 @@ export function parseSearchIntent(rawQuery: string): SearchIntent {
 
   // 4. Remaining keywords for text search fallback
   const keywords = queryWithoutModifiers
+    .replace(/[^a-z0-9\s'-]/g, " ")
     .split(/\s+/)
-    .filter((w) => !STOP_WORDS.has(w) && w.length > 2);
+    .filter((w) => !STOP_WORDS.has(w) && !FILLER_WORDS.has(w) && w.length > 2);
+
+  // Dedicated strict town mode for explicit "[intent] in [town]" style searches
+  const strictTownMode = Boolean(
+    hasExplicitLocation &&
+    city &&
+    STRICT_TOWN_INTENT_PHRASES.some((phrase) =>
+      query.includes(phrase) || queryWithoutLocation.includes(phrase)
+    )
+  );
 
   // 5. Generate suggested page slugs
   const suggestedPages: string[] = [];
@@ -358,6 +368,8 @@ export function parseSearchIntent(rawQuery: string): SearchIntent {
     modifiers,
     keywords,
     suggestedPages,
+    intentLabel,
+    strictTownMode,
   };
 }
 
