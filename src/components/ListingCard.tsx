@@ -1,6 +1,7 @@
 import { Link } from "react-router-dom";
 import { Star, MapPin, ExternalLink } from "lucide-react";
-import { getImageUrl, generateListingAltText, isPlaceholderImage } from "@/lib/image-utils";
+import { getImageUrl, generateListingAltText, isPlaceholderImage, getCategoryPlaceholder } from "@/lib/image-utils";
+import { useCallback } from "react";
 
 interface ListingCardProps {
   name: string;
@@ -51,6 +52,15 @@ export const ListingCard = ({
     ? imageAlt
     : generateListingAltText(name, categoryName, neighbourhoodName, cityName, usingPlaceholder);
 
+  const fallbackImage = getCategoryPlaceholder(categorySlug, citySlug);
+
+  const handleImageError = useCallback((e: React.SyntheticEvent<HTMLImageElement>) => {
+    const img = e.currentTarget;
+    if (img.src !== fallbackImage) {
+      img.src = fallbackImage;
+    }
+  }, [fallbackImage]);
+
   const detailUrl = `/place/${slug}`;
 
   return (
@@ -68,8 +78,14 @@ export const ListingCard = ({
             decoding="async"
             width={600}
             height={375}
+            onError={handleImageError}
           />
-          {isFeatured && (
+          {categoryName && (
+            <span className="absolute top-2.5 left-2.5 bg-accent text-accent-foreground text-[10px] font-semibold px-2 py-0.5 rounded">
+              {categoryName}
+            </span>
+          )}
+          {isFeatured && !categoryName && (
             <span className="absolute top-2.5 left-2.5 bg-accent text-accent-foreground text-[10px] font-semibold px-2 py-0.5 rounded">
               Featured
             </span>
@@ -102,12 +118,17 @@ export const ListingCard = ({
         <p className="text-xs text-muted-foreground mb-2.5 line-clamp-2 leading-relaxed">{shortDescription}</p>
 
         <div className="flex items-center justify-between">
-          {address && (
+          {address ? (
             <div className="flex items-center gap-1 text-[11px] text-muted-foreground">
               <MapPin className="h-3 w-3 shrink-0" />
               <span className="line-clamp-1">{address}</span>
             </div>
-          )}
+          ) : cityName ? (
+            <div className="flex items-center gap-1 text-[11px] text-muted-foreground">
+              <MapPin className="h-3 w-3 shrink-0" />
+              <span className="line-clamp-1">{cityName}{neighbourhoodName ? `, ${neighbourhoodName}` : ""}</span>
+            </div>
+          ) : null}
           {googleMapsLink && (
             <a
               href={googleMapsLink}

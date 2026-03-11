@@ -1,7 +1,8 @@
 import { Link } from "react-router-dom";
 import { Calendar, MapPin, Clock, Ticket } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
-import { getImageUrl, generateEventAltText, isPlaceholderImage, getEventImageByKeywords } from "@/lib/image-utils";
+import { getImageUrl, generateEventAltText, isPlaceholderImage, getEventImageByKeywords, getCategoryPlaceholder } from "@/lib/image-utils";
+import { useCallback } from "react";
 
 interface EventCardProps {
   title: string;
@@ -56,6 +57,15 @@ export const EventCard = ({
     ? imageAlt
     : generateEventAltText(title, venueName, cityName, usingPlaceholder);
 
+  const fallbackImage = getCategoryPlaceholder(categorySlug || "events");
+
+  const handleImageError = useCallback((e: React.SyntheticEvent<HTMLImageElement>) => {
+    const img = e.currentTarget;
+    if (img.src !== fallbackImage) {
+      img.src = fallbackImage;
+    }
+  }, [fallbackImage]);
+
   const detailUrl = `/event/${slug}`;
 
   const formatDate = (dateStr: string) => {
@@ -86,6 +96,7 @@ export const EventCard = ({
             decoding="async"
             width={600}
             height={375}
+            onError={handleImageError}
           />
           {/* Date badge */}
           <div className="absolute top-2.5 left-2.5 bg-card/95 backdrop-blur-sm rounded-md px-2.5 py-1.5 text-center">
