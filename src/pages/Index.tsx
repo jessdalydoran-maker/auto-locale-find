@@ -35,6 +35,8 @@ const POPULAR_SEARCHES = [
   { label: "Best brunch Belfast", to: "/best-brunch-belfast" },
   { label: "Date night", to: "/date-night" },
   { label: "Live music tonight", to: "/live-music-tonight" },
+  { label: "Live music this weekend", to: "/live-music-this-weekend" },
+  { label: "Upcoming live music", to: "/upcoming-live-music" },
   { label: "Halal food Belfast", to: "/halal-food-belfast" },
   { label: "Alcohol free Belfast", to: "/alcohol-free-belfast" },
   { label: "Theatre Belfast", to: "/theatre-belfast" },
