@@ -163,7 +163,7 @@ export const EventCard = ({
               href={ticketUrl}
               target="_blank"
               rel="noopener noreferrer"
-              className="text-[11px] text-accent font-medium hover:underline flex items-center gap-1"
+              className="text-[11px] text-primary font-medium hover:underline flex items-center gap-1"
               onClick={(e) => e.stopPropagation()}
             >
               <Ticket className="h-3 w-3" />
