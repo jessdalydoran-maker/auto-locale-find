@@ -40,7 +40,7 @@ const CityPage = () => {
   });
 
   const { data: listings } = useQuery({
-    queryKey: ["city-listings", resolvedCitySlug, categoryFilter],
+    queryKey: ["city-listings", resolvedCitySlug, categoryFilter, city?.id],
     queryFn: async () => {
       let query = supabase
         .from("listings")
@@ -80,7 +80,7 @@ const CityPage = () => {
 
       return data;
     },
-    enabled: !!resolvedCitySlug,
+    enabled: !!resolvedCitySlug && !!city,
   });
 
   // Deduplicate and validate
