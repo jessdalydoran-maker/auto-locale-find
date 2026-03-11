@@ -1319,7 +1319,7 @@ const ProgrammaticPage = () => {
         {showEvents && venueListings && venueListings.length > 0 && (
           <div className="my-8">
             <h2 className="font-display font-semibold text-xl text-foreground mb-6">
-              <MapPin className="inline h-5 w-5 mr-2 text-accent" />
+              <MapPin className="inline h-5 w-5 mr-2 text-teal" />
               {parsed?.categorySlug === "live-music" ? "Music Venues & Bars" :
                parsed?.categorySlug === "theatre" ? "Theatres & Performance Venues" :
                parsed?.categorySlug === "comedy" ? "Comedy Venues" :
