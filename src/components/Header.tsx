@@ -36,6 +36,8 @@ const NAV_ITEMS = [
       { label: "Best Cafes", to: "/best-cafes-belfast" },
       { label: "Bars", to: "/bars-belfast" },
       { label: "Cocktail Bars", to: "/cocktail-bars-belfast" },
+      { label: "Halal Food", to: "/halal-food" },
+      { label: "Alcohol Free", to: "/alcohol-free" },
     ],
   },
 ];

@@ -27,6 +27,7 @@ const QUICK_LINKS = [
 ];
 
 const POPULAR_SEARCHES = [
+  { label: "What's on Belfast", to: "/whats-on-belfast" },
   { label: "What's on this weekend", to: "/events-this-weekend" },
   { label: "Free events", to: "/free-events" },
   { label: "Family activities", to: "/family-activities" },
@@ -34,11 +35,12 @@ const POPULAR_SEARCHES = [
   { label: "Best brunch Belfast", to: "/best-brunch-belfast" },
   { label: "Date night", to: "/date-night" },
   { label: "Live music tonight", to: "/live-music-tonight" },
-  { label: "Things to do today", to: "/things-to-do-today" },
+  { label: "Halal food Belfast", to: "/halal-food-belfast" },
+  { label: "Alcohol free Belfast", to: "/alcohol-free-belfast" },
+  { label: "Theatre Belfast", to: "/theatre-belfast" },
+  { label: "Leisure centres", to: "/leisure-centres" },
   { label: "Best cafes Belfast", to: "/best-cafes-belfast" },
   { label: "Cocktail bars Belfast", to: "/cocktail-bars-belfast" },
-  { label: "Things to do Cathedral Quarter", to: "/things-to-do-cathedral-quarter-belfast" },
-  { label: "Restaurants Titanic Quarter", to: "/restaurants-titanic-quarter-belfast" },
 ];
 
 const Index = () => {

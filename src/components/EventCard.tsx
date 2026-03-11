@@ -121,7 +121,7 @@ export const EventCard = ({
         </Link>
 
         {shortDescription && (
-          <p className="text-xs text-muted-foreground mb-2.5 line-clamp-2 leading-relaxed">{shortDescription}</p>
+          <p className="text-[13px] text-muted-foreground mb-2.5 line-clamp-2 leading-relaxed">{shortDescription}</p>
         )}
 
         <div className="space-y-1">
