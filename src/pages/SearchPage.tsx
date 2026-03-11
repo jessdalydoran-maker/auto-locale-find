@@ -137,6 +137,9 @@ const SearchPage = () => {
     ],
     queryFn: async () => {
       if (!query.trim()) return { exact: [] as any[], nearby: [] as any[], niWide: [] as any[] };
+      if (intent.hasExplicitLocation && !resolvedCity) {
+        return { exact: [] as any[], nearby: [] as any[], niWide: [] as any[] };
+      }
 
       const selectFields = "*, cities!inner(slug, name), categories!inner(slug, name)";
       const exactResults: any[] = [];
