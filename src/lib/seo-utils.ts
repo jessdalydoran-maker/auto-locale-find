@@ -217,6 +217,13 @@ export function generateTitle(
     return `${categoryName} in ${location} | Find the Best ${categoryName}`;
   }
 
+  // Live Music cluster
+  if (["live music", "live-music"].includes(categoryName.toLowerCase())) {
+    if (timeLabel) return `Live Music in ${location} ${timeLabel} | Gigs, Bands & Acoustic Sessions`;
+    if (modifier === "best") return `Best Live Music Venues in ${location} | Gigs & Concerts`;
+    return `Live Music in ${location} | Gigs, Bands & Live Sessions`;
+  }
+
   // Generic fallback
   const timeSuffix = timeLabel ? ` ${timeLabel}` : "";
   if (modifier) {
