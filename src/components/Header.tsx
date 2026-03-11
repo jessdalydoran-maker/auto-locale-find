@@ -48,7 +48,7 @@ export const Header = () => {
       <div className="container mx-auto px-4">
         <div className="flex items-center justify-between h-14">
           <Link to="/" className="flex items-center">
-            <img src={logo} alt="City Scout Guide" className="h-10 w-auto" />
+            <img src={logo} alt="City Scout Guide" className="h-20 w-auto" />
           </Link>
 
           <nav className="hidden lg:flex items-center gap-0.5">
