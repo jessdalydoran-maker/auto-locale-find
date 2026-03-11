@@ -1160,7 +1160,7 @@ const ProgrammaticPage = () => {
               {city && !isNIWide && (
                 <Link
                   to={`/${city.slug}`}
-                  className="px-3 py-1.5 text-[12px] font-medium bg-accent text-accent-foreground rounded-full"
+                  className="px-3 py-1.5 text-[12px] font-medium bg-primary text-primary-foreground rounded-full"
                 >
                   Explore {city.name}
                 </Link>
