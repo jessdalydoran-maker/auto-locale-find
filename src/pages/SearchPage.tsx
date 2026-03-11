@@ -242,10 +242,11 @@ const SearchPage = () => {
     enabled: !!query && (intent.city ? resolvedCity !== undefined : true),
   });
 
-  // Score and rank listings
-  const { rankedExact, rankedNearby } = useMemo(() => {
-    if (!rawListings) return { rankedExact: [], rankedNearby: [] };
+  // Score and rank listings across all 3 tiers
+  const { rankedExact, rankedNearby, rankedNiWide } = useMemo(() => {
+    if (!rawListings) return { rankedExact: [], rankedNearby: [], rankedNiWide: [] };
 
+    // Tier 1: exact city — score with full location weight
     const scoredExact = rawListings.exact.map(item => ({
       item,
       score: scoreListing(item, query, intent),
@@ -254,6 +255,7 @@ const SearchPage = () => {
     const { unique: uniqueExact } = deduplicateListings(exact as any);
     const filteredExact = filterCompleteListings(uniqueExact);
 
+    // Tier 2: nearby — score without location penalty
     const scoredNearby = rawListings.nearby.map(item => ({
       item,
       score: scoreListing(item, query, { ...intent, city: null, hasExplicitLocation: false }),
@@ -262,7 +264,16 @@ const SearchPage = () => {
     const { unique: uniqueNearby } = deduplicateListings(nearby as any);
     const filteredNearby = filterCompleteListings(uniqueNearby);
 
-    return { rankedExact: filteredExact, rankedNearby: filteredNearby };
+    // Tier 3: NI-wide — only shown when exact + nearby are thin
+    const scoredNiWide = rawListings.niWide.map(item => ({
+      item,
+      score: scoreListing(item, query, { ...intent, city: null, hasExplicitLocation: false }),
+    }));
+    const niWide = rankAndFilter(scoredNiWide, 20, false);
+    const { unique: uniqueNiWide } = deduplicateListings(niWide as any);
+    const filteredNiWide = filterCompleteListings(uniqueNiWide);
+
+    return { rankedExact: filteredExact, rankedNearby: filteredNearby, rankedNiWide: filteredNiWide };
   }, [rawListings, query]);
 
   // Search events — location-filtered
