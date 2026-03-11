@@ -242,7 +242,7 @@ const Index = () => {
               <h2 className="font-display font-bold text-xl md:text-2xl text-foreground">Belfast Highlights</h2>
               <p className="text-sm text-muted-foreground mt-1">Curated places and experiences we recommend</p>
             </div>
-            <Link to="/things-to-do" className="text-[13px] text-accent font-medium flex items-center gap-1 hover:underline">
+            <Link to="/things-to-do" className="text-[13px] text-primary font-medium flex items-center gap-1 hover:underline">
               Explore more <ArrowRight className="h-3.5 w-3.5" />
             </Link>
           </div>
