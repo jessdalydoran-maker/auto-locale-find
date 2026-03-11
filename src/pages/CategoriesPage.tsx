@@ -54,7 +54,7 @@ const CategoriesPage = () => {
               className="bg-card rounded-xl p-6 card-shadow hover:card-shadow-hover transition-all animate-fade-in"
               style={{ animationDelay: `${i * 80}ms` }}
             >
-              <div className="w-14 h-14 rounded-xl bg-accent/10 flex items-center justify-center text-accent mb-4">
+              <div className="w-14 h-14 rounded-xl bg-teal/10 flex items-center justify-center text-teal mb-4">
                 {cat.icon && iconMap[cat.icon] ? iconMap[cat.icon] : <Compass className="h-8 w-8" />}
               </div>
               <h3 className="font-display font-semibold text-lg text-foreground mb-2">{cat.name}</h3>
@@ -64,7 +64,7 @@ const CategoriesPage = () => {
                   <Link
                     key={city.id}
                     to={`/best-${cat.slug}-${city.slug}`}
-                    className="text-xs px-2 py-1 bg-muted text-muted-foreground rounded hover:bg-accent hover:text-accent-foreground transition-colors"
+                    className="text-xs px-2 py-1 bg-muted text-muted-foreground rounded hover:bg-primary hover:text-primary-foreground transition-colors"
                   >
                     {city.name}
                   </Link>

@@ -43,7 +43,7 @@ export const LandmarkMap = ({
         />
       </div>
       <div className="p-3.5 flex items-center gap-2">
-        <MapPin className="h-4 w-4 text-accent shrink-0" />
+        <MapPin className="h-4 w-4 text-teal shrink-0" />
         <div>
           <p className="text-sm font-display font-semibold text-foreground">{landmarkName}</p>
           <p className="text-xs text-muted-foreground">

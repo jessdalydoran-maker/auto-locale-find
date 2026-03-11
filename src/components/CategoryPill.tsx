@@ -25,10 +25,10 @@ export const CategoryPill = ({ name, slug, icon, citySlug }: CategoryPillProps) 
   return (
     <Link
       to={to}
-      className="flex items-center gap-2 px-4 py-2.5 bg-card border border-border rounded-full text-sm font-medium text-foreground hover:border-accent hover:text-accent transition-all card-shadow hover:card-shadow-hover"
+      className="flex items-center gap-2 px-4 py-2.5 bg-card border border-border rounded-full text-sm font-medium text-foreground hover:border-teal hover:text-teal transition-all card-shadow hover:card-shadow-hover"
     >
       {icon && iconMap[icon] ? (
-        <span className="text-accent">{iconMap[icon]}</span>
+        <span className="text-teal">{iconMap[icon]}</span>
       ) : null}
       {name}
     </Link>

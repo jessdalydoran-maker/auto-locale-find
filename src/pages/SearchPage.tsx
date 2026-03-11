@@ -173,7 +173,7 @@ const SearchPage = () => {
               </span>
             )}
             {intent.modifiers.map((m) => (
-              <span key={m} className="text-xs bg-accent text-accent-foreground px-2 py-0.5 rounded-full">
+              <span key={m} className="text-xs bg-primary/10 text-primary px-2 py-0.5 rounded-full">
                 {m}
               </span>
             ))}
@@ -202,7 +202,7 @@ const SearchPage = () => {
         {hasEvents && (
           <section className="mb-10">
             <div className="flex items-center gap-2 mb-4">
-              <Calendar className="h-5 w-5 text-accent" />
+              <Calendar className="h-5 w-5 text-teal" />
               <h2 className="font-display font-semibold text-lg text-foreground">
                 Upcoming Events
               </h2>

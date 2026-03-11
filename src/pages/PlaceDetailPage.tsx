@@ -184,11 +184,11 @@ const PlaceDetailPage = () => {
       {/* Breadcrumb */}
       <nav className="container mx-auto px-4 pt-4 pb-2">
         <ol className="flex items-center gap-1.5 text-xs text-muted-foreground flex-wrap">
-          <li><Link to="/" className="hover:text-accent transition-colors">Home</Link></li>
+          <li><Link to="/" className="hover:text-primary transition-colors">Home</Link></li>
           <ChevronRight className="h-3 w-3" />
-          <li><Link to={`/${citySlug}`} className="hover:text-accent transition-colors">{cityName}</Link></li>
+          <li><Link to={`/${citySlug}`} className="hover:text-primary transition-colors">{cityName}</Link></li>
           <ChevronRight className="h-3 w-3" />
-          <li><Link to={`/best-${catSlug}-${citySlug}`} className="hover:text-accent transition-colors">{catName}</Link></li>
+          <li><Link to={`/best-${catSlug}-${citySlug}`} className="hover:text-primary transition-colors">{catName}</Link></li>
           <ChevronRight className="h-3 w-3" />
           <li className="text-foreground font-medium truncate max-w-[200px]">{listing.name}</li>
         </ol>
@@ -212,7 +212,7 @@ const PlaceDetailPage = () => {
           <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent" />
           <div className="absolute bottom-0 left-0 right-0 p-6 md:p-8">
             <div className="flex items-center gap-2 mb-2">
-              <span className="text-xs px-2.5 py-1 bg-accent text-accent-foreground rounded-full font-medium">
+              <span className="text-xs px-2.5 py-1 bg-teal text-teal-foreground rounded-full font-medium">
                 {catName}
               </span>
               {listing.price_level && (
@@ -262,7 +262,7 @@ const PlaceDetailPage = () => {
             {listing.audience_tags && listing.audience_tags.length > 0 && (
               <div>
                 <h3 className="font-display font-semibold text-sm text-foreground mb-2 flex items-center gap-1.5">
-                  <Tag className="h-4 w-4 text-accent" /> Tags
+                  <Tag className="h-4 w-4 text-teal" /> Tags
                 </h3>
                 <div className="flex flex-wrap gap-1.5">
                   {listing.audience_tags.map((tag: string) => (
@@ -282,7 +282,7 @@ const PlaceDetailPage = () => {
                   <Link
                     key={link.url}
                     to={link.url}
-                    className="text-xs px-3 py-1.5 bg-card border border-border text-muted-foreground rounded-full hover:border-accent/40 hover:text-accent transition-colors"
+                    className="text-xs px-3 py-1.5 bg-card border border-border text-muted-foreground rounded-full hover:border-primary/40 hover:text-primary transition-colors"
                   >
                     {link.label}
                   </Link>
@@ -298,15 +298,15 @@ const PlaceDetailPage = () => {
 
               {listing.address && (
                 <div className="flex items-start gap-2.5 text-sm">
-                  <MapPin className="h-4 w-4 text-accent shrink-0 mt-0.5" />
+                  <MapPin className="h-4 w-4 text-teal shrink-0 mt-0.5" />
                   <span className="text-muted-foreground">{listing.address}</span>
                 </div>
               )}
 
               {nbName && (
                 <div className="flex items-start gap-2.5 text-sm">
-                  <Navigation className="h-4 w-4 text-accent shrink-0 mt-0.5" />
-                  <Link to={`/${catSlug}-${nbSlug}-${citySlug}`} className="text-accent hover:underline">
+                  <Navigation className="h-4 w-4 text-teal shrink-0 mt-0.5" />
+                  <Link to={`/${catSlug}-${nbSlug}-${citySlug}`} className="text-primary hover:underline">
                     {nbName}, {cityName}
                   </Link>
                 </div>
@@ -314,8 +314,8 @@ const PlaceDetailPage = () => {
 
               {listing.phone && (
                 <div className="flex items-start gap-2.5 text-sm">
-                  <Phone className="h-4 w-4 text-accent shrink-0 mt-0.5" />
-                  <a href={`tel:${listing.phone}`} className="text-muted-foreground hover:text-accent transition-colors">
+                  <Phone className="h-4 w-4 text-teal shrink-0 mt-0.5" />
+                  <a href={`tel:${listing.phone}`} className="text-muted-foreground hover:text-primary transition-colors">
                     {listing.phone}
                   </a>
                 </div>
@@ -323,7 +323,7 @@ const PlaceDetailPage = () => {
 
               {listing.price_level && (
                 <div className="flex items-start gap-2.5 text-sm">
-                  <DollarSign className="h-4 w-4 text-accent shrink-0 mt-0.5" />
+                  <DollarSign className="h-4 w-4 text-teal shrink-0 mt-0.5" />
                   <span className="text-muted-foreground">Price: {listing.price_level}</span>
                 </div>
               )}
@@ -335,7 +335,7 @@ const PlaceDetailPage = () => {
                     href={listing.google_maps_link}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-accent text-accent-foreground rounded-lg text-sm font-medium hover:bg-accent/90 transition-colors"
+                    className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-primary text-primary-foreground rounded-lg text-sm font-medium hover:bg-primary/90 transition-colors"
                   >
                     <MapPin className="h-4 w-4" /> View on Map
                   </a>
@@ -364,7 +364,7 @@ const PlaceDetailPage = () => {
               <h3 className="font-display font-semibold text-foreground text-sm mb-2">Category</h3>
               <Link
                 to={`/best-${catSlug}-${citySlug}`}
-                className="inline-flex items-center gap-1.5 text-sm text-accent hover:underline"
+                className="inline-flex items-center gap-1.5 text-sm text-primary hover:underline"
               >
                 {catName} <ExternalLink className="h-3 w-3" />
               </Link>
@@ -376,7 +376,7 @@ const PlaceDetailPage = () => {
         {venueEvents && venueEvents.length > 0 && (
           <section className="mt-12 pt-8 border-t border-border">
             <div className="flex items-center gap-2 mb-6">
-              <CalendarDays className="h-5 w-5 text-accent" />
+              <CalendarDays className="h-5 w-5 text-teal" />
               <h2 className="font-display font-semibold text-lg text-foreground">
                 Upcoming Events at {listing.name}
               </h2>

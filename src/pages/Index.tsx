@@ -174,7 +174,7 @@ const Index = () => {
       {/* Hero */}
       <section className="bg-card border-b border-border">
         <div className="container mx-auto px-4 py-14 md:py-20 text-center">
-          <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-accent/10 text-accent rounded-full text-xs font-medium mb-5">
+          <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-primary/10 text-primary rounded-full text-xs font-medium mb-5">
             <MapPin className="h-3 w-3" />
             Northern Ireland's Local Discovery Platform
           </div>
@@ -192,7 +192,7 @@ const Index = () => {
               <Link
                 key={link.to}
                 to={link.to}
-                className="flex items-center gap-1.5 px-3.5 py-2 bg-secondary text-muted-foreground rounded-full text-[13px] font-medium hover:text-accent hover:bg-accent/8 transition-colors"
+                className="flex items-center gap-1.5 px-3.5 py-2 bg-secondary text-foreground rounded-full text-[13px] font-medium hover:text-primary hover:bg-primary/10 transition-colors"
               >
                 <link.icon className="h-3.5 w-3.5" />
                 {link.label}
@@ -226,7 +226,7 @@ const Index = () => {
             <Link
               key={s.to}
               to={s.to}
-              className="px-3.5 py-2.5 bg-card border border-border rounded-lg text-[13px] text-foreground hover:border-accent/40 hover:text-accent transition-colors card-shadow"
+              className="px-3.5 py-2.5 bg-card border border-border rounded-lg text-[13px] text-foreground hover:border-primary/40 hover:text-primary transition-colors card-shadow"
             >
               {s.label}
             </Link>
@@ -242,7 +242,7 @@ const Index = () => {
               <h2 className="font-display font-bold text-xl md:text-2xl text-foreground">Belfast Highlights</h2>
               <p className="text-sm text-muted-foreground mt-1">Curated places and experiences we recommend</p>
             </div>
-            <Link to="/things-to-do" className="text-[13px] text-accent font-medium flex items-center gap-1 hover:underline">
+            <Link to="/things-to-do" className="text-[13px] text-primary font-medium flex items-center gap-1 hover:underline">
               Explore more <ArrowRight className="h-3.5 w-3.5" />
             </Link>
           </div>
@@ -274,7 +274,7 @@ const Index = () => {
                         if (img.src !== fb) img.src = fb;
                       }}
                     />
-                    <span className="absolute top-3 left-3 bg-accent text-accent-foreground text-[11px] font-semibold px-2.5 py-1 rounded-md">
+                    <span className="absolute top-3 left-3 bg-teal text-teal-foreground text-[11px] font-semibold px-2.5 py-1 rounded-md">
                       {catName}
                     </span>
                     {listing.rating && listing.rating > 0 && (
@@ -284,7 +284,7 @@ const Index = () => {
                     )}
                   </div>
                   <div className="p-4">
-                    <h3 className="font-display font-semibold text-base text-foreground group-hover:text-accent transition-colors mb-1.5">
+                    <h3 className="font-display font-semibold text-base text-foreground group-hover:text-primary transition-colors mb-1.5">
                       {listing.name}
                     </h3>
                     <p className="text-[13px] text-muted-foreground line-clamp-3 leading-relaxed mb-3">
@@ -312,7 +312,7 @@ const Index = () => {
               <Link
                 key={link.to}
                 to={link.to}
-                className="text-xs px-3 py-1.5 bg-secondary text-muted-foreground rounded-full hover:text-accent transition-colors"
+                className="text-xs px-3 py-1.5 bg-secondary text-foreground rounded-full hover:text-primary transition-colors"
               >
                 {link.label}
               </Link>
@@ -326,10 +326,10 @@ const Index = () => {
         <section className="container mx-auto px-4 py-8">
           <div className="flex items-center justify-between mb-5">
             <h2 className="font-display font-semibold text-lg text-foreground flex items-center gap-2">
-              <TrendingUp className="h-5 w-5 text-accent" />
+              <TrendingUp className="h-5 w-5 text-teal" />
               Trending This Weekend
             </h2>
-            <Link to="/things-to-do-this-weekend" className="text-[13px] text-accent font-medium flex items-center gap-1 hover:underline">
+            <Link to="/things-to-do-this-weekend" className="text-[13px] text-primary font-medium flex items-center gap-1 hover:underline">
               See all <ArrowRight className="h-3.5 w-3.5" />
             </Link>
           </div>
@@ -360,13 +360,13 @@ const Index = () => {
                     {item.category}
                   </span>
                   {item.badge && (
-                    <span className="absolute top-2 right-2 bg-accent text-accent-foreground text-[10px] font-semibold px-2 py-0.5 rounded">
+                    <span className="absolute top-2 right-2 bg-teal text-teal-foreground text-[10px] font-semibold px-2 py-0.5 rounded">
                       {item.badge}
                     </span>
                   )}
                 </div>
                 <div className="p-3">
-                  <h3 className="font-display font-semibold text-sm text-foreground line-clamp-1 group-hover:text-accent transition-colors">
+                  <h3 className="font-display font-semibold text-sm text-foreground line-clamp-1 group-hover:text-primary transition-colors">
                     {item.title}
                   </h3>
                   <p className="text-xs text-muted-foreground line-clamp-2 mt-1 leading-relaxed">
@@ -384,7 +384,7 @@ const Index = () => {
         <section className="container mx-auto px-4 py-8">
           <div className="flex items-center justify-between mb-5">
             <h2 className="font-display font-semibold text-lg text-foreground">Upcoming Events</h2>
-            <Link to="/events-belfast" className="text-[13px] text-accent font-medium flex items-center gap-1 hover:underline">
+            <Link to="/events-belfast" className="text-[13px] text-primary font-medium flex items-center gap-1 hover:underline">
               View all <ArrowRight className="h-3.5 w-3.5" />
             </Link>
           </div>
@@ -442,7 +442,7 @@ const Index = () => {
       <section className="container mx-auto px-4 py-8">
         <div className="flex items-center justify-between mb-5">
           <h2 className="font-display font-semibold text-lg text-foreground">Explore Cities</h2>
-          <Link to="/cities" className="text-[13px] text-accent font-medium flex items-center gap-1 hover:underline">
+          <Link to="/cities" className="text-[13px] text-primary font-medium flex items-center gap-1 hover:underline">
             View all <ArrowRight className="h-3.5 w-3.5" />
           </Link>
         </div>
@@ -465,7 +465,7 @@ const Index = () => {
         <section className="container mx-auto px-4 py-10">
           <div className="flex items-center justify-between mb-5">
             <h2 className="font-display font-semibold text-lg text-foreground">Featured Places</h2>
-            <Link to="/best-restaurants-belfast" className="text-[13px] text-accent font-medium flex items-center gap-1 hover:underline">
+            <Link to="/best-restaurants-belfast" className="text-[13px] text-primary font-medium flex items-center gap-1 hover:underline">
               View all <ArrowRight className="h-3.5 w-3.5" />
             </Link>
           </div>
@@ -515,13 +515,13 @@ const Index = () => {
             <Link
               key={mood.to}
               to={mood.to}
-              className="group bg-card border border-border rounded-xl p-4 text-center card-shadow hover:card-shadow-hover hover:border-accent/40 transition-all duration-200 animate-fade-in flex flex-col items-center gap-2.5"
+              className="group bg-card border border-border rounded-xl p-4 text-center card-shadow hover:card-shadow-hover hover:border-primary/40 transition-all duration-200 animate-fade-in flex flex-col items-center gap-2.5"
               style={{ animationDelay: `${i * 60}ms` }}
             >
-              <div className="w-11 h-11 rounded-full bg-accent/10 flex items-center justify-center group-hover:bg-accent/20 transition-colors">
-                <mood.icon className="h-5 w-5 text-accent" />
+              <div className="w-11 h-11 rounded-full bg-teal/10 flex items-center justify-center group-hover:bg-teal/20 transition-colors">
+                <mood.icon className="h-5 w-5 text-teal" />
               </div>
-              <h3 className="font-display font-semibold text-sm text-foreground group-hover:text-accent transition-colors">
+              <h3 className="font-display font-semibold text-sm text-foreground group-hover:text-primary transition-colors">
                 {mood.label}
               </h3>
               <p className="text-[11px] text-muted-foreground leading-snug line-clamp-2">
@@ -541,7 +541,7 @@ const Index = () => {
               <Link
                 key={`${city.slug}-${cat.slug}`}
                 to={`/best-${cat.slug}-${city.slug}`}
-                className="text-xs px-3 py-1.5 bg-card border border-border text-muted-foreground rounded-full hover:border-accent/40 hover:text-accent transition-colors"
+                className="text-xs px-3 py-1.5 bg-card border border-border text-muted-foreground rounded-full hover:border-primary/40 hover:text-primary transition-colors"
               >
                 Best {cat.name} {city.name}
               </Link>
@@ -551,7 +551,7 @@ const Index = () => {
             <Link
               key={combo}
               to={`/${combo}`}
-              className="text-xs px-3 py-1.5 bg-card border border-border text-muted-foreground rounded-full hover:border-accent/40 hover:text-accent transition-colors"
+              className="text-xs px-3 py-1.5 bg-card border border-border text-muted-foreground rounded-full hover:border-primary/40 hover:text-primary transition-colors"
             >
               {combo.split("-").map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(" ")}
             </Link>
@@ -572,7 +572,7 @@ const Index = () => {
               placeholder="your@email.com"
               className="flex-1 px-4 py-2.5 bg-background border border-border rounded-lg text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring"
             />
-            <button className="px-5 py-2.5 bg-accent text-accent-foreground rounded-lg text-sm font-medium hover:bg-accent/90 transition-colors">
+            <button className="px-5 py-2.5 bg-primary text-primary-foreground rounded-lg text-sm font-medium hover:bg-primary/90 transition-colors">
               Subscribe
             </button>
           </div>

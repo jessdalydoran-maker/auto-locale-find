@@ -81,12 +81,12 @@ export const ListingCard = ({
             onError={handleImageError}
           />
           {categoryName && (
-            <span className="absolute top-2.5 left-2.5 bg-accent text-accent-foreground text-[10px] font-semibold px-2 py-0.5 rounded">
+            <span className="absolute top-2.5 left-2.5 bg-teal text-teal-foreground text-[10px] font-semibold px-2 py-0.5 rounded">
               {categoryName}
             </span>
           )}
           {isFeatured && !categoryName && (
-            <span className="absolute top-2.5 left-2.5 bg-accent text-accent-foreground text-[10px] font-semibold px-2 py-0.5 rounded">
+            <span className="absolute top-2.5 left-2.5 bg-teal text-teal-foreground text-[10px] font-semibold px-2 py-0.5 rounded">
               Featured
             </span>
           )}
@@ -102,7 +102,7 @@ export const ListingCard = ({
         <div className="flex items-start justify-between gap-2 mb-1.5">
           <Link
             to={detailUrl}
-            className="font-display font-semibold text-sm text-foreground hover:text-accent transition-colors line-clamp-1"
+            className="font-display font-semibold text-sm text-foreground hover:text-primary transition-colors line-clamp-1"
           >
             {name}
           </Link>
@@ -134,7 +134,7 @@ export const ListingCard = ({
               href={googleMapsLink}
               target="_blank"
               rel="noopener noreferrer"
-              className="text-[11px] text-accent hover:underline flex items-center gap-0.5 shrink-0"
+              className="text-[11px] text-primary hover:underline flex items-center gap-0.5 shrink-0"
               onClick={(e) => e.stopPropagation()}
             >
               Map <ExternalLink className="h-2.5 w-2.5" />

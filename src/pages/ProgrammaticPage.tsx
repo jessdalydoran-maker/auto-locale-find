@@ -1049,8 +1049,8 @@ const ProgrammaticPage = () => {
                   to={page.url}
                   className={`px-3 py-1.5 text-xs font-medium rounded-full transition-colors ${
                     page.url === currentUrl
-                      ? "bg-accent text-accent-foreground"
-                      : "bg-muted text-muted-foreground hover:bg-accent hover:text-accent-foreground"
+                      ? "bg-primary text-primary-foreground"
+                      : "bg-muted text-muted-foreground hover:bg-primary hover:text-primary-foreground"
                   }`}
                 >
                   {page.label}
@@ -1068,7 +1068,7 @@ const ProgrammaticPage = () => {
               <Link
                 key={f.value}
                 to={f.url}
-                className="px-3 py-1.5 text-xs font-medium bg-muted text-muted-foreground rounded-full hover:bg-accent hover:text-accent-foreground transition-colors"
+                className="px-3 py-1.5 text-xs font-medium bg-muted text-muted-foreground rounded-full hover:bg-primary hover:text-primary-foreground transition-colors"
               >
                 {f.label}
               </Link>
@@ -1076,7 +1076,7 @@ const ProgrammaticPage = () => {
             {parsed?.timeIntent && (
               <Link
                 to={buildPageUrl(parsed.modifierSlug, parsed.categorySlug, parsed.neighbourhoodSlug, isNIWide ? null as any : parsed.citySlug)}
-                className="px-3 py-1.5 text-xs font-medium bg-accent text-accent-foreground rounded-full"
+                className="px-3 py-1.5 text-xs font-medium bg-primary text-primary-foreground rounded-full"
               >
                 {formatTimeIntent(parsed.timeIntent)} ✕
               </Link>
@@ -1092,8 +1092,8 @@ const ProgrammaticPage = () => {
               onClick={() => setLocationFilter(null)}
               className={`px-3 py-1.5 text-xs font-medium rounded-full transition-colors ${
                 !locationFilter
-                  ? "bg-accent text-accent-foreground"
-                  : "bg-muted text-muted-foreground hover:bg-accent hover:text-accent-foreground"
+                  ? "bg-primary text-primary-foreground"
+                  : "bg-muted text-muted-foreground hover:bg-primary hover:text-primary-foreground"
               }`}
             >
               All Northern Ireland
@@ -1104,8 +1104,8 @@ const ProgrammaticPage = () => {
                 onClick={() => setLocationFilter(locationFilter === c.slug ? null : c.slug)}
                 className={`px-3 py-1.5 text-xs font-medium rounded-full transition-colors ${
                   locationFilter === c.slug
-                    ? "bg-accent text-accent-foreground"
-                    : "bg-muted text-muted-foreground hover:bg-accent hover:text-accent-foreground"
+                    ? "bg-primary text-primary-foreground"
+                    : "bg-muted text-muted-foreground hover:bg-primary hover:text-primary-foreground"
                 }`}
               >
                 {c.name}
@@ -1152,7 +1152,7 @@ const ProgrammaticPage = () => {
                 <Link
                   key={page.url}
                   to={page.url}
-                  className="px-3 py-1.5 text-[12px] font-medium bg-secondary text-foreground rounded-full hover:bg-accent hover:text-accent-foreground transition-colors"
+                  className="px-3 py-1.5 text-[12px] font-medium bg-secondary text-foreground rounded-full hover:bg-primary hover:text-primary-foreground transition-colors"
                 >
                   {page.label}
                 </Link>
@@ -1160,7 +1160,7 @@ const ProgrammaticPage = () => {
               {city && !isNIWide && (
                 <Link
                   to={`/${city.slug}`}
-                  className="px-3 py-1.5 text-[12px] font-medium bg-accent text-accent-foreground rounded-full"
+                  className="px-3 py-1.5 text-[12px] font-medium bg-primary text-primary-foreground rounded-full"
                 >
                   Explore {city.name}
                 </Link>
@@ -1185,7 +1185,7 @@ const ProgrammaticPage = () => {
                 <Link
                   key={page.url}
                   to={page.url}
-                  className="px-3 py-1.5 text-[12px] font-medium bg-secondary text-foreground rounded-full hover:bg-accent hover:text-accent-foreground transition-colors"
+                  className="px-3 py-1.5 text-[12px] font-medium bg-secondary text-foreground rounded-full hover:bg-primary hover:text-primary-foreground transition-colors"
                 >
                   {page.label}
                 </Link>
@@ -1193,7 +1193,7 @@ const ProgrammaticPage = () => {
               {city && !isNIWide && (
                 <Link
                   to={`/${city.slug}`}
-                  className="px-3 py-1.5 text-[12px] font-medium bg-accent text-accent-foreground rounded-full"
+                  className="px-3 py-1.5 text-[12px] font-medium bg-primary text-primary-foreground rounded-full"
                 >
                   Explore {city.name}
                 </Link>
@@ -1228,7 +1228,7 @@ const ProgrammaticPage = () => {
                     {eventsByCity.map(([cityGroupName, cityEvents]) => (
                       <div key={cityGroupName}>
                         <h3 className="font-display font-semibold text-lg text-foreground mb-4 flex items-center gap-2">
-                          <MapPin className="h-4 w-4 text-accent" />
+                          <MapPin className="h-4 w-4 text-teal" />
                           {cityGroupName}
                           <span className="text-xs text-muted-foreground font-normal">({cityEvents.length} event{cityEvents.length !== 1 ? "s" : ""})</span>
                         </h3>
@@ -1304,7 +1304,7 @@ const ProgrammaticPage = () => {
                 {siblingPages.length > 0 && (
                   <div className="flex flex-wrap justify-center gap-2">
                     {siblingPages.slice(0, 4).map((page) => (
-                      <Link key={page.url} to={page.url} className="text-xs px-3 py-1.5 bg-card border border-border text-accent rounded-full hover:bg-accent hover:text-accent-foreground transition-colors">
+                      <Link key={page.url} to={page.url} className="text-xs px-3 py-1.5 bg-card border border-border text-primary rounded-full hover:bg-primary hover:text-primary-foreground transition-colors">
                         {page.label}
                       </Link>
                     ))}
@@ -1319,7 +1319,7 @@ const ProgrammaticPage = () => {
         {showEvents && venueListings && venueListings.length > 0 && (
           <div className="my-8">
             <h2 className="font-display font-semibold text-xl text-foreground mb-6">
-              <MapPin className="inline h-5 w-5 mr-2 text-accent" />
+              <MapPin className="inline h-5 w-5 mr-2 text-teal" />
               {parsed?.categorySlug === "live-music" ? "Music Venues & Bars" :
                parsed?.categorySlug === "theatre" ? "Theatres & Performance Venues" :
                parsed?.categorySlug === "comedy" ? "Comedy Venues" :
@@ -1339,14 +1339,14 @@ const ProgrammaticPage = () => {
                     .map(([cityGroupName, cityListings]) => (
                       <div key={cityGroupName}>
                         <h3 className="font-display font-semibold text-lg text-foreground mb-4 flex items-center gap-2">
-                          <MapPin className="h-4 w-4 text-accent" />
+                          <MapPin className="h-4 w-4 text-teal" />
                           {cityGroupName}
                           <span className="text-xs text-muted-foreground font-normal">({cityListings.length})</span>
                         </h3>
                         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
                           {cityListings.map((listing, i) => (
                             <div key={listing.id} className="relative">
-                              <span className="absolute -top-2 -left-2 z-10 w-7 h-7 bg-accent text-accent-foreground rounded-full flex items-center justify-center text-xs font-bold card-shadow">
+                              <span className="absolute -top-2 -left-2 z-10 w-7 h-7 bg-primary text-primary-foreground rounded-full flex items-center justify-center text-xs font-bold card-shadow">
                                 {i + 1}
                               </span>
                               <ListingCard
@@ -1380,7 +1380,7 @@ const ProgrammaticPage = () => {
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
                 {venueListings.map((listing, i) => (
                   <div key={listing.id} className="relative">
-                    <span className="absolute -top-2 -left-2 z-10 w-7 h-7 bg-accent text-accent-foreground rounded-full flex items-center justify-center text-xs font-bold card-shadow">
+                    <span className="absolute -top-2 -left-2 z-10 w-7 h-7 bg-primary text-primary-foreground rounded-full flex items-center justify-center text-xs font-bold card-shadow">
                       {i + 1}
                     </span>
                     <ListingCard
@@ -1413,7 +1413,7 @@ const ProgrammaticPage = () => {
         {!showEvents && shouldFetchEvents && events && events.length > 0 && (
           <div className="my-8">
             <h2 className="font-display font-semibold text-xl text-foreground mb-6">
-              <Calendar className="inline h-5 w-5 mr-2 text-accent" />
+              <Calendar className="inline h-5 w-5 mr-2 text-teal" />
               {isDateNightPage ? "Evening Events & Shows" : isFamilyPage ? "Family Events" : parsed?.modifierSlug === "free" ? "Free Events" : "Events"} {parsed?.timeIntent ? formatTimeIntent(parsed.timeIntent) : ""} {locationFilter ? `in ${niCities.find(c => c.slug === locationFilter)?.name || ""}` : isNIWide ? "Across Northern Ireland" : `in ${locationName}`}
             </h2>
             {eventsByCity && !locationFilter ? (
@@ -1421,7 +1421,7 @@ const ProgrammaticPage = () => {
                 {eventsByCity.map(([cityGroupName, cityEvents]) => (
                   <div key={cityGroupName}>
                     <h3 className="font-display font-semibold text-base text-foreground mb-3 flex items-center gap-2">
-                      <MapPin className="h-3.5 w-3.5 text-accent" />
+                      <MapPin className="h-3.5 w-3.5 text-teal" />
                       {cityGroupName}
                     </h3>
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -1514,7 +1514,7 @@ const ProgrammaticPage = () => {
                   <Link
                     key={l.slug}
                     to={`/${parsed?.categorySlug || "things-to-do"}-near-${l.slug}-${parsed?.citySlug || "belfast"}`}
-                    className="text-xs px-3 py-1.5 bg-card border border-border text-muted-foreground rounded-full hover:border-accent/40 hover:text-accent transition-colors"
+                    className="text-xs px-3 py-1.5 bg-card border border-border text-muted-foreground rounded-full hover:border-primary/40 hover:text-primary transition-colors"
                   >
                     {parsed?.categorySlug === "things-to-do" ? "Things To Do" : category?.name || "Places"} Near {l.name}
                   </Link>
@@ -1553,14 +1553,14 @@ const ProgrammaticPage = () => {
                         .map(([cityGroupName, cityListings]) => (
                           <div key={cityGroupName}>
                             <h3 className="font-display font-semibold text-lg text-foreground mb-4 flex items-center gap-2">
-                              <MapPin className="h-4 w-4 text-accent" />
+                              <MapPin className="h-4 w-4 text-teal" />
                               {cityGroupName}
                               <span className="text-xs text-muted-foreground font-normal">({cityListings.length})</span>
                             </h3>
                             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
                               {cityListings.map((listing, i) => (
                                 <div key={listing.id} className="relative">
-                                  <span className="absolute -top-2 -left-2 z-10 w-7 h-7 bg-accent text-accent-foreground rounded-full flex items-center justify-center text-xs font-bold card-shadow">
+                                  <span className="absolute -top-2 -left-2 z-10 w-7 h-7 bg-primary text-primary-foreground rounded-full flex items-center justify-center text-xs font-bold card-shadow">
                                     {i + 1}
                                   </span>
                                   <ListingCard
@@ -1594,7 +1594,7 @@ const ProgrammaticPage = () => {
                   <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
                     {listings.map((listing, i) => (
                       <div key={listing.id} className="relative">
-                        <span className="absolute -top-2 -left-2 z-10 w-7 h-7 bg-accent text-accent-foreground rounded-full flex items-center justify-center text-xs font-bold card-shadow">
+                        <span className="absolute -top-2 -left-2 z-10 w-7 h-7 bg-primary text-primary-foreground rounded-full flex items-center justify-center text-xs font-bold card-shadow">
                           {i + 1}
                         </span>
                         <ListingCard
@@ -1639,7 +1639,7 @@ const ProgrammaticPage = () => {
                 {siblingPages.length > 0 && (
                   <div className="flex flex-wrap justify-center gap-2">
                     {siblingPages.slice(0, 4).map((page) => (
-                      <Link key={page.url} to={page.url} className="text-xs px-3 py-1.5 bg-card border border-border text-accent rounded-full hover:bg-accent hover:text-accent-foreground transition-colors">
+                      <Link key={page.url} to={page.url} className="text-xs px-3 py-1.5 bg-card border border-border text-primary rounded-full hover:bg-primary hover:text-primary-foreground transition-colors">
                         {page.label}
                       </Link>
                     ))}
@@ -1666,10 +1666,10 @@ const ProgrammaticPage = () => {
                   className="group flex items-center justify-between p-4 bg-card border border-border rounded-lg card-shadow hover:card-shadow-hover transition-all"
                 >
                   <div>
-                    <span className="font-display font-medium text-sm text-foreground group-hover:text-accent transition-colors">{link.label}</span>
+                    <span className="font-display font-medium text-sm text-foreground group-hover:text-primary transition-colors">{link.label}</span>
                     <p className="text-xs text-muted-foreground mt-0.5">{link.description}</p>
                   </div>
-                  <ArrowRight className="h-4 w-4 text-muted-foreground group-hover:text-accent transition-colors shrink-0" />
+                  <ArrowRight className="h-4 w-4 text-muted-foreground group-hover:text-primary transition-colors shrink-0" />
                 </Link>
               ))}
             </div>
@@ -1683,7 +1683,7 @@ const ProgrammaticPage = () => {
             <div className="space-y-3 max-w-3xl">
               {faqItems.map((faq, i) => (
                 <details key={i} className="bg-card border border-border rounded-lg group">
-                  <summary className="p-4 cursor-pointer font-display font-medium text-sm text-foreground hover:text-accent transition-colors list-none flex items-center justify-between">
+                  <summary className="p-4 cursor-pointer font-display font-medium text-sm text-foreground hover:text-primary transition-colors list-none flex items-center justify-between">
                     {faq.q}
                     <ChevronRight className="h-4 w-4 text-muted-foreground group-open:rotate-90 transition-transform shrink-0" />
                   </summary>
@@ -1706,7 +1706,7 @@ const ProgrammaticPage = () => {
                 <Link
                   key={ti}
                   to={buildPageUrl(parsed.modifierSlug, parsed.categorySlug, parsed.neighbourhoodSlug, parsed.citySlug, ti)}
-                  className="text-xs px-3 py-1.5 bg-card border border-border text-muted-foreground rounded-full hover:border-accent hover:text-accent transition-colors"
+                  className="text-xs px-3 py-1.5 bg-card border border-border text-muted-foreground rounded-full hover:border-primary hover:text-primary transition-colors"
                 >
                   {modifier?.name || ""} {category?.name || ""} {locationName} {formatTimeIntent(ti)}
                 </Link>
@@ -1719,7 +1719,7 @@ const ProgrammaticPage = () => {
                   <Link
                     key={cat.slug}
                     to={buildPageUrl(parsed.modifierSlug, cat.slug, parsed.neighbourhoodSlug, parsed.citySlug, parsed.timeIntent)}
-                    className="text-xs px-3 py-1.5 bg-card border border-border text-muted-foreground rounded-full hover:border-accent hover:text-accent transition-colors"
+                    className="text-xs px-3 py-1.5 bg-card border border-border text-muted-foreground rounded-full hover:border-primary hover:text-primary transition-colors"
                   >
                     {modifier?.name || ""} {cat.name} {neighbourhood?.name || city?.name || ""}
                   </Link>
@@ -1732,7 +1732,7 @@ const ProgrammaticPage = () => {
                   <Link
                     key={mod.slug}
                     to={buildPageUrl(mod.slug, parsed.categorySlug, parsed.neighbourhoodSlug, parsed.citySlug, parsed.timeIntent)}
-                    className="text-xs px-3 py-1.5 bg-card border border-border text-muted-foreground rounded-full hover:border-accent hover:text-accent transition-colors"
+                    className="text-xs px-3 py-1.5 bg-card border border-border text-muted-foreground rounded-full hover:border-primary hover:text-primary transition-colors"
                   >
                     {mod.name} {category?.name || ""} {neighbourhood?.name || city?.name || ""}
                   </Link>

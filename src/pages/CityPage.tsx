@@ -175,7 +175,7 @@ const CityPage = () => {
             to={`/${resolvedCitySlug}`}
             className={`px-4 py-2 rounded-full text-sm font-medium transition-colors ${
               !categoryFilter
-                ? "bg-accent text-accent-foreground"
+                ? "bg-primary text-primary-foreground"
                 : "bg-muted text-muted-foreground hover:text-foreground"
             }`}
           >
@@ -187,7 +187,7 @@ const CityPage = () => {
               to={`/${resolvedCitySlug}?category=${cat.slug}`}
               className={`px-4 py-2 rounded-full text-sm font-medium transition-colors ${
                 categoryFilter === cat.slug
-                  ? "bg-accent text-accent-foreground"
+                  ? "bg-primary text-primary-foreground"
                   : "bg-muted text-muted-foreground hover:text-foreground"
               }`}
             >
@@ -251,14 +251,14 @@ const CityPage = () => {
           <section className="mt-12">
             <div className="flex items-center justify-between mb-4">
               <div className="flex items-center gap-2">
-                <Calendar className="h-5 w-5 text-accent" />
+                <Calendar className="h-5 w-5 text-teal" />
                 <h2 className="font-display font-semibold text-lg text-foreground">
                   What's On in {city.name}
                 </h2>
               </div>
               <Link
                 to={`/events-${resolvedCitySlug}`}
-                className="text-sm text-accent hover:underline"
+                className="text-sm text-primary hover:underline"
               >
                 View all events →
               </Link>
@@ -304,7 +304,7 @@ const CityPage = () => {
               <Link
                 key={cat.id}
                 to={`/best-${cat.slug}-${resolvedCitySlug}`}
-                className="text-xs px-3 py-1.5 bg-muted text-muted-foreground rounded-full hover:bg-accent hover:text-accent-foreground transition-colors"
+                className="text-xs px-3 py-1.5 bg-muted text-muted-foreground rounded-full hover:bg-primary hover:text-primary-foreground transition-colors"
               >
                 Best {cat.name} {city.name}
               </Link>

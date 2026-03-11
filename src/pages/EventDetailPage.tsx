@@ -174,11 +174,11 @@ const EventDetailPage = () => {
       {/* Breadcrumb */}
       <nav className="container mx-auto px-4 pt-4 pb-2">
         <ol className="flex items-center gap-1.5 text-xs text-muted-foreground flex-wrap">
-          <li><Link to="/" className="hover:text-accent transition-colors">Home</Link></li>
+          <li><Link to="/" className="hover:text-primary transition-colors">Home</Link></li>
           <ChevronRight className="h-3 w-3" />
-          <li><Link to={`/${citySlug}`} className="hover:text-accent transition-colors">{cityName}</Link></li>
+          <li><Link to={`/${citySlug}`} className="hover:text-primary transition-colors">{cityName}</Link></li>
           <ChevronRight className="h-3 w-3" />
-          <li><Link to={`/events-${citySlug}`} className="hover:text-accent transition-colors">Events</Link></li>
+          <li><Link to={`/events-${citySlug}`} className="hover:text-primary transition-colors">Events</Link></li>
           <ChevronRight className="h-3 w-3" />
           <li className="text-foreground font-medium truncate max-w-[200px]">{event.title}</li>
         </ol>
@@ -242,7 +242,7 @@ const EventDetailPage = () => {
             {event.tags && event.tags.length > 0 && (
               <div>
                 <h3 className="font-display font-semibold text-sm text-foreground mb-2 flex items-center gap-1.5">
-                  <Tag className="h-4 w-4 text-accent" /> Tags
+                  <Tag className="h-4 w-4 text-teal" /> Tags
                 </h3>
                 <div className="flex flex-wrap gap-1.5">
                   {event.tags.map((tag: string) => (
@@ -262,7 +262,7 @@ const EventDetailPage = () => {
                   <Link
                     key={link.url}
                     to={link.url}
-                    className="text-xs px-3 py-1.5 bg-card border border-border text-muted-foreground rounded-full hover:border-accent/40 hover:text-accent transition-colors"
+                    className="text-xs px-3 py-1.5 bg-card border border-border text-muted-foreground rounded-full hover:border-primary/40 hover:text-primary transition-colors"
                   >
                     {link.label}
                   </Link>
@@ -277,7 +277,7 @@ const EventDetailPage = () => {
               <h3 className="font-display font-semibold text-foreground">Event Details</h3>
 
               <div className="flex items-start gap-2.5 text-sm">
-                <Calendar className="h-4 w-4 text-accent shrink-0 mt-0.5" />
+                <Calendar className="h-4 w-4 text-teal shrink-0 mt-0.5" />
                 <div>
                   <span className="text-foreground font-medium">{formatDate(event.date_start)}</span>
                   {event.date_end && event.date_end !== event.date_start && (
@@ -288,7 +288,7 @@ const EventDetailPage = () => {
 
               {event.time_start && (
                 <div className="flex items-start gap-2.5 text-sm">
-                  <Clock className="h-4 w-4 text-accent shrink-0 mt-0.5" />
+                  <Clock className="h-4 w-4 text-teal shrink-0 mt-0.5" />
                   <span className="text-muted-foreground">
                     {formatTime(event.time_start)}
                     {event.time_end && ` — ${formatTime(event.time_end)}`}
@@ -298,7 +298,7 @@ const EventDetailPage = () => {
 
               {event.venue_name && (
                 <div className="flex items-start gap-2.5 text-sm">
-                  <MapPin className="h-4 w-4 text-accent shrink-0 mt-0.5" />
+                  <MapPin className="h-4 w-4 text-teal shrink-0 mt-0.5" />
                   <div>
                     <span className="text-foreground font-medium">{event.venue_name}</span>
                     {event.venue_address && (
@@ -310,7 +310,7 @@ const EventDetailPage = () => {
 
               {event.price && !event.is_free && (
                 <div className="flex items-start gap-2.5 text-sm">
-                  <Ticket className="h-4 w-4 text-accent shrink-0 mt-0.5" />
+                  <Ticket className="h-4 w-4 text-teal shrink-0 mt-0.5" />
                   <span className="text-muted-foreground">{event.price}</span>
                 </div>
               )}
@@ -329,7 +329,7 @@ const EventDetailPage = () => {
                     href={event.ticket_url}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-accent text-accent-foreground rounded-lg text-sm font-medium hover:bg-accent/90 transition-colors"
+                    className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-primary text-primary-foreground rounded-lg text-sm font-medium hover:bg-primary/90 transition-colors"
                   >
                     <Ticket className="h-4 w-4" /> Get Tickets
                   </a>

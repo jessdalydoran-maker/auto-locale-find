@@ -17,8 +17,8 @@ const SubmitVenuePage = () => {
     <Layout>
       <div className="container mx-auto px-4 py-12 max-w-lg">
         <div className="text-center mb-8">
-          <div className="w-12 h-12 rounded-full bg-accent/10 flex items-center justify-center mx-auto mb-4">
-            <MapPin className="h-6 w-6 text-accent" />
+          <div className="w-12 h-12 rounded-full bg-teal/10 flex items-center justify-center mx-auto mb-4">
+            <MapPin className="h-6 w-6 text-teal" />
           </div>
           <h1 className="font-display font-bold text-2xl text-foreground mb-2">Submit a Venue</h1>
           <p className="text-muted-foreground text-sm">Know a great place that's missing from City Scout Guide? Let us know and we'll add it to the directory.</p>

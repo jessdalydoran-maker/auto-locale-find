@@ -99,7 +99,7 @@ export const EventCard = ({
             onError={handleImageError}
           />
           <div className="absolute top-2.5 left-2.5 bg-card/95 backdrop-blur-sm rounded-md px-2.5 py-1.5 text-center">
-            <span className="block text-xs font-bold text-accent leading-tight">
+            <span className="block text-xs font-bold text-primary leading-tight">
               {new Date(dateStart + "T00:00:00").toLocaleDateString("en-GB", { day: "numeric" })}
             </span>
             <span className="block text-[10px] font-medium text-muted-foreground uppercase">
@@ -119,7 +119,7 @@ export const EventCard = ({
 
       <div className="p-3.5">
         <Link to={detailUrl}>
-          <h3 className="font-display font-semibold text-sm text-foreground mb-1.5 line-clamp-2 group-hover:text-accent transition-colors">
+          <h3 className="font-display font-semibold text-sm text-foreground mb-1.5 line-clamp-2 group-hover:text-primary transition-colors">
             {title}
           </h3>
         </Link>
@@ -130,7 +130,7 @@ export const EventCard = ({
 
         <div className="space-y-1">
           <div className="flex items-center gap-1.5 text-[11px] text-muted-foreground">
-            <Calendar className="h-3 w-3 shrink-0 text-accent" />
+            <Calendar className="h-3 w-3 shrink-0 text-teal" />
             <span>
               {formatDate(dateStart)}
               {dateEnd && dateEnd !== dateStart && ` – ${formatDate(dateEnd)}`}
@@ -138,13 +138,13 @@ export const EventCard = ({
           </div>
           {timeStart && (
             <div className="flex items-center gap-1.5 text-[11px] text-muted-foreground">
-              <Clock className="h-3 w-3 shrink-0 text-accent" />
+              <Clock className="h-3 w-3 shrink-0 text-teal" />
               <span>{formatTime(timeStart)}</span>
             </div>
           )}
           {venueName && (
             <div className="flex items-center gap-1.5 text-[11px] text-muted-foreground">
-              <MapPin className="h-3 w-3 shrink-0 text-accent" />
+              <MapPin className="h-3 w-3 shrink-0 text-teal" />
               <span className="line-clamp-1">{venueName}</span>
             </div>
           )}
@@ -163,7 +163,7 @@ export const EventCard = ({
               href={ticketUrl}
               target="_blank"
               rel="noopener noreferrer"
-              className="text-[11px] text-accent font-medium hover:underline flex items-center gap-1"
+              className="text-[11px] text-primary font-medium hover:underline flex items-center gap-1"
               onClick={(e) => e.stopPropagation()}
             >
               <Ticket className="h-3 w-3" />
