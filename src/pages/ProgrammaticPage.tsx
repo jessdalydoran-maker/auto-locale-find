@@ -1421,7 +1421,7 @@ const ProgrammaticPage = () => {
                 {eventsByCity.map(([cityGroupName, cityEvents]) => (
                   <div key={cityGroupName}>
                     <h3 className="font-display font-semibold text-base text-foreground mb-3 flex items-center gap-2">
-                      <MapPin className="h-3.5 w-3.5 text-accent" />
+                      <MapPin className="h-3.5 w-3.5 text-teal" />
                       {cityGroupName}
                     </h3>
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
