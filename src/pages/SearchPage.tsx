@@ -6,6 +6,8 @@ import { ListingCard } from "@/components/ListingCard";
 import { SearchBar } from "@/components/SearchBar";
 import { parseSearchIntent } from "@/lib/search-intent";
 import { Search } from "lucide-react";
+import { deduplicateListings, filterCompleteListings } from "@/lib/page-validation";
+import { useMemo } from "react";
 
 const SearchPage = () => {
   const [searchParams] = useSearchParams();
@@ -107,7 +109,14 @@ const SearchPage = () => {
     enabled: !!query && intent.suggestedPages.length > 0,
   });
 
-  const hasResults = listings && listings.length > 0;
+  // Deduplicate search results
+  const dedupedListings = useMemo(() => {
+    if (!listings) return [];
+    const { unique } = deduplicateListings(listings as any);
+    return filterCompleteListings(unique);
+  }, [listings]);
+
+  const hasResults = dedupedListings.length > 0;
   const hasRelatedPages = relatedPages && relatedPages.length > 0;
 
   return (
@@ -161,13 +170,13 @@ const SearchPage = () => {
         )}
 
         <p className="text-sm text-muted-foreground mb-6">
-          {isLoading ? "Searching..." : `${listings?.length || 0} places found`}
+          {isLoading ? "Searching..." : `${dedupedListings.length} places found`}
         </p>
 
         {/* Results grid */}
         {hasResults && (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-            {listings!.map((listing, i) => (
+            {dedupedListings.map((listing: any, i: number) => (
             <ListingCard
                 key={listing.id}
                 name={listing.name}

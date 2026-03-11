@@ -5,7 +5,9 @@ import { Layout } from "@/components/Layout";
 import { ListingCard } from "@/components/ListingCard";
 import { CategoryPill } from "@/components/CategoryPill";
 import { AdPlaceholder } from "@/components/AdPlaceholder";
-import { MapPin } from "lucide-react";
+import { MapPin, Info } from "lucide-react";
+import { deduplicateListings, filterCompleteListings, validatePage, detectPageType, getRobotsDirective, generateSupportingIntro } from "@/lib/page-validation";
+import { useEffect, useMemo } from "react";
 
 const CityPage = () => {
   const { citySlug, "*": wildcard } = useParams();
@@ -57,6 +59,40 @@ const CityPage = () => {
     },
     enabled: !!resolvedCitySlug,
   });
+
+  // Deduplicate and validate
+  const dedupedListings = useMemo(() => {
+    if (!listings) return [];
+    const { unique } = deduplicateListings(listings as any);
+    return filterCompleteListings(unique);
+  }, [listings]);
+
+  const validation = useMemo(() => {
+    return validatePage({
+      listings: (dedupedListings || []) as any,
+      pageType: detectPageType({ isNeighbourhood: false, isLandmark: false, isEvents: false, hasModifier: !!categoryFilter, categorySlug: categoryFilter }),
+      hasIntro: !!city?.description,
+      hasSectionHeading: true,
+      hasFaq: false,
+      isNicheModifier: false,
+    });
+  }, [dedupedListings, city, categoryFilter]);
+
+  // SEO: noindex thin city pages
+  useEffect(() => {
+    const robotsDirective = getRobotsDirective(validation);
+    let robotsEl = document.querySelector('meta[name="robots"]') as HTMLMetaElement;
+    if (robotsDirective) {
+      if (!robotsEl) {
+        robotsEl = document.createElement("meta");
+        robotsEl.name = "robots";
+        document.head.appendChild(robotsEl);
+      }
+      robotsEl.content = robotsDirective;
+    } else if (robotsEl) {
+      robotsEl.remove();
+    }
+  }, [validation]);
 
   if (!city) return <Layout><div className="container mx-auto px-4 py-20 text-center text-muted-foreground">Loading...</div></Layout>;
 
@@ -118,9 +154,26 @@ const CityPage = () => {
           ))}
         </div>
 
-        {/* Listings grid */}
+        {/* Auto-generated intro for city pages */}
+        {validation.status === "complete" && !city.description && (
+          <p className="text-muted-foreground text-[14px] leading-relaxed max-w-3xl my-4">
+            {generateSupportingIntro(activeCategory?.name || "Places", city.name, dedupedListings.length, "city")}
+          </p>
+        )}
+
+        {/* Limited results notice */}
+        {(validation.status === "needs-more-data" || validation.status === "hidden-from-index") && (
+          <div className="my-6 px-4 py-3 bg-secondary rounded-lg flex items-start gap-2">
+            <Info className="h-4 w-4 text-muted-foreground shrink-0 mt-0.5" />
+            <p className="text-[12px] text-muted-foreground leading-relaxed">
+              {validation.message || "Limited results in this area — we're curating more recommendations."}
+            </p>
+          </div>
+        )}
+
+        {/* Listings grid — uses deduplicated list */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-          {listings?.map((listing, i) => (
+          {dedupedListings.map((listing: any, i: number) => (
             <ListingCard
               key={listing.id}
               name={listing.name}
@@ -145,7 +198,7 @@ const CityPage = () => {
           ))}
         </div>
 
-        {listings?.length === 0 && (
+        {dedupedListings.length === 0 && (
           <div className="text-center py-20 text-muted-foreground">
             <p>No listings found. Check back soon!</p>
           </div>
