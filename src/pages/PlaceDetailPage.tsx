@@ -364,7 +364,7 @@ const PlaceDetailPage = () => {
               <h3 className="font-display font-semibold text-foreground text-sm mb-2">Category</h3>
               <Link
                 to={`/best-${catSlug}-${citySlug}`}
-                className="inline-flex items-center gap-1.5 text-sm text-accent hover:underline"
+                className="inline-flex items-center gap-1.5 text-sm text-primary hover:underline"
               >
                 {catName} <ExternalLink className="h-3 w-3" />
               </Link>
