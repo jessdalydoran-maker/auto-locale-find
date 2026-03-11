@@ -170,7 +170,7 @@ const SearchPage = () => {
         )}
 
         <p className="text-sm text-muted-foreground mb-6">
-          {isLoading ? "Searching..." : `${listings?.length || 0} places found`}
+          {isLoading ? "Searching..." : `${dedupedListings.length} places found`}
         </p>
 
         {/* Results grid */}
