@@ -11,6 +11,8 @@ import { ArrowRight, Calendar, Utensils, MapPin, Star, Sparkles, Heart, Trending
 import { Button } from "@/components/ui/button";
 import { getImageUrl, getCategoryPlaceholder, buildImageErrorHandler } from "@/lib/image-utils";
 import { Link } from "react-router-dom";
+import { setPageCanonical } from "@/lib/canonical";
+import { useEffect } from "react";
 
 const QUICK_LINKS = [
   { label: "What's On", to: "/events", icon: Calendar },
