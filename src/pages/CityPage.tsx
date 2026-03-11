@@ -3,9 +3,10 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Layout } from "@/components/Layout";
 import { ListingCard } from "@/components/ListingCard";
+import { EventCard } from "@/components/EventCard";
 import { CategoryPill } from "@/components/CategoryPill";
 import { AdPlaceholder } from "@/components/AdPlaceholder";
-import { MapPin, Info } from "lucide-react";
+import { MapPin, Info, Calendar } from "lucide-react";
 import { deduplicateListings, filterCompleteListings, validatePage, detectPageType, getRobotsDirective, generateSupportingIntro } from "@/lib/page-validation";
 import { useEffect, useMemo } from "react";
 
@@ -81,6 +82,24 @@ const CityPage = () => {
       return data;
     },
     enabled: !!resolvedCitySlug && !!city,
+  });
+
+  // Fetch upcoming events for this city
+  const { data: cityEvents } = useQuery({
+    queryKey: ["city-events", city?.id],
+    queryFn: async () => {
+      const today = new Date().toISOString().split("T")[0];
+      const { data } = await supabase
+        .from("events")
+        .select("*, cities!inner(slug, name)")
+        .eq("city_id", city!.id)
+        .eq("status", "active")
+        .gte("date_start", today)
+        .order("date_start", { ascending: true })
+        .limit(6);
+      return data || [];
+    },
+    enabled: !!city,
   });
 
   // Deduplicate and validate
@@ -225,6 +244,52 @@ const CityPage = () => {
           <div className="text-center py-20 text-muted-foreground">
             <p>No listings found. Check back soon!</p>
           </div>
+        )}
+
+        {/* Upcoming Events */}
+        {cityEvents && cityEvents.length > 0 && (
+          <section className="mt-12">
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center gap-2">
+                <Calendar className="h-5 w-5 text-accent" />
+                <h2 className="font-display font-semibold text-lg text-foreground">
+                  What's On in {city.name}
+                </h2>
+              </div>
+              <Link
+                to={`/events-${resolvedCitySlug}`}
+                className="text-sm text-accent hover:underline"
+              >
+                View all events →
+              </Link>
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+              {cityEvents.map((event: any, i: number) => (
+                <EventCard
+                  key={event.id}
+                  title={event.title}
+                  slug={event.slug}
+                  shortDescription={event.short_description}
+                  dateStart={event.date_start}
+                  dateEnd={event.date_end}
+                  timeStart={event.time_start}
+                  venueName={event.venue_name}
+                  venueAddress={event.venue_address}
+                  imageUrl={event.image_url}
+                  imageSource={event.image_source}
+                  imageAlt={event.image_alt}
+                  imageStatus={event.image_status}
+                  cityName={(event.cities as any)?.name}
+                  isFree={event.is_free}
+                  isFamilyFriendly={event.is_family_friendly}
+                  ticketUrl={event.ticket_url}
+                  price={event.price}
+                  tags={event.tags || []}
+                  index={i}
+                />
+              ))}
+            </div>
+          </section>
         )}
 
         <AdPlaceholder slot="mid-content" />

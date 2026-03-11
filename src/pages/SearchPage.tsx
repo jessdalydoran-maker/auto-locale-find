@@ -3,9 +3,10 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Layout } from "@/components/Layout";
 import { ListingCard } from "@/components/ListingCard";
+import { EventCard } from "@/components/EventCard";
 import { SearchBar } from "@/components/SearchBar";
 import { parseSearchIntent } from "@/lib/search-intent";
-import { Search } from "lucide-react";
+import { Search, Calendar } from "lucide-react";
 import { deduplicateListings, filterCompleteListings } from "@/lib/page-validation";
 import { useMemo } from "react";
 
@@ -91,6 +92,33 @@ const SearchPage = () => {
     enabled: !!query,
   });
 
+  // Search events alongside listings
+  const { data: eventResults } = useQuery({
+    queryKey: ["search-events", query],
+    queryFn: async () => {
+      const today = new Date().toISOString().split("T")[0];
+      const textTerms = query.split(/\s+/).filter((w) => w.length > 2);
+
+      if (textTerms.length === 0) return [];
+
+      const orClauses = textTerms
+        .map((t) => `title.ilike.%${t}%,short_description.ilike.%${t}%,venue_name.ilike.%${t}%,description.ilike.%${t}%`)
+        .join(",");
+
+      const { data } = await supabase
+        .from("events")
+        .select("*, cities!inner(slug, name)")
+        .eq("status", "active")
+        .gte("date_start", today)
+        .or(orClauses)
+        .order("date_start", { ascending: true })
+        .limit(12);
+
+      return data || [];
+    },
+    enabled: !!query,
+  });
+
   // Fetch related programmatic pages
   const { data: relatedPages } = useQuery({
     queryKey: ["search-pages", query],
@@ -117,6 +145,7 @@ const SearchPage = () => {
   }, [listings]);
 
   const hasResults = dedupedListings.length > 0;
+  const hasEvents = eventResults && eventResults.length > 0;
   const hasRelatedPages = relatedPages && relatedPages.length > 0;
 
   return (
@@ -169,6 +198,44 @@ const SearchPage = () => {
           </div>
         )}
 
+        {/* Events section */}
+        {hasEvents && (
+          <section className="mb-10">
+            <div className="flex items-center gap-2 mb-4">
+              <Calendar className="h-5 w-5 text-accent" />
+              <h2 className="font-display font-semibold text-lg text-foreground">
+                Upcoming Events
+              </h2>
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+              {eventResults!.map((event: any, i: number) => (
+                <EventCard
+                  key={event.id}
+                  title={event.title}
+                  slug={event.slug}
+                  shortDescription={event.short_description}
+                  dateStart={event.date_start}
+                  dateEnd={event.date_end}
+                  timeStart={event.time_start}
+                  venueName={event.venue_name}
+                  venueAddress={event.venue_address}
+                  imageUrl={event.image_url}
+                  imageSource={event.image_source}
+                  imageAlt={event.image_alt}
+                  imageStatus={event.image_status}
+                  cityName={(event.cities as any)?.name}
+                  isFree={event.is_free}
+                  isFamilyFriendly={event.is_family_friendly}
+                  ticketUrl={event.ticket_url}
+                  price={event.price}
+                  tags={event.tags || []}
+                  index={i}
+                />
+              ))}
+            </div>
+          </section>
+        )}
+
         <p className="text-sm text-muted-foreground mb-6">
           {isLoading ? "Searching..." : `${dedupedListings.length} places found`}
         </p>
@@ -202,7 +269,7 @@ const SearchPage = () => {
         )}
 
         {/* Zero-result protection */}
-        {!isLoading && !hasResults && query && (
+        {!isLoading && !hasResults && !hasEvents && query && (
           <div className="text-center py-12">
             <Search className="h-10 w-10 text-muted-foreground/30 mx-auto mb-4" />
             <p className="text-muted-foreground mb-6">
@@ -213,8 +280,8 @@ const SearchPage = () => {
                 "best restaurants Belfast",
                 "things to do Belfast",
                 "cafes Belfast",
+                "markets Belfast",
                 "events Belfast",
-                "bars Belfast",
                 "family activities Belfast",
               ].map((suggestion) => (
                 <Link
