@@ -566,7 +566,7 @@ const ProgrammaticPage = () => {
   const FAMILY_EVENT_DEPRIORITY_TAGS = ["sport", "boxing", "nightlife", "concerts"];
 
   const { data: rawEvents } = useQuery({
-    queryKey: ["prog-events", parsed?.categorySlug, parsed?.citySlug, parsed?.neighbourhoodSlug, parsed?.timeIntent, parsed?.modifierSlug, locationFilter],
+    queryKey: ["prog-events", parsed?.categorySlug, parsed?.citySlug, parsed?.neighbourhoodSlug, parsed?.timeIntent, parsed?.modifierSlug, locationFilter, customDate?.toISOString()],
     queryFn: async () => {
       const today = new Date().toISOString().split("T")[0];
       let query = supabase
