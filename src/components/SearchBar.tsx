@@ -104,7 +104,14 @@ export const SearchBar = ({ onClose, large = false, placeholder = "Search by cit
       }
     }
 
-    setSuggestions(results.slice(0, 8));
+    // Always include LGBT+ suggestion if not already present
+    const lgbtTerms = ["lgbt", "lgbtq", "pride", "queer", "gay", "lesbian", "drag", "rainbow"];
+    const hasLgbtResult = results.some(r => lgbtTerms.some(t => r.label.toLowerCase().includes(t)));
+    if (!hasLgbtResult) {
+      results.push({ label: "LGBT+ Belfast", type: "category" });
+    }
+
+    setSuggestions(results.slice(0, 9));
     setSelectedIndex(-1);
     setShowSuggestions(results.length > 0);
   }, []);
