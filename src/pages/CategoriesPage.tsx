@@ -37,6 +37,8 @@ const CategoriesPage = () => {
     },
   });
 
+  useEffect(() => { setPageCanonical("/categories"); }, []);
+
   return (
     <Layout>
       <section className="bg-primary py-12 md:py-16">

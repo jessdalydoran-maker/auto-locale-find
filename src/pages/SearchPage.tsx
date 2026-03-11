@@ -10,7 +10,7 @@ import { parseSearchIntent } from "@/lib/search-intent";
 import { scoreListing, scoreEvent, rankAndFilter } from "@/lib/search-scoring";
 import { Search, Calendar, MapPin } from "lucide-react";
 import { deduplicateListings, filterCompleteListings } from "@/lib/page-validation";
-import { useMemo } from "react";
+import { useMemo, useEffect } from "react";
 
 const SearchPage = () => {
   const [searchParams] = useSearchParams();
