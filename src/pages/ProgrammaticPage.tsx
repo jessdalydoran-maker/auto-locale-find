@@ -840,7 +840,7 @@ const ProgrammaticPage = () => {
         canonicalEl.rel = "canonical";
         document.head.appendChild(canonicalEl);
       }
-      canonicalEl.href = `https://bestlocal.co.uk${canonicalSlug || currentUrl}`;
+      canonicalEl.href = `https://cityscoutguide.co.uk${canonicalSlug || currentUrl}`;
 
       // Noindex pages that don't meet quality threshold
       const robotsDirective = getRobotsDirective(validation);
@@ -986,7 +986,7 @@ const ProgrammaticPage = () => {
                 "@type": "ListItem",
                 position: i + 1,
                 name: c.label,
-                ...(c.url ? { item: `https://bestlocal.co.uk${c.url}` } : {}),
+                ...(c.url ? { item: `https://cityscoutguide.co.uk${c.url}` } : {}),
               })),
             }),
           }}
