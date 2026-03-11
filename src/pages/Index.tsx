@@ -360,7 +360,7 @@ const Index = () => {
                     {item.category}
                   </span>
                   {item.badge && (
-                    <span className="absolute top-2 right-2 bg-accent text-accent-foreground text-[10px] font-semibold px-2 py-0.5 rounded">
+                    <span className="absolute top-2 right-2 bg-teal text-teal-foreground text-[10px] font-semibold px-2 py-0.5 rounded">
                       {item.badge}
                     </span>
                   )}
