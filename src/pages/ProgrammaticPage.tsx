@@ -528,6 +528,13 @@ const ProgrammaticPage = () => {
             is_event_venue: l.is_event_venue,
           });
         });
+
+        // Sort by music venue relevance score
+        results.sort((a: any, b: any) => {
+          const aScore = liveMusicVenueScore({ categorySlug: (a.categories as any)?.slug, audience_tags: a.audience_tags, is_event_venue: a.is_event_venue, rating: a.rating });
+          const bScore = liveMusicVenueScore({ categorySlug: (b.categories as any)?.slug, audience_tags: b.audience_tags, is_event_venue: b.is_event_venue, rating: b.rating });
+          return bScore - aScore;
+        });
       }
 
       return results;
