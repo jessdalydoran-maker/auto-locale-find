@@ -1,6 +1,7 @@
 /**
  * Search Intent Engine
  * Maps natural language queries to structured search intents
+ * with location-first priority for Northern Ireland directory searches.
  */
 
 // Intent → category slug mappings
@@ -78,26 +79,73 @@ const INTENT_TO_CATEGORIES: Record<string, string[]> = {
   "lgbtq+": ["lgbtq", "bars", "nightlife", "events"],
   "lgbt": ["lgbtq", "bars", "nightlife", "events"],
   "lgbt+": ["lgbtq", "bars", "nightlife", "events"],
+  "lgbt bars": ["lgbtq", "bars", "nightlife"],
   "pride": ["lgbtq", "events"],
   "gay": ["lgbtq", "bars", "nightlife"],
   "gay bars": ["lgbtq", "bars", "nightlife"],
   "drag": ["lgbtq", "events"],
   "queer": ["lgbtq", "events", "bars"],
+  "shopping": ["shopping"],
+  "cinema": ["cinema"],
+  "swimming": ["leisure"],
+  "leisure": ["leisure"],
 };
 
-// Known locations (lowercase)
+// ─── Northern Ireland locations ───
+// Each entry: pattern to match, city slug in DB, optional neighbourhood
 const KNOWN_LOCATIONS: { pattern: string; city: string; neighbourhood?: string }[] = [
-  { pattern: "belfast", city: "belfast" },
+  // Belfast neighbourhoods (longest first)
   { pattern: "cathedral quarter", city: "belfast", neighbourhood: "cathedral-quarter" },
   { pattern: "titanic quarter", city: "belfast", neighbourhood: "titanic-quarter" },
-  { pattern: "ormeau", city: "belfast", neighbourhood: "ormeau" },
+  { pattern: "queen's quarter", city: "belfast", neighbourhood: "queens-quarter" },
+  { pattern: "queens quarter", city: "belfast", neighbourhood: "queens-quarter" },
+  { pattern: "lisburn road", city: "belfast", neighbourhood: "lisburn-road" },
   { pattern: "ormeau road", city: "belfast", neighbourhood: "ormeau" },
   { pattern: "ballyhackamore", city: "belfast", neighbourhood: "ballyhackamore" },
+  { pattern: "stranmillis", city: "belfast", neighbourhood: "stranmillis" },
   { pattern: "botanic", city: "belfast", neighbourhood: "botanic" },
-  { pattern: "lisburn road", city: "belfast", neighbourhood: "lisburn-road" },
-  { pattern: "queens quarter", city: "belfast", neighbourhood: "queens-quarter" },
-  { pattern: "queen's quarter", city: "belfast", neighbourhood: "queens-quarter" },
+  { pattern: "ormeau", city: "belfast", neighbourhood: "ormeau" },
+  // NI towns & cities
+  { pattern: "belfast", city: "belfast" },
+  { pattern: "lisburn", city: "lisburn" },
+  { pattern: "bangor", city: "bangor" },
+  { pattern: "newry", city: "newry" },
+  { pattern: "armagh", city: "armagh" },
+  { pattern: "derry", city: "derry" },
+  { pattern: "londonderry", city: "derry" },
+  { pattern: "omagh", city: "omagh" },
+  { pattern: "strabane", city: "strabane" },
+  { pattern: "ballymena", city: "ballymena" },
+  { pattern: "coleraine", city: "coleraine" },
+  { pattern: "portrush", city: "portrush" },
+  { pattern: "portstewart", city: "portstewart" },
+  { pattern: "enniskillen", city: "enniskillen" },
+  { pattern: "antrim", city: "antrim" },
+  { pattern: "carrickfergus", city: "carrickfergus" },
+  { pattern: "larne", city: "larne" },
+  { pattern: "newtownabbey", city: "newtownabbey" },
+  { pattern: "newtownards", city: "newtownards" },
+  { pattern: "downpatrick", city: "downpatrick" },
+  { pattern: "dungannon", city: "dungannon" },
+  { pattern: "cookstown", city: "cookstown" },
+  { pattern: "magherafelt", city: "magherafelt" },
+  { pattern: "limavady", city: "limavady" },
+  { pattern: "ballycastle", city: "ballycastle" },
+  { pattern: "holywood", city: "holywood" },
+  { pattern: "comber", city: "comber" },
+  { pattern: "hillsborough", city: "hillsborough" },
+  { pattern: "dromore", city: "dromore" },
+  { pattern: "craigavon", city: "craigavon" },
+  { pattern: "portadown", city: "portadown" },
+  { pattern: "lurgan", city: "lurgan" },
+  { pattern: "warrenpoint", city: "warrenpoint" },
+  { pattern: "newcastle", city: "newcastle" },
+  { pattern: "ballynahinch", city: "ballynahinch" },
+  { pattern: "northern ireland", city: "__region_ni" },
 ];
+
+// Words to strip from query that indicate "town centre" intent but aren't searchable
+const LOCATION_NOISE_WORDS = new Set(["town", "city", "centre", "center", "area", "village"]);
 
 // Modifiers
 const KNOWN_MODIFIERS = [
@@ -118,12 +166,18 @@ const STOP_WORDS = new Set([
   "in", "the", "a", "an", "for", "to", "of", "and", "or", "with",
   "near", "around", "at", "on", "is", "are", "what", "where", "which",
   "find", "show", "me", "my", "i", "we", "looking", "search",
+  "town", "city", "centre", "center", "area",
 ]);
 
 export interface SearchIntent {
   originalQuery: string;
   categorySlugs: string[];
+  /** The resolved city slug, or null if no location detected */
   city: string | null;
+  /** Whether the user explicitly mentioned a location */
+  hasExplicitLocation: boolean;
+  /** Whether this is a region-wide search (e.g. "Northern Ireland") */
+  isRegionSearch: boolean;
   neighbourhood: string | null;
   modifiers: string[];
   keywords: string[]; // remaining meaningful words
@@ -134,11 +188,13 @@ export interface SearchIntent {
  * Parse a natural language query into a structured search intent
  */
 export function parseSearchIntent(rawQuery: string): SearchIntent {
-  const query = rawQuery.toLowerCase().trim();
+  let query = rawQuery.toLowerCase().trim();
 
   // 1. Extract location
   let city: string | null = null;
   let neighbourhood: string | null = null;
+  let hasExplicitLocation = false;
+  let isRegionSearch = false;
   let queryWithoutLocation = query;
 
   // Sort locations by pattern length desc so longer matches win
@@ -148,21 +204,33 @@ export function parseSearchIntent(rawQuery: string): SearchIntent {
 
   for (const loc of sortedLocations) {
     if (query.includes(loc.pattern)) {
-      city = loc.city;
-      neighbourhood = loc.neighbourhood || null;
+      hasExplicitLocation = true;
+      if (loc.city === "__region_ni") {
+        isRegionSearch = true;
+        city = null;
+      } else {
+        city = loc.city;
+        neighbourhood = loc.neighbourhood || null;
+      }
       queryWithoutLocation = queryWithoutLocation.replace(loc.pattern, " ").trim();
       break;
     }
   }
 
-  // Default to Belfast
-  if (!city) city = "belfast";
+  // Strip location noise words
+  queryWithoutLocation = queryWithoutLocation
+    .split(/\s+/)
+    .filter(w => !LOCATION_NOISE_WORDS.has(w))
+    .join(" ")
+    .trim();
+
+  // Do NOT default to Belfast — if no location found, leave city null
+  // This prevents cross-contamination of results
 
   // 2. Extract modifiers
   const modifiers: string[] = [];
   let queryWithoutModifiers = queryWithoutLocation;
 
-  // Sort by length desc for multi-word modifiers
   const sortedModifiers = [...KNOWN_MODIFIERS].sort((a, b) => b.length - a.length);
   for (const mod of sortedModifiers) {
     if (queryWithoutModifiers.includes(mod)) {
@@ -225,6 +293,8 @@ export function parseSearchIntent(rawQuery: string): SearchIntent {
     originalQuery: rawQuery,
     categorySlugs: cats,
     city,
+    hasExplicitLocation,
+    isRegionSearch,
     neighbourhood,
     modifiers,
     keywords,
@@ -249,7 +319,6 @@ export function buildSearchFilters(intent: SearchIntent) {
  * Autocomplete suggestions from known data
  */
 const STATIC_SUGGESTIONS = [
-  // Food & Drink
   "best restaurants Belfast",
   "best cafes Belfast",
   "best brunch Belfast",
@@ -258,30 +327,33 @@ const STATIC_SUGGESTIONS = [
   "cheap eats Belfast",
   "romantic restaurants Belfast",
   "vegan restaurants Belfast",
-  // Things To Do
   "things to do Belfast",
   "things to do Belfast this weekend",
   "free things to do Belfast",
   "family activities Belfast",
   "date night Belfast",
   "indoor activities Belfast",
-  // What's On
   "events Belfast",
   "events Belfast this weekend",
   "free events Belfast",
   "live music Belfast",
-  // Neighbourhoods
   "restaurants Cathedral Quarter",
   "bars Cathedral Quarter",
   "things to do Titanic Quarter",
   "cafes Ormeau Road",
   "restaurants Ballyhackamore",
-  // Other
   "gyms Belfast",
   "parks Belfast",
   "escape rooms Belfast",
   "museums Belfast",
   "hidden gems Belfast",
+  "things to do Antrim",
+  "things to do Omagh",
+  "restaurants Derry",
+  "things to do Bangor",
+  "things to do Newry",
+  "live music Derry",
+  "markets Belfast",
 ];
 
 export function getAutocompleteSuggestions(partial: string): string[] {
