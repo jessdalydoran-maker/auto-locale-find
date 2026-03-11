@@ -282,7 +282,7 @@ const PlaceDetailPage = () => {
                   <Link
                     key={link.url}
                     to={link.url}
-                    className="text-xs px-3 py-1.5 bg-card border border-border text-muted-foreground rounded-full hover:border-accent/40 hover:text-accent transition-colors"
+                    className="text-xs px-3 py-1.5 bg-card border border-border text-muted-foreground rounded-full hover:border-primary/40 hover:text-primary transition-colors"
                   >
                     {link.label}
                   </Link>
