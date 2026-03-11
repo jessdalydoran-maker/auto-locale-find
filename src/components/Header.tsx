@@ -47,12 +47,8 @@ export const Header = () => {
     <header className="sticky top-0 z-50 bg-card/95 backdrop-blur-sm border-b border-border">
       <div className="container mx-auto px-4">
         <div className="flex items-center justify-between h-14">
-          <Link to="/" className="flex items-center gap-2">
-            <img src={logo} alt="City Scout Guide" className="h-8 w-auto" />
-            <div className="flex flex-col leading-none">
-              <span className="font-display font-bold text-[15px] text-foreground">City Scout Guide</span>
-              <span className="text-[10px] text-muted-foreground hidden sm:block">Discover Northern Ireland</span>
-            </div>
+          <Link to="/" className="flex items-center">
+            <img src={logo} alt="City Scout Guide" className="h-10 w-auto" />
           </Link>
 
           <nav className="hidden lg:flex items-center gap-0.5">
