@@ -119,8 +119,9 @@ const SearchPage = () => {
           if (data) results.push(...data);
         }
 
-        // If generic "things to do" with no specific matches, show top-rated
-        if (results.length === 0 && (intent.categorySlugs.length === 0 || intent.categorySlugs.includes("things-to-do"))) {
+        // If generic "things to do" with no specific matches, OR if we have few results, show top-rated
+        const isThingsToDoSearch = intent.categorySlugs.includes("things-to-do") || intent.categorySlugs.length === 0;
+        if (isThingsToDoSearch || results.length < 8) {
           const { data } = await supabase
             .from("listings")
             .select(selectFields)
