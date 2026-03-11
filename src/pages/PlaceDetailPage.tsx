@@ -74,7 +74,16 @@ const PlaceDetailPage = () => {
 
   // Compute image before hooks/effects
   const resolvedImage = listing
-    ? getImageUrl(listing.image_url, listing.image_source, category?.slug, city?.slug, listing.image_status, listing.name)
+    ? getImageUrl(
+        listing.image_url,
+        listing.image_source,
+        category?.slug,
+        city?.slug,
+        listing.image_status,
+        listing.name,
+        listing.audience_tags,
+        listing.description || listing.short_description
+      )
     : "";
   const usingPlaceholder = !listing || isPlaceholderImage(resolvedImage) || listing.image_status !== "verified";
   const altText = listing
