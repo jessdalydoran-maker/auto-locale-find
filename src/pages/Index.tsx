@@ -226,7 +226,7 @@ const Index = () => {
             <Link
               key={s.to}
               to={s.to}
-              className="px-3.5 py-2.5 bg-card border border-border rounded-lg text-[13px] text-foreground hover:border-accent/40 hover:text-accent transition-colors card-shadow"
+              className="px-3.5 py-2.5 bg-card border border-border rounded-lg text-[13px] text-foreground hover:border-primary/40 hover:text-primary transition-colors card-shadow"
             >
               {s.label}
             </Link>
