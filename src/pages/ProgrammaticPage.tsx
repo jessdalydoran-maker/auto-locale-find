@@ -774,8 +774,44 @@ const ProgrammaticPage = () => {
   const venueCount = venueListings?.length || 0;
   const itemCount = (showEvents ? eventCount + venueCount : listingCount) + (shouldFetchEvents && !showEvents ? eventCount : 0);
   const isNeighbourhoodPage = !!parsed?.neighbourhoodSlug;
-  const hasEnoughContent = meetsContentThreshold(itemCount, showEvents, isNeighbourhoodPage);
-  const isThin = isThinContent(itemCount);
+
+  // ─── Page validation ───
+  const pageType = detectPageType({
+    isNeighbourhood: isNeighbourhoodPage,
+    isLandmark: isLandmarkPage,
+    isEvents: showEvents,
+    hasModifier: !!parsed?.modifierSlug,
+    categorySlug: parsed?.categorySlug,
+  });
+
+  const validation: PageValidationResult = useMemo(() => {
+    const allListings = listings || [];
+    const allEvents = events || [];
+    return validatePage({
+      listings: allListings as any,
+      events: allEvents as any,
+      pageType,
+      hasIntro: !!introText || true, // We always generate intro
+      hasSectionHeading: true,
+      hasFaq: (faqItems?.length || 0) > 0,
+      isNicheModifier: !!parsed?.modifierSlug,
+    });
+  }, [listings, events, pageType, parsed?.modifierSlug]);
+
+  // Use deduplication from validation
+  const dedupedListings = useMemo(() => {
+    if (!listings) return [];
+    const { unique } = deduplicateListings(listings as any);
+    return filterCompleteListings(unique);
+  }, [listings]);
+
+  const dedupedEvents = useMemo(() => {
+    if (!events) return [];
+    return filterCompleteEvents(events);
+  }, [events]);
+
+  const hasEnoughContent = validation.status === "complete" || validation.status === "limited";
+  const isThin = validation.status === "limited";
 
   // Canonical URL
   const canonicalSlug = useMemo(() => {
