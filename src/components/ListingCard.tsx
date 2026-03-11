@@ -23,6 +23,8 @@ interface ListingCardProps {
   cityName?: string | null;
   isFeatured?: boolean;
   index?: number;
+  audienceTags?: string[] | null;
+  description?: string | null;
 }
 
 export const ListingCard = ({
@@ -45,16 +47,18 @@ export const ListingCard = ({
   cityName,
   isFeatured,
   index = 0,
+  audienceTags,
+  description,
 }: ListingCardProps) => {
-  const resolvedImage = getImageUrl(imageUrl, imageSource, categorySlug, citySlug, imageStatus, name);
+  const resolvedImage = getImageUrl(imageUrl, imageSource, categorySlug, citySlug, imageStatus, name, audienceTags, description || shortDescription);
   const usingPlaceholder = isPlaceholderImage(resolvedImage) || imageStatus !== "verified";
   const altText = imageAlt && !usingPlaceholder
     ? imageAlt
     : generateListingAltText(name, categoryName, neighbourhoodName, cityName, usingPlaceholder);
 
   const handleImageError = useMemo(
-    () => buildImageErrorHandler(categorySlug, name),
-    [categorySlug, name]
+    () => buildImageErrorHandler(categorySlug, name, audienceTags, description || shortDescription),
+    [categorySlug, name, audienceTags, description, shortDescription]
   );
 
   const detailUrl = `/place/${slug}`;

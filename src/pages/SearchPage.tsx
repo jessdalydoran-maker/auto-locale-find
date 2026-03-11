@@ -262,6 +262,8 @@ const SearchPage = () => {
                 address={listing.address}
                 priceLevel={listing.price_level}
                 googleMapsLink={listing.google_maps_link}
+                audienceTags={(listing as any).audience_tags}
+                description={(listing as any).description}
                 index={i}
               />
             ))}
