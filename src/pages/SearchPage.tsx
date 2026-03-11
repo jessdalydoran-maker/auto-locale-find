@@ -109,7 +109,14 @@ const SearchPage = () => {
     enabled: !!query && intent.suggestedPages.length > 0,
   });
 
-  const hasResults = listings && listings.length > 0;
+  // Deduplicate search results
+  const dedupedListings = useMemo(() => {
+    if (!listings) return [];
+    const { unique } = deduplicateListings(listings as any);
+    return filterCompleteListings(unique);
+  }, [listings]);
+
+  const hasResults = dedupedListings.length > 0;
   const hasRelatedPages = relatedPages && relatedPages.length > 0;
 
   return (
