@@ -398,6 +398,12 @@ export function getTimeIntentDateRange(timeIntent: string | null): { start: stri
     case "today":
     case "tonight":
       return { start: today, end: today };
+    case "tomorrow": {
+      const tmrw = new Date(now);
+      tmrw.setDate(now.getDate() + 1);
+      const tmrwStr = tmrw.toISOString().split("T")[0];
+      return { start: tmrwStr, end: tmrwStr };
+    }
     case "this-week": {
       const endOfWeek = new Date(now);
       const daysUntilSunday = 7 - now.getDay();
