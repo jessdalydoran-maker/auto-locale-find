@@ -17,6 +17,8 @@ const AdminPage = () => {
   const [isRunning, setIsRunning] = useState(false);
   const [isHarvesting, setIsHarvesting] = useState(false);
   const [isIngesting, setIsIngesting] = useState(false);
+  const [isScraping, setIsScraping] = useState(false);
+  const [scrapeResults, setScrapeResults] = useState<any>(null);
 
   const { data: cities } = useQuery({
     queryKey: ["admin-cities"],
