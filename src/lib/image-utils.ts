@@ -118,6 +118,13 @@ const FALLBACK_POOLS: Record<string, string[]> = {
     "https://images.unsplash.com/photo-1475721027785-f74eccf877e2?w=800&h=500&fit=crop&fm=webp&q=80",
   ],
 
+  // LGBT+ / Pride / Community
+  "lgbtq": [
+    "https://images.unsplash.com/photo-1562887250-9a52d844ad30?w=800&h=500&fit=crop&fm=webp&q=80",
+    "https://images.unsplash.com/photo-1561913618-35b46e18e0a5?w=800&h=500&fit=crop&fm=webp&q=80",
+    "https://images.unsplash.com/photo-1620121692029-d088224ddc74?w=800&h=500&fit=crop&fm=webp&q=80",
+  ],
+
   // Other categories
   "cinemas": [
     "https://images.unsplash.com/photo-1489599849927-2ee91cede3ba?w=800&h=500&fit=crop&fm=webp&q=80",

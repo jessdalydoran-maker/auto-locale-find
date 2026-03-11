@@ -2,7 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Layout } from "@/components/Layout";
 import { Link } from "react-router-dom";
-import { Utensils, Coffee, Wine, Compass, Dumbbell, Egg, Pizza, Store } from "lucide-react";
+import { Utensils, Coffee, Wine, Compass, Dumbbell, Egg, Pizza, Store, Rainbow } from "lucide-react";
 
 const iconMap: Record<string, React.ReactNode> = {
   utensils: <Utensils className="h-8 w-8" />,
@@ -13,6 +13,7 @@ const iconMap: Record<string, React.ReactNode> = {
   egg: <Egg className="h-8 w-8" />,
   pizza: <Pizza className="h-8 w-8" />,
   store: <Store className="h-8 w-8" />,
+  rainbow: <Rainbow className="h-8 w-8" />,
 };
 
 const CategoriesPage = () => {
