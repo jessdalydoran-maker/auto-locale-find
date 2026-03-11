@@ -910,12 +910,17 @@ const ProgrammaticPage = () => {
 
     // For event pages, show comprehensive time filters
     if (showEvents) {
+      const isLiveMusicPage = parsed.categorySlug === "live-music";
       const TIME_FILTERS = [
         { label: "All Upcoming", value: "", time: null },
         { label: "Tonight", value: "tonight", time: "tonight" },
         { label: "Tomorrow", value: "tomorrow", time: "tomorrow" },
         { label: "This Weekend", value: "this-weekend", time: "this-weekend" },
         { label: "This Week", value: "this-week", time: "this-week" },
+        ...(isLiveMusicPage ? [
+          { label: "Next 7 Days", value: "next-7-days", time: "next-7-days" },
+          { label: "Next 30 Days", value: "next-30-days", time: "next-30-days" },
+        ] : []),
       ];
 
       for (const tf of TIME_FILTERS) {

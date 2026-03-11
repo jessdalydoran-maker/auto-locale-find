@@ -45,6 +45,8 @@ const KNOWN_TIME_INTENTS = [
   "today",
   "tomorrow",
   "rainy-day",
+  "next-7-days",
+  "next-30-days",
 ];
 
 const CATEGORY_ALIASES: Record<string, string> = {
@@ -62,6 +64,9 @@ const CATEGORY_ALIASES: Record<string, string> = {
   "upcoming-events": "events",
   "events-tonight": "events",
   "events-tomorrow": "events",
+  "upcoming-live-music": "live-music",
+  "live-music-tonight": "live-music",
+  "live-music-this-weekend": "live-music",
   "alcohol-free-places": "alcohol-free",
   "sober-activities": "alcohol-free",
   "halal-restaurants": "halal-food",
@@ -69,6 +74,15 @@ const CATEGORY_ALIASES: Record<string, string> = {
   "leisure": "leisure-centres",
   "recreation": "leisure-centres",
   "swimming": "leisure-centres",
+};
+
+/** Aliases that carry an embedded time intent */
+const TIME_EMBEDDED_ALIASES: Record<string, { category: string; time: string }> = {
+  "events-tonight": { category: "events", time: "tonight" },
+  "events-tomorrow": { category: "events", time: "tomorrow" },
+  "live-music-tonight": { category: "live-music", time: "tonight" },
+  "live-music-this-weekend": { category: "live-music", time: "this-weekend" },
+  "upcoming-live-music": { category: "live-music", time: "next-30-days" },
 };
 
 /** City slug aliases — allows short forms like "ni" for "northern-ireland" */
@@ -167,11 +181,6 @@ export function parseSlug(
   let categorySlug = remaining || "things-to-do";
 
   // Apply aliases — some aliases carry embedded time intents
-  const TIME_EMBEDDED_ALIASES: Record<string, { category: string; time: string }> = {
-    "events-tonight": { category: "events", time: "tonight" },
-    "events-tomorrow": { category: "events", time: "tomorrow" },
-  };
-
   if (TIME_EMBEDDED_ALIASES[categorySlug]) {
     const alias = TIME_EMBEDDED_ALIASES[categorySlug];
     categorySlug = alias.category;
@@ -397,6 +406,8 @@ export function formatTimeIntent(timeIntent?: string | null): string {
     "this-week": "This Week",
     "this-weekend": "This Weekend",
     "rainy-day": "Rainy Day",
+    "next-7-days": "Next 7 Days",
+    "next-30-days": "Upcoming",
   };
   return map[timeIntent] || "";
 }
@@ -447,6 +458,16 @@ export function getTimeIntentDateRange(timeIntent: string | null): { start: stri
     }
     case "rainy-day":
       return null; // Not time-based
+    case "next-7-days": {
+      const end7 = new Date(now);
+      end7.setDate(now.getDate() + 7);
+      return { start: today, end: end7.toISOString().split("T")[0] };
+    }
+    case "next-30-days": {
+      const end30 = new Date(now);
+      end30.setDate(now.getDate() + 30);
+      return { start: today, end: end30.toISOString().split("T")[0] };
+    }
     default:
       return null;
   }
