@@ -84,6 +84,24 @@ const CityPage = () => {
     enabled: !!resolvedCitySlug && !!city,
   });
 
+  // Fetch upcoming events for this city
+  const { data: cityEvents } = useQuery({
+    queryKey: ["city-events", city?.id],
+    queryFn: async () => {
+      const today = new Date().toISOString().split("T")[0];
+      const { data } = await supabase
+        .from("events")
+        .select("*, cities!inner(slug, name)")
+        .eq("city_id", city!.id)
+        .eq("status", "active")
+        .gte("date_start", today)
+        .order("date_start", { ascending: true })
+        .limit(6);
+      return data || [];
+    },
+    enabled: !!city,
+  });
+
   // Deduplicate and validate
   const dedupedListings = useMemo(() => {
     if (!listings) return [];
