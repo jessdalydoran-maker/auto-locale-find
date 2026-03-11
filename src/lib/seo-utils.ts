@@ -59,6 +59,9 @@ const CATEGORY_ALIASES: Record<string, string> = {
   "acoustic": "live-music",
   "concerts": "live-music",
   "bands": "live-music",
+  "upcoming-events": "events",
+  "events-tonight": "events",
+  "events-tomorrow": "events",
 };
 
 /** City slug aliases — allows short forms like "ni" for "northern-ireland" */
