@@ -126,7 +126,7 @@ export const Footer = () => {
               </Link>
             ))}
           </div>
-          <p className="text-xs text-muted-foreground">© {new Date().getFullYear()} BestLocal. All rights reserved.</p>
+          <p className="text-xs text-muted-foreground">© {new Date().getFullYear()} City Scout Guide. All rights reserved.</p>
         </div>
       </div>
     </footer>
