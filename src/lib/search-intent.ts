@@ -35,17 +35,17 @@ const INTENT_TO_CATEGORIES: Record<string, string[]> = {
   "nightlife": ["bars", "cocktail-bars", "nightlife"],
   "night out": ["bars", "nightlife", "events"],
   "going out": ["bars", "nightlife", "events"],
-  "things to do": ["things-to-do", "attractions", "activities", "events", "parks", "museums", "cinema", "theatre", "leisure-centres", "restaurants", "bars", "pubs", "cafes"],
-  "activities": ["activities", "things-to-do", "parks", "leisure-centres", "cinema", "museums"],
-  "attractions": ["attractions", "things-to-do", "museums", "parks"],
+  "things to do": ["things-to-do", "attractions", "cinemas", "theatre", "leisure-centres", "parks", "restaurants", "bars", "live-music", "family-activities", "shopping", "leisure-entertainment"],
+  "activities": ["things-to-do", "parks", "leisure-centres", "cinemas", "museums", "family-activities", "leisure-entertainment"],
+  "attractions": ["attractions", "things-to-do", "museums", "parks", "family-activities"],
   "events": ["events"],
   "what's on": ["events"],
   "whats on": ["events"],
-  "live music": ["live-music", "events", "bars", "pubs"],
+  "live music": ["live-music", "events", "bars"],
   "music": ["live-music", "events"],
   "acoustic": ["live-music", "events", "bars"],
-  "trad": ["live-music", "events", "pubs"],
-  "trad session": ["live-music", "events", "pubs"],
+  "trad": ["live-music", "events", "bars"],
+  "trad session": ["live-music", "events", "bars"],
   "open mic": ["live-music", "events", "bars"],
   "gig": ["live-music", "events"],
   "gigs": ["live-music", "events"],
@@ -56,7 +56,7 @@ const INTENT_TO_CATEGORIES: Record<string, string[]> = {
   "folk": ["live-music", "events"],
   "blues": ["live-music", "events"],
   "cabaret": ["live-music", "events"],
-  "pub music": ["live-music", "pubs", "bars"],
+  "pub music": ["live-music", "bars"],
   "bar music": ["live-music", "bars"],
   "music tonight": ["live-music", "events"],
   "live music tonight": ["live-music", "events"],
@@ -88,12 +88,12 @@ const INTENT_TO_CATEGORIES: Record<string, string[]> = {
   "market": ["markets", "events"],
   "escape rooms": ["escape-rooms", "things-to-do"],
   "escape room": ["escape-rooms", "things-to-do"],
-  "indoor": ["escape-rooms", "museums", "gyms", "indoor-activities", "cinema", "leisure-centres"],
-  "indoor activities": ["escape-rooms", "museums", "gyms", "indoor-activities", "cinema", "leisure-centres"],
+  "indoor": ["escape-rooms", "museums", "gyms", "indoor-activities", "cinemas", "leisure-centres", "leisure-entertainment"],
+  "indoor activities": ["escape-rooms", "museums", "gyms", "indoor-activities", "cinemas", "leisure-centres", "leisure-entertainment"],
   "outdoor": ["parks", "tours", "attractions", "things-to-do"],
   "outdoor activities": ["parks", "tours", "attractions", "things-to-do"],
-  "cinema": ["cinema", "things-to-do"],
-  "cinemas": ["cinema", "things-to-do"],
+  "cinema": ["cinemas", "things-to-do"],
+  "cinemas": ["cinemas", "things-to-do"],
   "theatre": ["theatre", "events", "things-to-do"],
   "theater": ["theatre", "events", "things-to-do"],
   "hidden gems": ["hidden-gems"],
@@ -110,10 +110,10 @@ const INTENT_TO_CATEGORIES: Record<string, string[]> = {
   "gay bars": ["lgbtq", "bars", "nightlife"],
   "drag": ["lgbtq", "events"],
   "queer": ["lgbtq", "events", "bars"],
-  "shopping": ["shopping"],
-  "movies": ["cinema", "things-to-do"],
-  "swimming": ["leisure-centres", "leisure"],
-  "leisure": ["leisure-centres", "leisure"],
+  "shopping": ["shopping", "things-to-do"],
+  "movies": ["cinemas", "things-to-do"],
+  "swimming": ["leisure-centres", "leisure-entertainment"],
+  "leisure": ["leisure-centres", "leisure-entertainment", "things-to-do"],
   "leisure centre": ["leisure-centres"],
   "leisure centers": ["leisure-centres"],
   "recreation": ["leisure-centres"],
@@ -219,6 +219,13 @@ const STOP_WORDS = new Set([
   "town", "city", "centre", "center", "area",
 ]);
 
+// Query fillers to ignore when extracting intent keywords
+const FILLER_WORDS = new Set([
+  "things", "to", "do", "in", "near", "around", "what's", "whats", "on",
+]);
+
+const STRICT_TOWN_INTENT_PHRASES = ["things to do", "events", "live music", "restaurants"];
+
 export interface SearchIntent {
   originalQuery: string;
   categorySlugs: string[];
@@ -232,13 +239,15 @@ export interface SearchIntent {
   modifiers: string[];
   keywords: string[]; // remaining meaningful words
   suggestedPages: string[];
+  intentLabel: string | null;
+  strictTownMode: boolean;
 }
 
 /**
  * Parse a natural language query into a structured search intent
  */
 export function parseSearchIntent(rawQuery: string): SearchIntent {
-  let query = rawQuery.toLowerCase().trim();
+  const query = rawQuery.toLowerCase().trim();
 
   // 1. Extract location
   let city: string | null = null;
@@ -270,12 +279,9 @@ export function parseSearchIntent(rawQuery: string): SearchIntent {
   // Strip location noise words
   queryWithoutLocation = queryWithoutLocation
     .split(/\s+/)
-    .filter(w => !LOCATION_NOISE_WORDS.has(w))
+    .filter((w) => !LOCATION_NOISE_WORDS.has(w))
     .join(" ")
     .trim();
-
-  // Do NOT default to Belfast — if no location found, leave city null
-  // This prevents cross-contamination of results
 
   // 2. Extract modifiers
   const modifiers: string[] = [];
@@ -289,16 +295,17 @@ export function parseSearchIntent(rawQuery: string): SearchIntent {
     }
   }
 
-  // 3. Match intents to categories
+  // 3. Match intents to categories (prefer cleaned query, fallback to full query)
   const categorySlugs = new Set<string>();
+  let intentLabel: string | null = null;
 
-  // Try matching intent phrases (longest first)
   const sortedIntents = Object.keys(INTENT_TO_CATEGORIES).sort(
     (a, b) => b.length - a.length
   );
 
   for (const intent of sortedIntents) {
-    if (query.includes(intent)) {
+    if (queryWithoutLocation.includes(intent) || query.includes(intent)) {
+      if (!intentLabel) intentLabel = intent;
       for (const cat of INTENT_TO_CATEGORIES[intent]) {
         categorySlugs.add(cat);
       }
@@ -308,11 +315,13 @@ export function parseSearchIntent(rawQuery: string): SearchIntent {
   // Also try individual remaining words
   if (categorySlugs.size === 0) {
     const words = queryWithoutModifiers
+      .replace(/[^a-z0-9\s'-]/g, " ")
       .split(/\s+/)
-      .filter((w) => !STOP_WORDS.has(w) && w.length > 2);
+      .filter((w) => !STOP_WORDS.has(w) && !FILLER_WORDS.has(w) && w.length > 2);
 
     for (const word of words) {
       if (INTENT_TO_CATEGORIES[word]) {
+        if (!intentLabel) intentLabel = word;
         for (const cat of INTENT_TO_CATEGORIES[word]) {
           categorySlugs.add(cat);
         }
@@ -322,8 +331,18 @@ export function parseSearchIntent(rawQuery: string): SearchIntent {
 
   // 4. Remaining keywords for text search fallback
   const keywords = queryWithoutModifiers
+    .replace(/[^a-z0-9\s'-]/g, " ")
     .split(/\s+/)
-    .filter((w) => !STOP_WORDS.has(w) && w.length > 2);
+    .filter((w) => !STOP_WORDS.has(w) && !FILLER_WORDS.has(w) && w.length > 2);
+
+  // Dedicated strict town mode for explicit "[intent] in [town]" style searches
+  const strictTownMode = Boolean(
+    hasExplicitLocation &&
+    city &&
+    STRICT_TOWN_INTENT_PHRASES.some((phrase) =>
+      query.includes(phrase) || queryWithoutLocation.includes(phrase)
+    )
+  );
 
   // 5. Generate suggested page slugs
   const suggestedPages: string[] = [];
@@ -349,6 +368,8 @@ export function parseSearchIntent(rawQuery: string): SearchIntent {
     modifiers,
     keywords,
     suggestedPages,
+    intentLabel,
+    strictTownMode,
   };
 }
 
