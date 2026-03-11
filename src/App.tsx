@@ -14,6 +14,8 @@ import SearchPage from "./pages/SearchPage.tsx";
 import AdminPage from "./pages/AdminPage.tsx";
 import PlaceDetailPage from "./pages/PlaceDetailPage.tsx";
 import EventDetailPage from "./pages/EventDetailPage.tsx";
+import SubmitVenuePage from "./pages/SubmitVenuePage.tsx";
+import SuggestEventPage from "./pages/SuggestEventPage.tsx";
 import NotFound from "./pages/NotFound.tsx";
 
 const queryClient = new QueryClient();
