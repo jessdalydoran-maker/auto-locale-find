@@ -144,7 +144,7 @@ export const EventCard = ({
           )}
           {venueName && (
             <div className="flex items-center gap-1.5 text-[11px] text-muted-foreground">
-              <MapPin className="h-3 w-3 shrink-0 text-accent" />
+              <MapPin className="h-3 w-3 shrink-0 text-teal" />
               <span className="line-clamp-1">{venueName}</span>
             </div>
           )}
