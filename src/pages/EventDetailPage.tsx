@@ -195,7 +195,7 @@ const EventDetailPage = () => {
             height={400}
             onError={(e) => {
               const img = e.currentTarget;
-              const fb = getCategoryPlaceholder(category?.slug || "events");
+              const fb = getCategoryPlaceholder(category?.slug || "events", event?.title, event?.tags);
               if (img.src !== fb) img.src = fb;
             }}
           />
