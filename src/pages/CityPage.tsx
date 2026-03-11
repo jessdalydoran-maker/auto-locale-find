@@ -3,9 +3,10 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Layout } from "@/components/Layout";
 import { ListingCard } from "@/components/ListingCard";
+import { EventCard } from "@/components/EventCard";
 import { CategoryPill } from "@/components/CategoryPill";
 import { AdPlaceholder } from "@/components/AdPlaceholder";
-import { MapPin, Info } from "lucide-react";
+import { MapPin, Info, Calendar } from "lucide-react";
 import { deduplicateListings, filterCompleteListings, validatePage, detectPageType, getRobotsDirective, generateSupportingIntro } from "@/lib/page-validation";
 import { useEffect, useMemo } from "react";
 
