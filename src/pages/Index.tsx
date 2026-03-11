@@ -541,7 +541,7 @@ const Index = () => {
               <Link
                 key={`${city.slug}-${cat.slug}`}
                 to={`/best-${cat.slug}-${city.slug}`}
-                className="text-xs px-3 py-1.5 bg-card border border-border text-muted-foreground rounded-full hover:border-accent/40 hover:text-accent transition-colors"
+                className="text-xs px-3 py-1.5 bg-card border border-border text-muted-foreground rounded-full hover:border-primary/40 hover:text-primary transition-colors"
               >
                 Best {cat.name} {city.name}
               </Link>
