@@ -768,9 +768,9 @@ const ProgrammaticPage = () => {
       listings: allListings as any,
       events: allEvents as any,
       pageType,
-      hasIntro: !!introText || true, // We always generate intro
+      hasIntro: true, // We always generate intro
       hasSectionHeading: true,
-      hasFaq: (faqItems?.length || 0) > 0,
+      hasFaq: false, // Checked separately after FAQ generation
       isNicheModifier: !!parsed?.modifierSlug,
     });
   }, [listings, events, pageType, parsed?.modifierSlug]);
