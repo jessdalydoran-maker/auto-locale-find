@@ -1304,7 +1304,7 @@ const ProgrammaticPage = () => {
                 {siblingPages.length > 0 && (
                   <div className="flex flex-wrap justify-center gap-2">
                     {siblingPages.slice(0, 4).map((page) => (
-                      <Link key={page.url} to={page.url} className="text-xs px-3 py-1.5 bg-card border border-border text-accent rounded-full hover:bg-accent hover:text-accent-foreground transition-colors">
+                      <Link key={page.url} to={page.url} className="text-xs px-3 py-1.5 bg-card border border-border text-primary rounded-full hover:bg-primary hover:text-primary-foreground transition-colors">
                         {page.label}
                       </Link>
                     ))}
