@@ -209,26 +209,6 @@ const FALLBACK_POOLS: Record<string, string[]> = {
 // ─── Keyword → category mapping for title/tag matching ───
 
 const KEYWORD_CATEGORY_MAP: Array<{ keywords: string[]; category: string }> = [
-  // LGBT+ / Pride / Queer — check early so pride/drag events get correct imagery
-  {
-    keywords: ["lgbtq", "lgbt", "pride", "queer", "drag", "cabaret", "rainbow project", "cara friend", "here ni", "outburst"],
-    category: "lgbtq",
-  },
-  // LGBT+ nightlife venues
-  {
-    keywords: ["kremlin", "maverick belfast", "union street bar"],
-    category: "lgbtq-nightlife",
-  },
-  // Choir / singing groups
-  {
-    keywords: ["choir", "choral", "singing group", "vocal ensemble"],
-    category: "choir",
-  },
-  // LGBT+ community organisations
-  {
-    keywords: ["support", "counselling", "advocacy", "wellbeing", "health service", "community group", "youth group"],
-    category: "lgbtq-community",
-  },
   // Theatre & Performance — check first so "Beauty and the Beast" → theatre, not attractions
   {
     keywords: ["theatre", "theater", "musical", "pantomime", "panto", "stage", "play", "drama", "ballet", "opera", "performance", "jnr", "junior", "production"],
