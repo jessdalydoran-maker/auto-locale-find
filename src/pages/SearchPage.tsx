@@ -47,15 +47,17 @@ const SearchPage = () => {
 
   useEffect(() => { setPageCanonical(`/search${query ? `?q=${encodeURIComponent(query)}` : ""}`); }, [query]);
 
-  // Resolve city ID from slug
+  // Resolve city ID from slug/name
   const { data: resolvedCity } = useQuery({
     queryKey: ["resolve-city", intent.city],
     queryFn: async () => {
       if (!intent.city) return null;
+      const townNameGuess = intent.city.replace(/-/g, " ");
       const { data } = await supabase
         .from("cities")
-        .select("id, slug, name, nearby_city_slugs")
-        .eq("slug", intent.city)
+        .select("id, slug, name, nearby_city_slugs, latitude, longitude")
+        .or(`slug.eq.${intent.city},name.ilike.${townNameGuess}`)
+        .limit(1)
         .maybeSingle();
       return data;
     },
@@ -63,24 +65,67 @@ const SearchPage = () => {
     staleTime: 1000 * 60 * 10,
   });
 
-  // Resolve nearby city IDs for fallback
+  // Resolve nearby city IDs for fallback (10-15 mile radius, then configured nearby slugs)
   const { data: nearbyCities } = useQuery({
-    queryKey: ["nearby-cities", resolvedCity?.nearby_city_slugs],
+    queryKey: ["nearby-cities", resolvedCity?.id, resolvedCity?.latitude, resolvedCity?.longitude],
     queryFn: async () => {
-      if (!resolvedCity?.nearby_city_slugs?.length) return [];
-      const { data } = await supabase
-        .from("cities")
-        .select("id, slug, name")
-        .in("slug", resolvedCity.nearby_city_slugs);
-      return data || [];
+      if (!resolvedCity?.id) return [];
+
+      const nearby: Array<{ id: string; slug: string; name: string; distanceKm?: number }> = [];
+
+      if (resolvedCity.latitude != null && resolvedCity.longitude != null) {
+        const { data: citiesWithCoords } = await supabase
+          .from("cities")
+          .select("id, slug, name, latitude, longitude")
+          .not("latitude", "is", null)
+          .not("longitude", "is", null)
+          .neq("id", resolvedCity.id);
+
+        if (citiesWithCoords?.length) {
+          for (const city of citiesWithCoords) {
+            const distanceKm = haversineDistanceKm(
+              resolvedCity.latitude,
+              resolvedCity.longitude,
+              city.latitude,
+              city.longitude
+            );
+            if (distanceKm <= NEARBY_RADIUS_KM) {
+              nearby.push({ id: city.id, slug: city.slug, name: city.name, distanceKm });
+            }
+          }
+        }
+      }
+
+      if (resolvedCity.nearby_city_slugs?.length) {
+        const { data: configuredNearby } = await supabase
+          .from("cities")
+          .select("id, slug, name")
+          .in("slug", resolvedCity.nearby_city_slugs)
+          .neq("id", resolvedCity.id);
+
+        for (const city of configuredNearby || []) {
+          if (!nearby.some((n) => n.id === city.id)) {
+            nearby.push(city);
+          }
+        }
+      }
+
+      return nearby.sort((a, b) => (a.distanceKm ?? 999) - (b.distanceKm ?? 999));
     },
-    enabled: !!resolvedCity?.nearby_city_slugs?.length,
+    enabled: !!resolvedCity?.id,
     staleTime: 1000 * 60 * 10,
   });
 
-  // Main listings query — strict 3-tier location hierarchy
+  // Main listings query — strict location-first hierarchy
   const { data: rawListings, isLoading } = useQuery({
-    queryKey: ["search", query, resolvedCity?.id, nearbyCities?.map(c => c.id).join(",")],
+    queryKey: [
+      "search",
+      query,
+      resolvedCity?.id,
+      nearbyCities?.map((c) => c.id).join(","),
+      intent.strictTownMode,
+      intent.intentLabel,
+    ],
     queryFn: async () => {
       if (!query.trim()) return { exact: [] as any[], nearby: [] as any[], niWide: [] as any[] };
 
@@ -89,54 +134,49 @@ const SearchPage = () => {
       const nearbyResults: any[] = [];
       const niWideResults: any[] = [];
 
-      // Helper to run category + audience + name queries within a set of city IDs
+      const effectiveCategorySlugs = intent.categorySlugs.includes("things-to-do")
+        ? Array.from(new Set([...intent.categorySlugs, ...THINGS_TO_DO_PRIORITY_SLUGS]))
+        : intent.categorySlugs;
+
+      const { data: categoryRows } = effectiveCategorySlugs.length
+        ? await supabase
+            .from("categories")
+            .select("id, slug")
+            .in("slug", effectiveCategorySlugs)
+        : { data: [] as Array<{ id: string; slug: string }> };
+      const categoryIds = (categoryRows || []).map((c) => c.id);
+
       async function fetchForCities(cityIds: string[], limit: number) {
         const results: any[] = [];
 
-        // Name match
-        const { data: nameMatches } = await supabase
-          .from("listings")
-          .select(selectFields)
-          .in("city_id", cityIds)
-          .ilike("name", `%${query.trim()}%`)
-          .limit(limit);
-        if (nameMatches) results.push(...nameMatches);
-
-        // Category intent
-        if (intent.categorySlugs.length > 0) {
-          const { data: cats } = await supabase
-            .from("categories")
-            .select("id, slug")
-            .in("slug", intent.categorySlugs);
-          if (cats?.length) {
-            const catIds = cats.map(c => c.id);
-            const { data } = await supabase
-              .from("listings")
-              .select(selectFields)
-              .in("category_id", catIds)
-              .in("city_id", cityIds)
-              .order("rating", { ascending: false })
-              .limit(limit);
-            if (data) results.push(...data);
-          }
-
-          // Audience tags
-          for (const tag of intent.categorySlugs.slice(0, 2)) {
-            const { data } = await supabase
-              .from("listings")
-              .select(selectFields)
-              .contains("audience_tags", [tag])
-              .in("city_id", cityIds)
-              .limit(Math.ceil(limit / 2));
-            if (data) results.push(...data);
-          }
+        // Intent/category-first query within strict city scope
+        if (categoryIds.length > 0) {
+          const { data } = await supabase
+            .from("listings")
+            .select(selectFields)
+            .in("city_id", cityIds)
+            .in("category_id", categoryIds)
+            .order("rating", { ascending: false })
+            .limit(limit);
+          if (data) results.push(...data);
         }
 
-        // Text search within cities
-        const textTerms = intent.keywords.filter(w => w.length > 2);
-        if (textTerms.length > 0 && results.length < 5) {
+        // Audience tag query within strict city scope
+        for (const tag of effectiveCategorySlugs.slice(0, 3)) {
+          const { data } = await supabase
+            .from("listings")
+            .select(selectFields)
+            .contains("audience_tags", [tag])
+            .in("city_id", cityIds)
+            .limit(Math.ceil(limit / 2));
+          if (data) results.push(...data);
+        }
+
+        // Keyword text query within strict city scope
+        const textTerms = intent.keywords.filter((w) => w.length > 2);
+        if (textTerms.length > 0) {
           const orClauses = textTerms
-            .map(t => `name.ilike.%${t}%,short_description.ilike.%${t}%`)
+            .map((t) => `name.ilike.%${t}%,short_description.ilike.%${t}%,description.ilike.%${t}%`)
             .join(",");
           const { data } = await supabase
             .from("listings")
@@ -147,8 +187,23 @@ const SearchPage = () => {
           if (data) results.push(...data);
         }
 
-        // If generic "things to do" with no specific matches, OR if we have few results, show top-rated
-        const isThingsToDoSearch = intent.categorySlugs.includes("things-to-do") || intent.categorySlugs.length === 0;
+        // Venue name query for direct venue searches
+        if (query.trim().length > 2) {
+          const { data: nameMatches } = await supabase
+            .from("listings")
+            .select(selectFields)
+            .in("city_id", cityIds)
+            .ilike("name", `%${query.trim()}%`)
+            .limit(Math.ceil(limit / 2));
+          if (nameMatches) results.push(...nameMatches);
+        }
+
+        // "Things to do" should always include real local venues in town
+        const isThingsToDoSearch =
+          effectiveCategorySlugs.includes("things-to-do") ||
+          intent.intentLabel === "things to do" ||
+          effectiveCategorySlugs.length === 0;
+
         if (isThingsToDoSearch || results.length < 8) {
           const { data } = await supabase
             .from("listings")
@@ -163,104 +218,55 @@ const SearchPage = () => {
       }
 
       if (resolvedCity) {
-        // ── TIER 1: Exact town match ──
+        // Tier 1: exact town results only
         const tier1 = await fetchForCities([resolvedCity.id], 40);
         exactResults.push(...tier1);
 
-        // ── TIER 2: Nearby towns (only if exact < 5) ──
-        if (exactResults.length < 5 && nearbyCities?.length) {
-          const nearbyIds = nearbyCities.map(c => c.id);
+        // Tier 2: nearby towns only when local threshold is low
+        const minimumLocalThreshold = intent.strictTownMode
+          ? STRICT_LOCAL_MIN_RESULTS
+          : DEFAULT_LOCAL_MIN_RESULTS;
+
+        if (exactResults.length < minimumLocalThreshold && nearbyCities?.length) {
+          const nearbyIds = nearbyCities.map((c) => c.id);
           const tier2 = await fetchForCities(nearbyIds, 15);
           nearbyResults.push(...tier2);
         }
 
-        // ── TIER 3: NI-wide (only if exact + nearby < 3) ──
-        if (exactResults.length + nearbyResults.length < 3) {
-          const excludeIds = [resolvedCity.id, ...(nearbyCities?.map(c => c.id) || [])];
-          const textTerms = intent.keywords.filter(w => w.length > 2);
+        // Tier 3: NI-wide only for non-strict queries
+        if (!intent.strictTownMode && exactResults.length + nearbyResults.length < 3) {
+          const excludeIds = [resolvedCity.id, ...(nearbyCities?.map((c) => c.id) || [])];
+          const textTerms = intent.keywords.filter((w) => w.length > 2);
 
-          if (intent.categorySlugs.length > 0) {
-            const { data: cats } = await supabase
-              .from("categories")
-              .select("id, slug")
-              .in("slug", intent.categorySlugs);
-            if (cats?.length) {
-              const catIds = cats.map(c => c.id);
-              let q = supabase
-                .from("listings")
-                .select(selectFields)
-                .in("category_id", catIds)
-                .order("rating", { ascending: false })
-                .limit(10);
-              const { data } = await q;
-              if (data) {
-                // Exclude already-fetched cities
-                const filtered = data.filter(d => !excludeIds.includes(d.city_id));
-                niWideResults.push(...filtered);
-              }
-            }
-          } else if (textTerms.length > 0) {
-            const orClauses = textTerms
-              .map(t => `name.ilike.%${t}%,short_description.ilike.%${t}%`)
-              .join(",");
+          if (categoryIds.length > 0) {
             const { data } = await supabase
               .from("listings")
               .select(selectFields)
-              .or(orClauses)
+              .in("category_id", categoryIds)
+              .order("rating", { ascending: false })
               .limit(10);
-            if (data) {
-              const filtered = data.filter(d => !excludeIds.includes(d.city_id));
-              niWideResults.push(...filtered);
-            }
+            if (data) niWideResults.push(...data.filter((d) => !excludeIds.includes(d.city_id)));
+          } else if (textTerms.length > 0) {
+            const orClauses = textTerms
+              .map((t) => `name.ilike.%${t}%,short_description.ilike.%${t}%,description.ilike.%${t}%`)
+              .join(",");
+            const { data } = await supabase.from("listings").select(selectFields).or(orClauses).limit(10);
+            if (data) niWideResults.push(...data.filter((d) => !excludeIds.includes(d.city_id)));
           }
         }
       } else {
-        // ── No location specified: broad search ──
-        const { data: nameMatches } = await supabase
-          .from("listings")
-          .select(selectFields)
-          .ilike("name", `%${query.trim()}%`)
-          .limit(20);
-        if (nameMatches) exactResults.push(...nameMatches);
-
-        if (intent.categorySlugs.length > 0) {
-          const { data: cats } = await supabase
-            .from("categories")
-            .select("id, slug")
-            .in("slug", intent.categorySlugs);
-          if (cats?.length) {
-            const catIds = cats.map(c => c.id);
-            const { data } = await supabase
-              .from("listings")
-              .select(selectFields)
-              .in("category_id", catIds)
-              .order("rating", { ascending: false })
-              .limit(30);
-            if (data) exactResults.push(...data);
-          }
-        }
-
-        const textTerms = intent.keywords.filter(w => w.length > 2);
-        if (textTerms.length > 0) {
-          const orClauses = textTerms
-            .map(t => `name.ilike.%${t}%,short_description.ilike.%${t}%,description.ilike.%${t}%`)
-            .join(",");
-          const { data } = await supabase
-            .from("listings")
-            .select(selectFields)
-            .or(orClauses)
-            .limit(20);
-          if (data) exactResults.push(...data);
-        }
+        // No explicit location: broad search
+        const broadResults = await fetchForCities([], 30);
+        exactResults.push(...broadResults);
       }
 
-      // Deduplicate across all tiers
       const seenIds = new Set<string>();
-      const dedup = (arr: any[]) => arr.filter(item => {
-        if (seenIds.has(item.id)) return false;
-        seenIds.add(item.id);
-        return true;
-      });
+      const dedup = (arr: any[]) =>
+        arr.filter((item) => {
+          if (seenIds.has(item.id)) return false;
+          seenIds.add(item.id);
+          return true;
+        });
 
       return {
         exact: dedup(exactResults),
