@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import {
   BarChart3, Layers, MapPin, TrendingUp, Play, Settings, Clock,
-  CheckCircle2, XCircle, AlertTriangle, Archive, RefreshCw, FileText, Calendar,
+  CheckCircle2, XCircle, AlertTriangle, Archive, RefreshCw, FileText, Calendar, Image,
 } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
@@ -17,6 +17,8 @@ const AdminPage = () => {
   const [isRunning, setIsRunning] = useState(false);
   const [isHarvesting, setIsHarvesting] = useState(false);
   const [isIngesting, setIsIngesting] = useState(false);
+  const [isScraping, setIsScraping] = useState(false);
+  const [scrapeResults, setScrapeResults] = useState<any>(null);
 
   const { data: cities } = useQuery({
     queryKey: ["admin-cities"],
@@ -173,6 +175,26 @@ const AdminPage = () => {
     }
   };
 
+  const runImageScraper = async () => {
+    setIsScraping(true);
+    setScrapeResults(null);
+    try {
+      const { data, error } = await supabase.functions.invoke("scrape-venue-images", {
+        body: { batch_size: 15 },
+      });
+      if (error) throw error;
+      setScrapeResults(data);
+      toast.success(
+        `Image scraper: ${data.images_found} images found out of ${data.processed} venues`
+      );
+      queryClient.invalidateQueries({ queryKey: ["admin-listings"] });
+    } catch (err) {
+      toast.error("Image scraper failed: " + String(err));
+    } finally {
+      setIsScraping(false);
+    }
+  };
+
   const stats = [
     { label: "Cities", value: cities?.length || 0, icon: MapPin },
     { label: "Categories", value: categories?.length || 0, icon: Layers },
@@ -301,6 +323,23 @@ const AdminPage = () => {
                         )}
                       </Button>
                     </div>
+                    <Button
+                      onClick={runImageScraper}
+                      disabled={isScraping}
+                      variant="outline"
+                      className="w-full"
+                    >
+                      {isScraping ? (
+                        <><RefreshCw className="h-4 w-4 mr-2 animate-spin" /> Scraping Images...</>
+                      ) : (
+                        <><Image className="h-4 w-4 mr-2" /> Scrape Venue Images</>
+                      )}
+                    </Button>
+                    {scrapeResults && (
+                      <div className="text-xs text-muted-foreground bg-muted rounded p-2">
+                        <p>Processed: {scrapeResults.processed} | Found: {scrapeResults.images_found} | Missing: {scrapeResults.no_image}</p>
+                      </div>
+                    )}
                     <p className="text-xs text-muted-foreground text-center">
                       {settingsMap.get("last_manual_run")
                         ? `Last manual run: ${new Date(settingsMap.get("last_manual_run")!).toLocaleString()}`
