@@ -235,6 +235,8 @@ const CityPage = () => {
               priceLevel={listing.price_level}
               googleMapsLink={listing.google_maps_link}
               isFeatured={listing.is_featured}
+              audienceTags={(listing as any).audience_tags}
+              description={(listing as any).description}
               index={i}
             />
           ))}
