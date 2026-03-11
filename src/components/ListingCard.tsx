@@ -86,7 +86,7 @@ export const ListingCard = ({
             </span>
           )}
           {isFeatured && !categoryName && (
-            <span className="absolute top-2.5 left-2.5 bg-accent text-accent-foreground text-[10px] font-semibold px-2 py-0.5 rounded">
+            <span className="absolute top-2.5 left-2.5 bg-teal text-teal-foreground text-[10px] font-semibold px-2 py-0.5 rounded">
               Featured
             </span>
           )}
