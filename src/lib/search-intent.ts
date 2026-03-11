@@ -219,6 +219,13 @@ const STOP_WORDS = new Set([
   "town", "city", "centre", "center", "area",
 ]);
 
+// Query fillers to ignore when extracting intent keywords
+const FILLER_WORDS = new Set([
+  "things", "to", "do", "in", "near", "around", "what's", "whats", "on",
+]);
+
+const STRICT_TOWN_INTENT_PHRASES = ["things to do", "events", "live music", "restaurants"];
+
 export interface SearchIntent {
   originalQuery: string;
   categorySlugs: string[];
@@ -232,6 +239,8 @@ export interface SearchIntent {
   modifiers: string[];
   keywords: string[]; // remaining meaningful words
   suggestedPages: string[];
+  intentLabel: string | null;
+  strictTownMode: boolean;
 }
 
 /**
