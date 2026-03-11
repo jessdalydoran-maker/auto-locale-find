@@ -38,9 +38,8 @@ export const Footer = () => {
       <div className="container mx-auto px-4 py-10">
         <div className="grid grid-cols-2 md:grid-cols-5 gap-8">
           <div className="col-span-2 md:col-span-1">
-            <div className="flex items-center gap-2 mb-3">
-              <img src={logo} alt="City Scout Guide" className="h-8 w-auto" />
-              <span className="font-display font-bold text-[15px] text-foreground">City Scout Guide</span>
+            <div className="mb-3">
+              <img src={logo} alt="City Scout Guide" className="h-12 w-auto" />
             </div>
             <p className="text-[13px] text-muted-foreground leading-relaxed">
               Discover events, markets, restaurants, family activities and hidden gems across Northern Ireland.
