@@ -91,7 +91,7 @@ export const SearchBar = ({ onClose, large = false, placeholder = "Search by cit
               type="button"
               className={`w-full text-left px-3.5 py-2.5 text-[13px] flex items-center gap-2.5 transition-colors ${
                 i === selectedIndex
-                  ? "bg-accent text-accent-foreground"
+                  ? "bg-primary text-primary-foreground"
                   : "text-muted-foreground hover:bg-secondary hover:text-foreground"
               }`}
               onMouseEnter={() => setSelectedIndex(i)}
