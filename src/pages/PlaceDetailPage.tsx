@@ -108,12 +108,15 @@ const PlaceDetailPage = () => {
     if (!meta) { meta = document.createElement("meta"); meta.setAttribute("name", "description"); document.head.appendChild(meta); }
     meta.setAttribute("content", metaDesc.slice(0, 160));
 
+    // Canonical + og:url
+    setPageCanonical(window.location.pathname);
+
     // OG tags
     const ogTags: Record<string, string> = {
       "og:title": `${listing.name} — ${catName} in ${cityName}`,
       "og:description": metaDesc.slice(0, 160),
       "og:type": "place",
-      "og:url": window.location.href,
+      "og:url": getCanonicalUrl(window.location.pathname),
     };
     if (resolvedImage) ogTags["og:image"] = resolvedImage;
     

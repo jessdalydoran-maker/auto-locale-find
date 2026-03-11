@@ -108,7 +108,7 @@ const EventDetailPage = () => {
       startDate: event.date_start + (event.time_start ? `T${event.time_start}` : ""),
       endDate: event.date_end ? event.date_end + (event.time_end ? `T${event.time_end}` : "") : undefined,
       image: resolvedImage,
-      url: window.location.href,
+      url: getCanonicalUrl(window.location.pathname),
       isAccessibleForFree: event.is_free,
       location: event.venue_name ? {
         "@type": "Place",

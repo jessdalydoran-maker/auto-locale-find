@@ -987,7 +987,7 @@ const ProgrammaticPage = () => {
                 "@type": "ListItem",
                 position: i + 1,
                 name: c.label,
-                ...(c.url ? { item: `https://cityscoutguide.com${c.url}` } : {}),
+                ...(c.url ? { item: `${SITE_DOMAIN}${c.url}` } : {}),
               })),
             }),
           }}
