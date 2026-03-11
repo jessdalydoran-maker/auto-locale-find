@@ -420,8 +420,12 @@ const SearchPage = () => {
         const tier1 = await fetchEventsForCities([resolvedCity.id], 15);
         localEvents.push(...tier1);
 
-        // Tier 2: nearby city events (only if local < 3)
-        if (localEvents.length < 3 && nearbyCities?.length) {
+        // Tier 2: nearby city events (only if local is below threshold)
+        const minimumLocalThreshold = intent.strictTownMode
+          ? STRICT_LOCAL_MIN_RESULTS
+          : DEFAULT_LOCAL_MIN_RESULTS;
+
+        if (localEvents.length < minimumLocalThreshold && nearbyCities?.length) {
           const nearbyIds = nearbyCities.map(c => c.id);
           const tier2 = await fetchEventsForCities(nearbyIds, 10);
           nearbyEvents.push(...tier2);
@@ -440,11 +444,18 @@ const SearchPage = () => {
         return true;
       });
 
-      const scoredLocal = dedup(localEvents).map(item => ({
+      const dedupLocal = dedup(localEvents);
+      const { matched: cityMatchedLocal } = filterByCity(dedupLocal, intent.city);
+      const localSource = intent.hasExplicitLocation ? cityMatchedLocal : dedupLocal;
+      const nearbySource = intent.city
+        ? dedup(nearbyEvents).filter((item: any) => (item.cities as any)?.slug !== intent.city)
+        : dedup(nearbyEvents);
+
+      const scoredLocal = localSource.map((item: any) => ({
         item,
         score: scoreEvent(item, query, intent),
       }));
-      const scoredNearby = dedup(nearbyEvents).map(item => ({
+      const scoredNearby = nearbySource.map((item: any) => ({
         item,
         score: scoreEvent(item, query, { ...intent, city: null, hasExplicitLocation: false }),
       }));
