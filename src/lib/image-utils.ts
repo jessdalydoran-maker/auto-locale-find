@@ -36,7 +36,7 @@ export const CATEGORY_PLACEHOLDERS: Record<string, string> = {
   "indoor-activities": "https://images.unsplash.com/photo-1545558014-8692077e9b5c?w=800&h=500&fit=crop&fm=webp&q=80",
   "family-activities": "https://images.unsplash.com/photo-1472162072942-cd5147eb3902?w=800&h=500&fit=crop&fm=webp&q=80",
   "date-night": "https://images.unsplash.com/photo-1529543544282-ea8407407d89?w=800&h=500&fit=crop&fm=webp&q=80",
-  "hidden-gems": "https://images.unsplash.com/photo-1476514525535-07fb3b4ae5f1?w=800&h=500&fit=crop&fm=webp&q=80",
+  "hidden-gems": "https://images.unsplash.com/photo-1564959130747-897a8e5c33c6?w=800&h=500&fit=crop&fm=webp&q=80", // NI coastal scenery
   "gyms": "https://images.unsplash.com/photo-1534438327276-14e5300c3a48?w=800&h=500&fit=crop&fm=webp&q=80",
 
   // Events
