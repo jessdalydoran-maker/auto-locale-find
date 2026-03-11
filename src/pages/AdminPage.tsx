@@ -175,7 +175,26 @@ const AdminPage = () => {
     }
   };
 
-  const stats = [
+  const runImageScraper = async () => {
+    setIsScraping(true);
+    setScrapeResults(null);
+    try {
+      const { data, error } = await supabase.functions.invoke("scrape-venue-images", {
+        body: { batch_size: 15 },
+      });
+      if (error) throw error;
+      setScrapeResults(data);
+      toast.success(
+        `Image scraper: ${data.images_found} images found out of ${data.processed} venues`
+      );
+      queryClient.invalidateQueries({ queryKey: ["admin-listings"] });
+    } catch (err) {
+      toast.error("Image scraper failed: " + String(err));
+    } finally {
+      setIsScraping(false);
+    }
+  };
+
     { label: "Cities", value: cities?.length || 0, icon: MapPin },
     { label: "Categories", value: categories?.length || 0, icon: Layers },
     { label: "Listings", value: listings?.length || 0, icon: TrendingUp },
