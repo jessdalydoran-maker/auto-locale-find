@@ -1068,7 +1068,7 @@ const ProgrammaticPage = () => {
               <Link
                 key={f.value}
                 to={f.url}
-                className="px-3 py-1.5 text-xs font-medium bg-muted text-muted-foreground rounded-full hover:bg-accent hover:text-accent-foreground transition-colors"
+                className="px-3 py-1.5 text-xs font-medium bg-muted text-muted-foreground rounded-full hover:bg-primary hover:text-primary-foreground transition-colors"
               >
                 {f.label}
               </Link>
