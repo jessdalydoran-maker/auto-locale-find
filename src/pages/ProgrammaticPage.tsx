@@ -1228,7 +1228,7 @@ const ProgrammaticPage = () => {
                     {eventsByCity.map(([cityGroupName, cityEvents]) => (
                       <div key={cityGroupName}>
                         <h3 className="font-display font-semibold text-lg text-foreground mb-4 flex items-center gap-2">
-                          <MapPin className="h-4 w-4 text-accent" />
+                          <MapPin className="h-4 w-4 text-teal" />
                           {cityGroupName}
                           <span className="text-xs text-muted-foreground font-normal">({cityEvents.length} event{cityEvents.length !== 1 ? "s" : ""})</span>
                         </h3>
