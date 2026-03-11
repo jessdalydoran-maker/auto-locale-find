@@ -133,7 +133,7 @@ export function getEventImageByKeywords(
   return null;
 }
 
-const DEFAULT_PLACEHOLDER = "https://images.unsplash.com/photo-1501594907352-04cda38ebc29?w=800&h=500&fit=crop&fm=webp&q=80";
+const DEFAULT_PLACEHOLDER = "https://images.unsplash.com/photo-1533154683836-84ea7a0bc310?w=800&h=500&fit=crop&fm=webp&q=80"; // Belfast skyline
 
 /** Trusted image sources that bypass verification */
 const TRUSTED_SOURCES = new Set(["google_places", "manual", "official", "website"]);
