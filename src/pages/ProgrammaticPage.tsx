@@ -1,4 +1,5 @@
 import { useParams, Link } from "react-router-dom";
+import { cn } from "@/lib/utils";
 import { isLiveMusicEvent, isLiveMusicVenue, liveMusicVenueScore } from "@/lib/live-music-utils";
 import { SITE_DOMAIN } from "@/lib/canonical";
 import { useQuery } from "@tanstack/react-query";
@@ -44,6 +45,7 @@ import {
   type PageValidationResult,
 } from "@/lib/page-validation";
 import { useEffect, useMemo, useState } from "react";
+import { EventDatePicker } from "@/components/EventDatePicker";
 
 const ProgrammaticPage = () => {
   const { "*": rawSlug } = useParams();
@@ -142,11 +144,18 @@ const ProgrammaticPage = () => {
   const cityName = (neighbourhood || isLandmarkPage) ? city?.name : undefined;
   const showEvents = parsed ? isEventCategory(parsed.categorySlug) : false;
   const isWeekendPage = parsed?.categorySlug === "things-to-do" && !!parsed?.timeIntent;
-  const dateRange = parsed ? getTimeIntentDateRange(parsed.timeIntent || null) : null;
   const currentUrl = "/" + slug;
 
   // Location filter state for NI-wide pages
   const [locationFilter, setLocationFilter] = useState<string | null>(null);
+  // Custom calendar date filter
+  const [customDate, setCustomDate] = useState<Date | undefined>(undefined);
+
+  const baseRange = parsed ? getTimeIntentDateRange(parsed.timeIntent || null) : null;
+  // Override date range if custom date is selected
+  const dateRange = customDate
+    ? { start: customDate.toISOString().split("T")[0], end: customDate.toISOString().split("T")[0] }
+    : baseRange;
 
   // NI cities for location filter
   const niCities = useMemo(() => {
@@ -557,7 +566,7 @@ const ProgrammaticPage = () => {
   const FAMILY_EVENT_DEPRIORITY_TAGS = ["sport", "boxing", "nightlife", "concerts"];
 
   const { data: rawEvents } = useQuery({
-    queryKey: ["prog-events", parsed?.categorySlug, parsed?.citySlug, parsed?.neighbourhoodSlug, parsed?.timeIntent, parsed?.modifierSlug, locationFilter],
+    queryKey: ["prog-events", parsed?.categorySlug, parsed?.citySlug, parsed?.neighbourhoodSlug, parsed?.timeIntent, parsed?.modifierSlug, locationFilter, customDate?.toISOString()],
     queryFn: async () => {
       const today = new Date().toISOString().split("T")[0];
       let query = supabase
@@ -1085,15 +1094,23 @@ const ProgrammaticPage = () => {
               <Link
                 key={f.value || "all"}
                 to={f.url}
-                className={`px-3 py-1.5 text-xs font-medium rounded-full transition-colors ${
-                  (f as any).active
+                onClick={() => setCustomDate(undefined)}
+                className={cn(
+                  "px-3 py-1.5 text-xs font-medium rounded-full transition-colors",
+                  (f as any).active && !customDate
                     ? "bg-primary text-primary-foreground"
                     : "bg-muted text-muted-foreground hover:bg-primary hover:text-primary-foreground"
-                }`}
+                )}
               >
                 {f.label}
               </Link>
             ))}
+            {showEvents && (
+              <EventDatePicker
+                selectedDate={customDate}
+                onDateSelect={setCustomDate}
+              />
+            )}
           </div>
         )}
 
@@ -1231,7 +1248,7 @@ const ProgrammaticPage = () => {
           <div className="my-8">
             <h2 className="font-display font-semibold text-xl text-foreground mb-6">
               {modifier?.name || ""} {category?.name || "Events"} {locationFilter ? `in ${niCities.find(c => c.slug === locationFilter)?.name || ""}` : `Across ${locationName}`}
-              {parsed?.timeIntent ? ` ${formatTimeIntent(parsed.timeIntent)}` : ""}
+              {customDate ? ` on ${customDate.toLocaleDateString("en-GB", { weekday: "short", day: "numeric", month: "short" })}` : parsed?.timeIntent ? ` ${formatTimeIntent(parsed.timeIntent)}` : ""}
             </h2>
             {events && events.length > 0 ? (
               <>
