@@ -7,7 +7,7 @@ import { ListingCard } from "@/components/ListingCard";
 import { EventCard } from "@/components/EventCard";
 import { NeighbourhoodCard } from "@/components/NeighbourhoodCard";
 import { AdPlaceholder } from "@/components/AdPlaceholder";
-import { ArrowRight, Calendar, Utensils, MapPin, Star, Sparkles, Heart, TrendingUp, Moon, Users, CloudRain, Coins, PartyPopper, Coffee, Plus } from "lucide-react";
+import { ArrowRight, Calendar, Utensils, MapPin, Star, Sparkles, Heart, TrendingUp, Moon, Users, CloudRain, Coins, PartyPopper, Coffee, Plus, Rainbow } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { getImageUrl, getCategoryPlaceholder, buildImageErrorHandler } from "@/lib/image-utils";
 import { Link } from "react-router-dom";
@@ -18,6 +18,7 @@ const QUICK_LINKS = [
   { label: "Restaurants", to: "/best-restaurants-belfast", icon: Utensils },
   { label: "Free", to: "/free-things-to-do", icon: Star },
   { label: "Date Night", to: "/date-night", icon: Heart },
+  { label: "LGBT+", to: "/belfast?category=lgbtq", icon: Rainbow },
   { label: "This Weekend", to: "/things-to-do-this-weekend", icon: Calendar },
 ];
 

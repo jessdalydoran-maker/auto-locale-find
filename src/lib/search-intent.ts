@@ -74,6 +74,15 @@ const INTENT_TO_CATEGORIES: Record<string, string[]> = {
   "free": ["things-to-do", "events", "parks"],
   "free things to do": ["things-to-do", "events", "parks"],
   "cheap": ["restaurants", "cafes", "bars"],
+  "lgbtq": ["lgbtq", "bars", "nightlife", "events"],
+  "lgbtq+": ["lgbtq", "bars", "nightlife", "events"],
+  "lgbt": ["lgbtq", "bars", "nightlife", "events"],
+  "lgbt+": ["lgbtq", "bars", "nightlife", "events"],
+  "pride": ["lgbtq", "events"],
+  "gay": ["lgbtq", "bars", "nightlife"],
+  "gay bars": ["lgbtq", "bars", "nightlife"],
+  "drag": ["lgbtq", "events"],
+  "queer": ["lgbtq", "events", "bars"],
 };
 
 // Known locations (lowercase)

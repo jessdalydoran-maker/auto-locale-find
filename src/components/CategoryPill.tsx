@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { Utensils, Coffee, Wine, Compass, Dumbbell, Egg, Pizza, Store } from "lucide-react";
+import { Utensils, Coffee, Wine, Compass, Dumbbell, Egg, Pizza, Store, Rainbow } from "lucide-react";
 
 const iconMap: Record<string, React.ReactNode> = {
   utensils: <Utensils className="h-5 w-5" />,
@@ -10,6 +10,7 @@ const iconMap: Record<string, React.ReactNode> = {
   egg: <Egg className="h-5 w-5" />,
   pizza: <Pizza className="h-5 w-5" />,
   store: <Store className="h-5 w-5" />,
+  rainbow: <Rainbow className="h-5 w-5" />,
 };
 
 interface CategoryPillProps {
