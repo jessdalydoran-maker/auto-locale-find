@@ -62,6 +62,13 @@ const CATEGORY_ALIASES: Record<string, string> = {
   "upcoming-events": "events",
   "events-tonight": "events",
   "events-tomorrow": "events",
+  "alcohol-free-places": "alcohol-free",
+  "sober-activities": "alcohol-free",
+  "halal-restaurants": "halal-food",
+  "halal": "halal-food",
+  "leisure": "leisure-centres",
+  "recreation": "leisure-centres",
+  "swimming": "leisure-centres",
 };
 
 /** City slug aliases — allows short forms like "ni" for "northern-ireland" */

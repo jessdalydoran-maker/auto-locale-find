@@ -9,11 +9,13 @@ const NAV_ITEMS = [
   {
     label: "What's On",
     links: [
-      { label: "Events", to: "/events" },
+      { label: "What's On Belfast", to: "/whats-on-belfast" },
+      { label: "What's On NI", to: "/whats-on-northern-ireland" },
       { label: "Events This Weekend", to: "/events-this-weekend" },
       { label: "Free Events", to: "/free-events" },
       { label: "Family Events", to: "/family-events" },
       { label: "Live Music", to: "/live-music" },
+      { label: "Theatre", to: "/theatre" },
     ],
   },
   {
@@ -34,6 +36,8 @@ const NAV_ITEMS = [
       { label: "Best Cafes", to: "/best-cafes-belfast" },
       { label: "Bars", to: "/bars-belfast" },
       { label: "Cocktail Bars", to: "/cocktail-bars-belfast" },
+      { label: "Halal Food", to: "/halal-food" },
+      { label: "Alcohol Free", to: "/alcohol-free" },
     ],
   },
 ];
