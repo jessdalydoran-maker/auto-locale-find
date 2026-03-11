@@ -242,7 +242,7 @@ const EventDetailPage = () => {
             {event.tags && event.tags.length > 0 && (
               <div>
                 <h3 className="font-display font-semibold text-sm text-foreground mb-2 flex items-center gap-1.5">
-                  <Tag className="h-4 w-4 text-accent" /> Tags
+                  <Tag className="h-4 w-4 text-teal" /> Tags
                 </h3>
                 <div className="flex flex-wrap gap-1.5">
                   {event.tags.map((tag: string) => (
