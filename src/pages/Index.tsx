@@ -1,4 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
+import { isLiveMusicEvent, isLiveMusicVenue, MUSIC_VENUE_CATEGORY_SLUGS } from "@/lib/live-music-utils";
 import { supabase } from "@/integrations/supabase/client";
 import { Layout } from "@/components/Layout";
 import { SearchBar } from "@/components/SearchBar";
@@ -239,41 +240,42 @@ const Index = () => {
     },
   });
 
-  // Live Music Tonight: music events happening today across NI
+  // Live Music Tonight: music events + music venue listings happening today across NI
   const { data: liveMusicItems } = useQuery({
     queryKey: ["live-music-tonight"],
     queryFn: async () => {
       const today = new Date().toISOString().split("T")[0];
 
-      // Fetch events with music-related categories or tags
-      const { data: musicEvents } = await supabase
-        .from("events")
-        .select("id, title, slug, short_description, date_start, time_start, image_url, image_source, image_alt, image_status, is_free, venue_name, tags, cities!inner(slug, name), categories!inner(slug, name)")
-        .eq("status", "active")
-        .eq("date_start", today)
-        .order("time_start", { ascending: true })
-        .limit(20);
-
-      const MUSIC_CATEGORY_SLUGS = ["live-music", "music", "gigs", "concerts"];
-      const MUSIC_TAG_KEYWORDS = ["live music", "gig", "acoustic", "band", "dj", "open mic", "concert", "singer", "songwriter", "jam", "session"];
+      // Fetch today's events broadly (filter client-side for music)
+      const [eventRes, venueRes] = await Promise.all([
+        supabase
+          .from("events")
+          .select("id, title, slug, short_description, description, date_start, time_start, image_url, image_source, image_alt, image_status, is_free, venue_name, tags, cities!inner(slug, name), categories!inner(slug, name)")
+          .eq("status", "active")
+          .eq("date_start", today)
+          .order("time_start", { ascending: true })
+          .limit(30),
+        // Also fetch venues known for live music as fallback
+        supabase
+          .from("listings")
+          .select("id, name, slug, short_description, description, image_url, image_source, image_alt, image_status, address, audience_tags, is_event_venue, cities!inner(slug, name), categories!inner(slug, name)")
+          .eq("is_approved", true)
+          .order("rating", { ascending: false })
+          .limit(50),
+      ]);
 
       const items: Array<{
         id: string; title: string; slug: string; description: string;
         imageUrl: string | null; imageAlt: string | null;
         cityName: string; citySlug: string; link: string;
         venueName: string | null; time: string | null; badge?: string;
+        type: "event" | "venue";
       }> = [];
 
-      for (const e of (musicEvents || [])) {
+      // Filter events using shared logic
+      for (const e of (eventRes.data || [])) {
         const catSlug = (e.categories as any)?.slug || "";
-        const tags = (e.tags || []).map((t: string) => t.toLowerCase());
-        const titleLower = e.title.toLowerCase();
-
-        const isMusicCategory = MUSIC_CATEGORY_SLUGS.includes(catSlug);
-        const hasMusicTag = tags.some((t: string) => MUSIC_TAG_KEYWORDS.some(k => t.includes(k)));
-        const hasMusicTitle = MUSIC_TAG_KEYWORDS.some(k => titleLower.includes(k));
-
-        if (isMusicCategory || hasMusicTag || hasMusicTitle) {
+        if (isLiveMusicEvent({ title: e.title, tags: e.tags, short_description: e.short_description, description: e.description, categorySlug: catSlug })) {
           items.push({
             id: e.id, title: e.title, slug: e.slug,
             description: e.short_description || "",
@@ -281,10 +283,32 @@ const Index = () => {
             cityName: (e.cities as any)?.name || "",
             citySlug: (e.cities as any)?.slug || "",
             link: `/event/${e.slug}`,
-            venueName: e.venue_name,
-            time: e.time_start,
+            venueName: e.venue_name, time: e.time_start,
             badge: e.is_free ? "Free" : undefined,
+            type: "event",
           });
+        }
+      }
+
+      // If fewer than 6 music events, supplement with live music venues
+      if (items.length < 6) {
+        for (const l of (venueRes.data || [])) {
+          if (items.length >= 10) break;
+          if (items.some(i => i.id === l.id)) continue;
+          const catSlug = (l.categories as any)?.slug || "";
+          if (isLiveMusicVenue({ name: l.name, categorySlug: catSlug, audience_tags: l.audience_tags, short_description: l.short_description, description: l.description, is_event_venue: l.is_event_venue })) {
+            items.push({
+              id: l.id, title: l.name, slug: l.slug,
+              description: l.short_description || "",
+              imageUrl: l.image_url, imageAlt: l.image_alt as string | null,
+              cityName: (l.cities as any)?.name || "",
+              citySlug: (l.cities as any)?.slug || "",
+              link: `/${(l.cities as any)?.slug || "belfast"}/${l.slug}`,
+              venueName: null, time: null,
+              badge: undefined,
+              type: "venue",
+            });
+          }
         }
       }
 
@@ -596,7 +620,7 @@ const Index = () => {
                     onError={buildImageErrorHandler("live-music", item.title)}
                   />
                   <span className="absolute top-2 left-2 bg-card/90 backdrop-blur-sm text-foreground text-[10px] font-semibold px-2 py-0.5 rounded">
-                    Live Music
+                    {(item as any).type === "venue" ? "Music Venue" : "Live Music"}
                   </span>
                   {item.badge && (
                     <span className="absolute top-2 right-2 bg-teal text-teal-foreground text-[10px] font-semibold px-2 py-0.5 rounded">

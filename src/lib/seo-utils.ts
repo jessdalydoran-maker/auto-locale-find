@@ -232,9 +232,9 @@ export function generateTitle(
 
   // Live Music cluster
   if (["live music", "live-music"].includes(categoryName.toLowerCase())) {
-    if (timeLabel) return `Live Music in ${location} ${timeLabel} | Gigs, Bands & Acoustic Sessions`;
-    if (modifier === "best") return `Best Live Music Venues in ${location} | Gigs & Concerts`;
-    return `Live Music in ${location} | Gigs, Bands & Live Sessions`;
+    if (timeLabel) return `Live Music in ${location} ${timeLabel} | Pub Sessions, Gigs, Acoustic & Trad`;
+    if (modifier === "best") return `Best Live Music Venues in ${location} | Pubs, Bars & Gig Venues`;
+    return `Live Music in ${location} | Pub Sessions, Gigs, Acoustic & Trad Nights`;
   }
 
   // Generic fallback
@@ -296,8 +296,8 @@ export function generateMetaDescription(
 
   // Live Music cluster
   if (["live music", "live-music"].includes(catLower)) {
-    if (timeLabel) return `Live music in ${location} ${timeLabel.toLowerCase()}. Find gigs, bands, acoustic sessions, open mic nights and concerts happening near you.`;
-    return `Discover live music in ${location}. Browse gigs, bands, acoustic sessions, DJ sets and concerts at the best venues.`;
+    if (timeLabel) return `Live music in ${location} ${timeLabel.toLowerCase()}. Find pub sessions, acoustic nights, trad music, open mics, gigs and bar music happening near you.`;
+    return `Discover live music in ${location}. Browse pub sessions, acoustic nights, trad sessions, open mic nights, gigs and bar music at the best local venues.`;
   }
 
   // Generic fallback

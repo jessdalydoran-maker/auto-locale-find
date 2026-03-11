@@ -1,4 +1,5 @@
 import { useParams, Link } from "react-router-dom";
+import { isLiveMusicEvent, isLiveMusicVenue } from "@/lib/live-music-utils";
 import { SITE_DOMAIN } from "@/lib/canonical";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -476,7 +477,7 @@ const ProgrammaticPage = () => {
   // Fetch venue listings for event-category pages (live-music, theatre, comedy etc)
   // so we show both events AND related venues
   const VENUE_CATEGORY_MAP: Record<string, string[]> = {
-    "live-music": ["bars", "nightlife", "live-music"],
+    "live-music": ["bars", "pubs", "nightlife", "live-music", "restaurants", "hotels"],
     "theatre": ["theatre", "attractions"],
     "comedy": ["comedy", "bars", "nightlife"],
     "exhibitions": ["exhibitions", "museums", "attractions"],
@@ -514,31 +515,18 @@ const ProgrammaticPage = () => {
 
       let results = data || [];
 
-      // For live-music, filter to actual music venues (not all bars)
+      // For live-music, use shared detection logic to find actual music venues
       if (parsed?.categorySlug === "live-music") {
         results = results.filter((l: any) => {
           const catSlug = (l.categories as any)?.slug || "";
-          const name = l.name?.toLowerCase() || "";
-          const desc = (l.short_description || l.description || "").toLowerCase();
-          const tags: string[] = l.audience_tags || [];
-
-          // Direct category match
-          if (["live-music", "nightlife"].includes(catSlug)) return true;
-
-          // Bars that have live music signals (not all bars)
-          if (catSlug === "bars") {
-            // Known live music bars
-            if (name.includes("empire") || name.includes("limelight") ||
-                name.includes("front page") || name.includes("sunflower") || name.includes("voodoo") ||
-                name.includes("filthy") || name.includes("mandela") || name.includes("lavery") ||
-                name.includes("errigle") || name.includes("harp") || name.includes("duke of york") ||
-                name.includes("dirty onion") || name.includes("menagerie")) return true;
-            if (desc.includes("live music") || desc.includes("live band") || desc.includes("gig") || desc.includes("acoustic")) return true;
-            if (tags.includes("live-music") || tags.includes("music")) return true;
-            return false;
-          }
-
-          return false;
+          return isLiveMusicVenue({
+            name: l.name,
+            categorySlug: catSlug,
+            audience_tags: l.audience_tags,
+            short_description: l.short_description,
+            description: l.description,
+            is_event_venue: l.is_event_venue,
+          });
         });
       }
 
@@ -604,37 +592,20 @@ const ProgrammaticPage = () => {
     enabled: !!parsed?.citySlug && shouldFetchEvents,
   });
 
-  // Exclusion terms for live music pages
-  const LIVE_MUSIC_EXCLUDE_TERMS = ["class", "classes", "course", "courses", "workshop", "workshops", "lesson", "lessons", "recording", "dj set", "dj night", "tutorial"];
-
   // Apply family/date-night/live-music filtering + priority sorting to events
   const events = useMemo(() => {
     if (!rawEvents) return rawEvents;
 
-    // LIVE MUSIC filtering — only real performances
+    // LIVE MUSIC filtering — use shared detection logic
     if (parsed?.categorySlug === "live-music") {
       return rawEvents.filter(event => {
-        const tags: string[] = event.tags || [];
-        const title = event.title.toLowerCase();
-        const desc = (event.short_description || event.description || "").toLowerCase();
-        const combined = title + " " + desc;
-
-        // Exclude non-performance content
-        if (LIVE_MUSIC_EXCLUDE_TERMS.some(t => combined.includes(t))) return false;
-        if (tags.includes("workshop") || tags.includes("workshops")) return false;
-
-        // Include if has music performance tags
-        if (tags.some(t => ["live-music", "music", "concert", "gig", "band", "acoustic", "jazz"].includes(t))) return true;
-
-        // Include if title suggests live performance
-        if (title.includes("live") || title.includes("concert") || title.includes("gig") ||
-            title.includes("band") || title.includes("acoustic") || title.includes("session") ||
-            title.includes("singer") || title.includes("songwriter")) return true;
-
-        // Include general music events (not classes/workshops which are already excluded above)
-        if (tags.includes("music") || title.includes("music")) return true;
-
-        return false;
+        const catSlug = (event as any).category_id ? "" : ""; // category not joined on events query
+        return isLiveMusicEvent({
+          title: event.title,
+          tags: event.tags,
+          short_description: event.short_description,
+          description: event.description,
+        });
       });
     }
 
