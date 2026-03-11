@@ -25,8 +25,8 @@ export const CATEGORY_PLACEHOLDERS: Record<string, string> = {
   "italian": "https://images.unsplash.com/photo-1498579150354-977475b7ea0b?w=800&h=500&fit=crop&fm=webp&q=80",
 
   // Activities & Attractions
-  "things-to-do": "https://images.unsplash.com/photo-1501594907352-04cda38ebc29?w=800&h=500&fit=crop&fm=webp&q=80",
-  "attractions": "https://images.unsplash.com/photo-1506744038136-46273834b3fb?w=800&h=500&fit=crop&fm=webp&q=80",
+  "things-to-do": "https://images.unsplash.com/photo-1533154683836-84ea7a0bc310?w=800&h=500&fit=crop&fm=webp&q=80", // Belfast skyline
+  "attractions": "https://images.unsplash.com/photo-1590073844006-33379778ae09?w=800&h=500&fit=crop&fm=webp&q=80", // Giant's Causeway
   "museums": "https://images.unsplash.com/photo-1565060299509-453c4f3bc905?w=800&h=500&fit=crop&fm=webp&q=80",
   "tours": "https://images.unsplash.com/photo-1469854523086-cc02fe5d8800?w=800&h=500&fit=crop&fm=webp&q=80",
   "parks": "https://images.unsplash.com/photo-1441974231531-c6227db76b6e?w=800&h=500&fit=crop&fm=webp&q=80",
