@@ -841,7 +841,7 @@ const ProgrammaticPage = () => {
         canonicalEl.rel = "canonical";
         document.head.appendChild(canonicalEl);
       }
-      canonicalEl.href = `https://cityscoutguide.com${canonicalSlug || currentUrl}`;
+      canonicalEl.href = `${SITE_DOMAIN}${canonicalSlug || currentUrl}`;
 
       // Noindex pages that don't meet quality threshold
       const robotsDirective = getRobotsDirective(validation);
