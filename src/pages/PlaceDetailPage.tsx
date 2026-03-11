@@ -212,7 +212,7 @@ const PlaceDetailPage = () => {
           <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent" />
           <div className="absolute bottom-0 left-0 right-0 p-6 md:p-8">
             <div className="flex items-center gap-2 mb-2">
-              <span className="text-xs px-2.5 py-1 bg-accent text-accent-foreground rounded-full font-medium">
+              <span className="text-xs px-2.5 py-1 bg-teal text-teal-foreground rounded-full font-medium">
                 {catName}
               </span>
               {listing.price_level && (
