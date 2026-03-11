@@ -261,11 +261,7 @@ const KEYWORD_CATEGORY_MAP: Array<{ keywords: string[]; category: string }> = [
     keywords: ["quiz", "pub quiz", "trivia"],
     category: "bars",
   },
-  // Sports / Fitness
-  {
-    keywords: ["run", "marathon", "5k", "10k", "parkrun", "race", "cycling", "sport", "gym", "fitness", "swimming"],
-    category: "sports",
-  },
+  // (Sports moved above live-music for priority)
 ];
 
 // ─── Rotation tracker (per page load, avoids same image on one page) ───
