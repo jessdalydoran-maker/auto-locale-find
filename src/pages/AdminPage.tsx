@@ -323,6 +323,23 @@ const AdminPage = () => {
                         )}
                       </Button>
                     </div>
+                    <Button
+                      onClick={runImageScraper}
+                      disabled={isScraping}
+                      variant="outline"
+                      className="w-full"
+                    >
+                      {isScraping ? (
+                        <><RefreshCw className="h-4 w-4 mr-2 animate-spin" /> Scraping Images...</>
+                      ) : (
+                        <><Image className="h-4 w-4 mr-2" /> Scrape Venue Images</>
+                      )}
+                    </Button>
+                    {scrapeResults && (
+                      <div className="text-xs text-muted-foreground bg-muted rounded p-2">
+                        <p>Processed: {scrapeResults.processed} | Found: {scrapeResults.images_found} | Missing: {scrapeResults.no_image}</p>
+                      </div>
+                    )}
                     <p className="text-xs text-muted-foreground text-center">
                       {settingsMap.get("last_manual_run")
                         ? `Last manual run: ${new Date(settingsMap.get("last_manual_run")!).toLocaleString()}`
