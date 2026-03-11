@@ -281,6 +281,12 @@ export function generateMetaDescription(
     return `Find the best ${catLower} in ${location}. Browse ratings, reviews and directions for top ${catLower} near you.`;
   }
 
+  // Live Music cluster
+  if (["live music", "live-music"].includes(catLower)) {
+    if (timeLabel) return `Live music in ${location} ${timeLabel.toLowerCase()}. Find gigs, bands, acoustic sessions, open mic nights and concerts happening near you.`;
+    return `Discover live music in ${location}. Browse gigs, bands, acoustic sessions, DJ sets and concerts at the best venues.`;
+  }
+
   // Generic fallback
   if (modifier) {
     return `Discover the ${modifier} ${catLower} in ${location}${timePart}. Our curated guide to top-rated ${catLower} with ratings, reviews and maps.`;
