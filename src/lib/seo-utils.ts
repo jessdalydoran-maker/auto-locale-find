@@ -43,6 +43,7 @@ const KNOWN_TIME_INTENTS = [
   "this-week",
   "tonight",
   "today",
+  "tomorrow",
   "rainy-day",
 ];
 
