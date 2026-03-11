@@ -143,16 +143,18 @@ const ProgrammaticPage = () => {
   const cityName = (neighbourhood || isLandmarkPage) ? city?.name : undefined;
   const showEvents = parsed ? isEventCategory(parsed.categorySlug) : false;
   const isWeekendPage = parsed?.categorySlug === "things-to-do" && !!parsed?.timeIntent;
-  const baseRange = parsed ? getTimeIntentDateRange(parsed.timeIntent || null) : null;
-  // Override date range if custom date is selected
-  const dateRange = customDate
-    ? { start: customDate.toISOString().split("T")[0], end: customDate.toISOString().split("T")[0] }
-    : baseRange;
+  const currentUrl = "/" + slug;
 
   // Location filter state for NI-wide pages
   const [locationFilter, setLocationFilter] = useState<string | null>(null);
   // Custom calendar date filter
   const [customDate, setCustomDate] = useState<Date | undefined>(undefined);
+
+  const baseRange = parsed ? getTimeIntentDateRange(parsed.timeIntent || null) : null;
+  // Override date range if custom date is selected
+  const dateRange = customDate
+    ? { start: customDate.toISOString().split("T")[0], end: customDate.toISOString().split("T")[0] }
+    : baseRange;
 
   // NI cities for location filter
   const niCities = useMemo(() => {
