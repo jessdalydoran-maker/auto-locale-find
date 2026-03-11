@@ -5,7 +5,9 @@ import { Layout } from "@/components/Layout";
 import { ListingCard } from "@/components/ListingCard";
 import { CategoryPill } from "@/components/CategoryPill";
 import { AdPlaceholder } from "@/components/AdPlaceholder";
-import { MapPin } from "lucide-react";
+import { MapPin, Info } from "lucide-react";
+import { deduplicateListings, filterCompleteListings, validatePage, detectPageType, getRobotsDirective, generateSupportingIntro } from "@/lib/page-validation";
+import { useEffect, useMemo } from "react";
 
 const CityPage = () => {
   const { citySlug, "*": wildcard } = useParams();
