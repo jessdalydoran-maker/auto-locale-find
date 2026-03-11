@@ -163,13 +163,18 @@ const FALLBACK_POOLS: Record<string, string[]> = {
 const KEYWORD_CATEGORY_MAP: Array<{ keywords: string[]; category: string }> = [
   // Theatre & Performance — check first so "Beauty and the Beast" → theatre, not attractions
   {
-    keywords: ["theatre", "theater", "musical", "pantomime", "panto", "stage", "play", "drama", "ballet", "opera", "performance", "show", "jnr", "junior", "production"],
+    keywords: ["theatre", "theater", "musical", "pantomime", "panto", "stage", "play", "drama", "ballet", "opera", "performance", "jnr", "junior", "production"],
     category: "theatre",
   },
-  // Comedy
+  // Comedy — before live-music so comedy events with "music" tag don't get mismatched
   {
-    keywords: ["comedy", "stand-up", "standup", "comedian", "laugh", "improv"],
+    keywords: ["comedy", "stand-up", "standup", "comedian", "laugh", "improv", "comedy club"],
     category: "comedy",
+  },
+  // Sports / Fitness — before live-music so sports events with "music" tag don't get mismatched
+  {
+    keywords: ["marathon", "half marathon", "5k", "10k", "parkrun", "race week", "cycling", "sport", "gym", "fitness", "swimming", "boxing", "mma", "pfl", "fight", "v wilson", "v ", "rugby", "gaa", "hurling", "football"],
+    category: "sports",
   },
   // Live Music / Gigs
   {
@@ -256,11 +261,7 @@ const KEYWORD_CATEGORY_MAP: Array<{ keywords: string[]; category: string }> = [
     keywords: ["quiz", "pub quiz", "trivia"],
     category: "bars",
   },
-  // Sports / Fitness
-  {
-    keywords: ["run", "marathon", "5k", "10k", "parkrun", "race", "cycling", "sport", "gym", "fitness", "swimming"],
-    category: "sports",
-  },
+  // (Sports moved above live-music for priority)
 ];
 
 // ─── Rotation tracker (per page load, avoids same image on one page) ───
