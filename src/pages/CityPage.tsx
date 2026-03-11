@@ -154,9 +154,26 @@ const CityPage = () => {
           ))}
         </div>
 
-        {/* Listings grid */}
+        {/* Auto-generated intro for city pages */}
+        {validation.status === "complete" && !city.description && (
+          <p className="text-muted-foreground text-[14px] leading-relaxed max-w-3xl my-4">
+            {generateSupportingIntro(activeCategory?.name || "Places", city.name, dedupedListings.length, "city")}
+          </p>
+        )}
+
+        {/* Limited results notice */}
+        {(validation.status === "needs-more-data" || validation.status === "hidden-from-index") && (
+          <div className="my-6 px-4 py-3 bg-secondary rounded-lg flex items-start gap-2">
+            <Info className="h-4 w-4 text-muted-foreground shrink-0 mt-0.5" />
+            <p className="text-[12px] text-muted-foreground leading-relaxed">
+              {validation.message || "Limited results in this area — we're curating more recommendations."}
+            </p>
+          </div>
+        )}
+
+        {/* Listings grid — uses deduplicated list */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-          {listings?.map((listing, i) => (
+          {dedupedListings.map((listing: any, i: number) => (
             <ListingCard
               key={listing.id}
               name={listing.name}
@@ -181,7 +198,7 @@ const CityPage = () => {
           ))}
         </div>
 
-        {listings?.length === 0 && (
+        {dedupedListings.length === 0 && (
           <div className="text-center py-20 text-muted-foreground">
             <p>No listings found. Check back soon!</p>
           </div>
