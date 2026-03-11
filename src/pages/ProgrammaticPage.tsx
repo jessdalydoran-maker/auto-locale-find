@@ -1666,10 +1666,10 @@ const ProgrammaticPage = () => {
                   className="group flex items-center justify-between p-4 bg-card border border-border rounded-lg card-shadow hover:card-shadow-hover transition-all"
                 >
                   <div>
-                    <span className="font-display font-medium text-sm text-foreground group-hover:text-accent transition-colors">{link.label}</span>
+                    <span className="font-display font-medium text-sm text-foreground group-hover:text-primary transition-colors">{link.label}</span>
                     <p className="text-xs text-muted-foreground mt-0.5">{link.description}</p>
                   </div>
-                  <ArrowRight className="h-4 w-4 text-muted-foreground group-hover:text-accent transition-colors shrink-0" />
+                  <ArrowRight className="h-4 w-4 text-muted-foreground group-hover:text-primary transition-colors shrink-0" />
                 </Link>
               ))}
             </div>
