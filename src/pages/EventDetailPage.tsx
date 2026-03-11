@@ -298,7 +298,7 @@ const EventDetailPage = () => {
 
               {event.venue_name && (
                 <div className="flex items-start gap-2.5 text-sm">
-                  <MapPin className="h-4 w-4 text-accent shrink-0 mt-0.5" />
+                  <MapPin className="h-4 w-4 text-teal shrink-0 mt-0.5" />
                   <div>
                     <span className="text-foreground font-medium">{event.venue_name}</span>
                     {event.venue_address && (
