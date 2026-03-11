@@ -1,8 +1,8 @@
 import { Link } from "react-router-dom";
 import { Calendar, MapPin, Clock, Ticket } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
-import { getImageUrl, generateEventAltText, isPlaceholderImage, getEventImageByKeywords, getCategoryPlaceholder } from "@/lib/image-utils";
-import { useCallback } from "react";
+import { getImageUrl, generateEventAltText, isPlaceholderImage, getEventImageByKeywords, buildImageErrorHandler } from "@/lib/image-utils";
+import { useMemo } from "react";
 
 interface EventCardProps {
   title: string;
