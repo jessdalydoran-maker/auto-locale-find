@@ -40,7 +40,7 @@ const CityPage = () => {
   });
 
   const { data: listings } = useQuery({
-    queryKey: ["city-listings", resolvedCitySlug, categoryFilter],
+    queryKey: ["city-listings", resolvedCitySlug, categoryFilter, city?.id],
     queryFn: async () => {
       let query = supabase
         .from("listings")
@@ -55,9 +55,32 @@ const CityPage = () => {
 
       const { data, error } = await query;
       if (error) throw error;
+
+      // If fewer than 5 results, expand to nearby cities
+      if (data && data.length < 5 && city?.nearby_city_slugs?.length) {
+        const nearbySlugs = city.nearby_city_slugs.slice(0, 3);
+        let nearbyQuery = supabase
+          .from("listings")
+          .select("*, cities!inner(slug, name), categories!inner(slug, name)")
+          .in("cities.slug", nearbySlugs);
+
+        if (categoryFilter) {
+          nearbyQuery = nearbyQuery.eq("categories.slug", categoryFilter);
+        }
+
+        nearbyQuery = nearbyQuery.order("rating", { ascending: false }).limit(10);
+
+        const { data: nearbyData } = await nearbyQuery;
+        if (nearbyData) {
+          const existingIds = new Set(data.map((l: any) => l.id));
+          const extras = nearbyData.filter((l: any) => !existingIds.has(l.id));
+          return [...data, ...extras];
+        }
+      }
+
       return data;
     },
-    enabled: !!resolvedCitySlug,
+    enabled: !!resolvedCitySlug && !!city,
   });
 
   // Deduplicate and validate

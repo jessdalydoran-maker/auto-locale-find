@@ -156,6 +156,16 @@ const FALLBACK_POOLS: Record<string, string[]> = {
     "https://images.unsplash.com/photo-1564959130747-897a8e5c33c6?w=800&h=500&fit=crop&fm=webp&q=80",
     "https://images.unsplash.com/photo-1533154683836-84ea7a0bc310?w=800&h=500&fit=crop&fm=webp&q=80",
   ],
+  "shopping": [
+    "https://images.unsplash.com/photo-1519567241046-7f570f348a04?w=800&h=500&fit=crop&fm=webp&q=80",
+    "https://images.unsplash.com/photo-1555529669-e69e7aa0ba9a?w=800&h=500&fit=crop&fm=webp&q=80",
+    "https://images.unsplash.com/photo-1441984904996-e0b6ba687e04?w=800&h=500&fit=crop&fm=webp&q=80",
+  ],
+  "leisure-entertainment": [
+    "https://images.unsplash.com/photo-1545558014-8692077e9b5c?w=800&h=500&fit=crop&fm=webp&q=80",
+    "https://images.unsplash.com/photo-1596461404969-9ae70f2830c1?w=800&h=500&fit=crop&fm=webp&q=80",
+    "https://images.unsplash.com/photo-1558618666-fcd25c85f82e?w=800&h=500&fit=crop&fm=webp&q=80",
+  ],
 };
 
 // ─── Keyword → category mapping for title/tag matching ───
@@ -260,6 +270,16 @@ const KEYWORD_CATEGORY_MAP: Array<{ keywords: string[]; category: string }> = [
   {
     keywords: ["quiz", "pub quiz", "trivia"],
     category: "bars",
+  },
+  // Shopping / Retail
+  {
+    keywords: ["shopping", "retail", "outlet", "mall", "shopping centre", "retail park"],
+    category: "shopping",
+  },
+  // Leisure / Entertainment
+  {
+    keywords: ["bowling", "trampoline", "airtastic", "leisure", "soft play", "climbing wall", "arcade", "laser tag", "activity centre", "entertainment", "vertigo", "leisureplex"],
+    category: "leisure-entertainment",
   },
   // (Sports moved above live-music for priority)
 ];
