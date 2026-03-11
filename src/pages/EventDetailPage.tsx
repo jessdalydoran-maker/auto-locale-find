@@ -277,7 +277,7 @@ const EventDetailPage = () => {
               <h3 className="font-display font-semibold text-foreground">Event Details</h3>
 
               <div className="flex items-start gap-2.5 text-sm">
-                <Calendar className="h-4 w-4 text-accent shrink-0 mt-0.5" />
+                <Calendar className="h-4 w-4 text-teal shrink-0 mt-0.5" />
                 <div>
                   <span className="text-foreground font-medium">{formatDate(event.date_start)}</span>
                   {event.date_end && event.date_end !== event.date_start && (
