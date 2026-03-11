@@ -64,6 +64,9 @@ const CATEGORY_ALIASES: Record<string, string> = {
   "upcoming-events": "events",
   "events-tonight": "events",
   "events-tomorrow": "events",
+  "upcoming-live-music": "live-music",
+  "live-music-tonight": "live-music",
+  "live-music-this-weekend": "live-music",
   "alcohol-free-places": "alcohol-free",
   "sober-activities": "alcohol-free",
   "halal-restaurants": "halal-food",
@@ -71,6 +74,15 @@ const CATEGORY_ALIASES: Record<string, string> = {
   "leisure": "leisure-centres",
   "recreation": "leisure-centres",
   "swimming": "leisure-centres",
+};
+
+/** Aliases that carry an embedded time intent */
+const TIME_EMBEDDED_ALIASES: Record<string, { category: string; time: string }> = {
+  "events-tonight": { category: "events", time: "tonight" },
+  "events-tomorrow": { category: "events", time: "tomorrow" },
+  "live-music-tonight": { category: "live-music", time: "tonight" },
+  "live-music-this-weekend": { category: "live-music", time: "this-weekend" },
+  "upcoming-live-music": { category: "live-music", time: "next-30-days" },
 };
 
 /** City slug aliases — allows short forms like "ni" for "northern-ireland" */
