@@ -104,14 +104,20 @@ export const SearchBar = ({ onClose, large = false, placeholder = "Search by cit
       }
     }
 
-    // Always include LGBT+ suggestion if not already present
+    // Always include LGBT+ suggestion and pin it near the top
     const lgbtTerms = ["lgbt", "lgbtq", "pride", "queer", "gay", "lesbian", "drag", "rainbow"];
-    const hasLgbtResult = results.some(r => lgbtTerms.some(t => r.label.toLowerCase().includes(t)));
-    if (!hasLgbtResult) {
-      results.push({ label: "LGBT+ Belfast", type: "category" });
+    const existingLgbtIndex = results.findIndex((r) =>
+      lgbtTerms.some((t) => r.label.toLowerCase().includes(t))
+    );
+
+    if (existingLgbtIndex === -1) {
+      results.unshift({ label: "LGBT+ Belfast", type: "category" });
+    } else if (existingLgbtIndex > 0) {
+      const [lgbtSuggestion] = results.splice(existingLgbtIndex, 1);
+      if (lgbtSuggestion) results.unshift(lgbtSuggestion);
     }
 
-    setSuggestions(results.slice(0, 9));
+    setSuggestions(results.slice(0, 8));
     setSelectedIndex(-1);
     setShowSuggestions(results.length > 0);
   }, []);
