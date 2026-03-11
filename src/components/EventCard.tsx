@@ -138,7 +138,7 @@ export const EventCard = ({
           </div>
           {timeStart && (
             <div className="flex items-center gap-1.5 text-[11px] text-muted-foreground">
-              <Clock className="h-3 w-3 shrink-0 text-accent" />
+              <Clock className="h-3 w-3 shrink-0 text-teal" />
               <span>{formatTime(timeStart)}</span>
             </div>
           )}
