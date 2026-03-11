@@ -195,6 +195,7 @@ const AdminPage = () => {
     }
   };
 
+  const stats = [
     { label: "Cities", value: cities?.length || 0, icon: MapPin },
     { label: "Categories", value: categories?.length || 0, icon: Layers },
     { label: "Listings", value: listings?.length || 0, icon: TrendingUp },
