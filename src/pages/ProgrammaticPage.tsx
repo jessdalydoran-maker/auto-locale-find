@@ -1380,7 +1380,7 @@ const ProgrammaticPage = () => {
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
                 {venueListings.map((listing, i) => (
                   <div key={listing.id} className="relative">
-                    <span className="absolute -top-2 -left-2 z-10 w-7 h-7 bg-accent text-accent-foreground rounded-full flex items-center justify-center text-xs font-bold card-shadow">
+                    <span className="absolute -top-2 -left-2 z-10 w-7 h-7 bg-primary text-primary-foreground rounded-full flex items-center justify-center text-xs font-bold card-shadow">
                       {i + 1}
                     </span>
                     <ListingCard
