@@ -305,8 +305,8 @@ const PlaceDetailPage = () => {
 
               {nbName && (
                 <div className="flex items-start gap-2.5 text-sm">
-                  <Navigation className="h-4 w-4 text-accent shrink-0 mt-0.5" />
-                  <Link to={`/${catSlug}-${nbSlug}-${citySlug}`} className="text-accent hover:underline">
+                  <Navigation className="h-4 w-4 text-teal shrink-0 mt-0.5" />
+                  <Link to={`/${catSlug}-${nbSlug}-${citySlug}`} className="text-primary hover:underline">
                     {nbName}, {cityName}
                   </Link>
                 </div>
