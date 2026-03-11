@@ -17,6 +17,8 @@ const SearchPage = () => {
   const query = searchParams.get("q") || "";
   const intent = parseSearchIntent(query);
 
+  useEffect(() => { setPageCanonical(`/search${query ? `?q=${encodeURIComponent(query)}` : ""}`); }, [query]);
+
   // Resolve city ID from slug
   const { data: resolvedCity } = useQuery({
     queryKey: ["resolve-city", intent.city],
