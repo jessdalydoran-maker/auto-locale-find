@@ -458,6 +458,16 @@ export function getTimeIntentDateRange(timeIntent: string | null): { start: stri
     }
     case "rainy-day":
       return null; // Not time-based
+    case "next-7-days": {
+      const end7 = new Date(now);
+      end7.setDate(now.getDate() + 7);
+      return { start: today, end: end7.toISOString().split("T")[0] };
+    }
+    case "next-30-days": {
+      const end30 = new Date(now);
+      end30.setDate(now.getDate() + 30);
+      return { start: today, end: end30.toISOString().split("T")[0] };
+    }
     default:
       return null;
   }
