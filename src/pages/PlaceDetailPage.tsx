@@ -48,6 +48,26 @@ const PlaceDetailPage = () => {
     enabled: !!listing,
   });
 
+  // Venue events: upcoming events linked to this venue
+  const { data: venueEvents } = useQuery({
+    queryKey: ["venue-events", listing?.id],
+    queryFn: async () => {
+      if (!listing) return [];
+      const today = new Date().toISOString().split("T")[0];
+      // Match by venue_listing_id or by venue_name
+      const { data } = await supabase
+        .from("events")
+        .select("*, cities!inner(name, slug), categories(name, slug)")
+        .or(`venue_listing_id.eq.${listing.id},venue_name.ilike.%${listing.name.replace(/'/g, "''")}%`)
+        .gte("date_start", today)
+        .eq("status", "active")
+        .order("date_start", { ascending: true })
+        .limit(6);
+      return data || [];
+    },
+    enabled: !!listing && !!(listing as any).is_event_venue,
+  });
+
   const city = listing?.cities as any;
   const category = listing?.categories as any;
   const neighbourhood = listing?.neighbourhoods as any;
