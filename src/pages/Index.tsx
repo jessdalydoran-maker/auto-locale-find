@@ -20,8 +20,8 @@ const QUICK_LINKS = [
   { label: "Restaurants", to: "/best-restaurants-belfast", icon: Utensils },
   { label: "Free", to: "/free-things-to-do", icon: Star },
   { label: "Date Night", to: "/date-night", icon: Heart },
-  { label: "LGBT+", to: "/belfast?category=lgbtq", icon: Rainbow },
   { label: "This Weekend", to: "/things-to-do-this-weekend", icon: Calendar },
+  { label: "LGBT+", to: "/belfast?category=lgbtq", icon: Rainbow },
 ];
 
 const POPULAR_SEARCHES = [
