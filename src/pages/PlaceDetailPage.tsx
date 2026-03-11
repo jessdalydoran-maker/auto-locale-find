@@ -5,6 +5,7 @@ import { Layout } from "@/components/Layout";
 import { ListingCard } from "@/components/ListingCard";
 import { EventCard } from "@/components/EventCard";
 import { getImageUrl, isPlaceholderImage, generateListingAltText, buildImageErrorHandler } from "@/lib/image-utils";
+import { setPageCanonical, getCanonicalUrl } from "@/lib/canonical";
 import {
   Star, MapPin, ExternalLink, Globe, ChevronRight, ArrowLeft,
   Clock, Tag, DollarSign, Phone, Navigation, CalendarDays,
