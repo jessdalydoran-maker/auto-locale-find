@@ -377,6 +377,7 @@ export function formatTimeIntent(timeIntent?: string | null): string {
   const map: Record<string, string> = {
     "today": "Today",
     "tonight": "Tonight",
+    "tomorrow": "Tomorrow",
     "this-week": "This Week",
     "this-weekend": "This Weekend",
     "rainy-day": "Rainy Day",
