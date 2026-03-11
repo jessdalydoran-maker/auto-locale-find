@@ -1683,7 +1683,7 @@ const ProgrammaticPage = () => {
             <div className="space-y-3 max-w-3xl">
               {faqItems.map((faq, i) => (
                 <details key={i} className="bg-card border border-border rounded-lg group">
-                  <summary className="p-4 cursor-pointer font-display font-medium text-sm text-foreground hover:text-accent transition-colors list-none flex items-center justify-between">
+                  <summary className="p-4 cursor-pointer font-display font-medium text-sm text-foreground hover:text-primary transition-colors list-none flex items-center justify-between">
                     {faq.q}
                     <ChevronRight className="h-4 w-4 text-muted-foreground group-open:rotate-90 transition-transform shrink-0" />
                   </summary>
