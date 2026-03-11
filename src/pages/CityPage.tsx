@@ -127,6 +127,11 @@ const CityPage = () => {
     });
   }, [dedupedListings, city, categoryFilter]);
 
+  // SEO: canonical
+  useEffect(() => {
+    setPageCanonical(window.location.pathname);
+  }, [resolvedCitySlug, categoryFilter]);
+
   // SEO: noindex thin city pages
   useEffect(() => {
     const robotsDirective = getRobotsDirective(validation);

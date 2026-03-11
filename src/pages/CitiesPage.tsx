@@ -15,6 +15,8 @@ const CitiesPage = () => {
     },
   });
 
+  useEffect(() => { setPageCanonical("/cities"); }, []);
+
   return (
     <Layout>
       <section className="bg-primary py-12 md:py-16">

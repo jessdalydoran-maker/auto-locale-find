@@ -7,6 +7,7 @@ import { setPageCanonical } from "@/lib/canonical";
 
 const SubmitVenuePage = () => {
   const [submitted, setSubmitted] = useState(false);
+  useEffect(() => { setPageCanonical("/submit-venue"); }, []);
 
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
