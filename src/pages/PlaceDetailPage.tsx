@@ -372,6 +372,45 @@ const PlaceDetailPage = () => {
           </div>
         </div>
 
+        {/* Upcoming Events at this Venue */}
+        {venueEvents && venueEvents.length > 0 && (
+          <section className="mt-12 pt-8 border-t border-border">
+            <div className="flex items-center gap-2 mb-6">
+              <CalendarDays className="h-5 w-5 text-accent" />
+              <h2 className="font-display font-semibold text-lg text-foreground">
+                Upcoming Events at {listing.name}
+              </h2>
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+              {venueEvents.map((event: any, i: number) => (
+                <EventCard
+                  key={event.id}
+                  title={event.title}
+                  slug={event.slug}
+                  shortDescription={event.short_description}
+                  dateStart={event.date_start}
+                  dateEnd={event.date_end}
+                  timeStart={event.time_start}
+                  venueName={event.venue_name}
+                  venueAddress={event.venue_address}
+                  imageUrl={event.image_url}
+                  imageSource={event.image_source}
+                  imageAlt={event.image_alt}
+                  imageStatus={event.image_status}
+                  categorySlug={event.categories?.slug}
+                  cityName={(event.cities as any)?.name}
+                  isFree={event.is_free}
+                  isFamilyFriendly={event.is_family_friendly}
+                  ticketUrl={event.ticket_url}
+                  price={event.price}
+                  tags={event.tags || []}
+                  index={i}
+                />
+              ))}
+            </div>
+          </section>
+        )}
+
         {/* Related Listings */}
         {relatedListings && relatedListings.length > 0 && (
           <section className="mt-12 pt-8 border-t border-border">
