@@ -224,6 +224,11 @@ const KEYWORD_CATEGORY_MAP: Array<{ keywords: string[]; category: string }> = [
     keywords: ["marathon", "half marathon", "5k", "10k", "parkrun", "race week", "cycling", "sport", "gym", "fitness", "swimming", "boxing", "mma", "pfl", "fight", "v wilson", "v ", "rugby", "gaa", "hurling", "football"],
     category: "sports",
   },
+  // Choir / vocal groups
+  {
+    keywords: ["choir", "choral", "vocal ensemble", "rehearsal"],
+    category: "choir-music",
+  },
   // Live Music / Gigs
   {
     keywords: ["gig", "concert", "band", "rock", "indie", "punk", "metal", "live music", "singer", "acoustic", "open mic", "open-mic", "songwriter"],
