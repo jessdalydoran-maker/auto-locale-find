@@ -605,15 +605,17 @@ const ProgrammaticPage = () => {
 
     // LIVE MUSIC filtering — use shared detection logic
     if (parsed?.categorySlug === "live-music") {
-      return rawEvents.filter(event => {
-        const catSlug = (event as any).category_id ? "" : ""; // category not joined on events query
+      const filtered = rawEvents.filter(event => {
         return isLiveMusicEvent({
           title: event.title,
           tags: event.tags,
           short_description: event.short_description,
           description: event.description,
+          venue_name: event.venue_name,
         });
       });
+      // Sort by date ascending (nearest first)
+      return filtered.sort((a, b) => a.date_start.localeCompare(b.date_start));
     }
 
     // DATE NIGHT filtering
