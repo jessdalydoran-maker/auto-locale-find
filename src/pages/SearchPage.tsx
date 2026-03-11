@@ -173,7 +173,7 @@ const SearchPage = () => {
               </span>
             )}
             {intent.modifiers.map((m) => (
-              <span key={m} className="text-xs bg-accent text-accent-foreground px-2 py-0.5 rounded-full">
+              <span key={m} className="text-xs bg-primary/10 text-primary px-2 py-0.5 rounded-full">
                 {m}
               </span>
             ))}
