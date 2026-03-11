@@ -7,7 +7,7 @@ import { EventCard } from "@/components/EventCard";
 import { SearchBar } from "@/components/SearchBar";
 import { parseSearchIntent } from "@/lib/search-intent";
 import { scoreListing, scoreEvent, rankAndFilter } from "@/lib/search-scoring";
-import { Search, Calendar } from "lucide-react";
+import { Search, Calendar, MapPin } from "lucide-react";
 import { deduplicateListings, filterCompleteListings } from "@/lib/page-validation";
 import { useMemo } from "react";
 
@@ -16,156 +16,272 @@ const SearchPage = () => {
   const query = searchParams.get("q") || "";
   const intent = parseSearchIntent(query);
 
-  // Fetch all candidate listings (broad search, then score client-side)
-  const { data: rawListings, isLoading } = useQuery({
-    queryKey: ["search", query],
+  // Resolve city ID from slug
+  const { data: resolvedCity } = useQuery({
+    queryKey: ["resolve-city", intent.city],
     queryFn: async () => {
-      if (!query.trim()) return [];
+      if (!intent.city) return null;
+      const { data } = await supabase
+        .from("cities")
+        .select("id, slug, name, nearby_city_slugs")
+        .eq("slug", intent.city)
+        .maybeSingle();
+      return data;
+    },
+    enabled: !!intent.city,
+    staleTime: 1000 * 60 * 10,
+  });
 
-      const queryWords = query.toLowerCase().split(/\s+/).filter(w => w.length > 1);
-      const allResults: any[] = [];
+  // Resolve nearby city IDs for fallback
+  const { data: nearbyCities } = useQuery({
+    queryKey: ["nearby-cities", resolvedCity?.nearby_city_slugs],
+    queryFn: async () => {
+      if (!resolvedCity?.nearby_city_slugs?.length) return [];
+      const { data } = await supabase
+        .from("cities")
+        .select("id, slug, name")
+        .in("slug", resolvedCity.nearby_city_slugs);
+      return data || [];
+    },
+    enabled: !!resolvedCity?.nearby_city_slugs?.length,
+    staleTime: 1000 * 60 * 10,
+  });
 
-      // 1. Exact name search (top priority)
-      const { data: exactMatches } = await supabase
-        .from("listings")
-        .select("*, cities!inner(slug, name), categories!inner(slug, name)")
-        .ilike("name", `%${query.trim()}%`)
-        .limit(20);
-      if (exactMatches) allResults.push(...exactMatches);
+  // Main listings query — location-first
+  const { data: rawListings, isLoading } = useQuery({
+    queryKey: ["search", query, resolvedCity?.id],
+    queryFn: async () => {
+      if (!query.trim()) return { exact: [] as any[], nearby: [] as any[] };
 
-      // 2. Category + city intent match
-      if (intent.categorySlugs.length > 0) {
-        const { data: cats } = await supabase
-          .from("categories")
-          .select("id, slug")
-          .in("slug", intent.categorySlugs);
+      const exactResults: any[] = [];
+      const nearbyResults: any[] = [];
 
-        let cityId: string | null = null;
-        if (intent.city) {
-          const { data: city } = await supabase
-            .from("cities")
-            .select("id")
-            .eq("slug", intent.city)
-            .maybeSingle();
-          cityId = city?.id || null;
-        }
+      // ── TIER 1: Exact location match ──
+      if (resolvedCity) {
+        // 1a. Name search within city
+        const { data: nameMatches } = await supabase
+          .from("listings")
+          .select("*, cities!inner(slug, name), categories!inner(slug, name)")
+          .eq("city_id", resolvedCity.id)
+          .ilike("name", `%${query.trim()}%`)
+          .limit(20);
+        if (nameMatches) exactResults.push(...nameMatches);
 
-        if (cats?.length) {
-          const catIds = cats.map(c => c.id);
-          let q = supabase
-            .from("listings")
-            .select("*, cities!inner(slug, name), categories!inner(slug, name)")
-            .in("category_id", catIds)
-            .limit(40);
-          if (cityId) q = q.eq("city_id", cityId);
-          const { data } = await q;
-          if (data) allResults.push(...data);
-        }
+        // 1b. Category intent within city
+        if (intent.categorySlugs.length > 0) {
+          const { data: cats } = await supabase
+            .from("categories")
+            .select("id, slug")
+            .in("slug", intent.categorySlugs);
 
-        // Also search by audience_tags for cross-category discovery
-        if (cats?.length) {
-          const tagSlugs = intent.categorySlugs.slice(0, 5);
-          for (const tag of tagSlugs) {
-            let q = supabase
+          if (cats?.length) {
+            const catIds = cats.map(c => c.id);
+            const { data } = await supabase
+              .from("listings")
+              .select("*, cities!inner(slug, name), categories!inner(slug, name)")
+              .in("category_id", catIds)
+              .eq("city_id", resolvedCity.id)
+              .order("rating", { ascending: false })
+              .limit(40);
+            if (data) exactResults.push(...data);
+          }
+
+          // Audience tags within city
+          for (const tag of intent.categorySlugs.slice(0, 3)) {
+            const { data } = await supabase
               .from("listings")
               .select("*, cities!inner(slug, name), categories!inner(slug, name)")
               .contains("audience_tags", [tag])
+              .eq("city_id", resolvedCity.id)
               .limit(20);
-            if (cityId) q = q.eq("city_id", cityId);
-            const { data } = await q;
-            if (data) allResults.push(...data);
+            if (data) exactResults.push(...data);
           }
+        }
+
+        // 1c. If no category intent, show top-rated in city
+        if (intent.categorySlugs.length === 0 && exactResults.length === 0) {
+          const { data } = await supabase
+            .from("listings")
+            .select("*, cities!inner(slug, name), categories!inner(slug, name)")
+            .eq("city_id", resolvedCity.id)
+            .order("rating", { ascending: false })
+            .limit(30);
+          if (data) exactResults.push(...data);
+        }
+
+        // ── TIER 2: Nearby fallback (only if exact results < 5) ──
+        if (exactResults.length < 5 && nearbyCities?.length) {
+          const nearbyIds = nearbyCities.map(c => c.id);
+          if (intent.categorySlugs.length > 0) {
+            const { data: cats } = await supabase
+              .from("categories")
+              .select("id, slug")
+              .in("slug", intent.categorySlugs);
+            if (cats?.length) {
+              const catIds = cats.map(c => c.id);
+              const { data } = await supabase
+                .from("listings")
+                .select("*, cities!inner(slug, name), categories!inner(slug, name)")
+                .in("category_id", catIds)
+                .in("city_id", nearbyIds)
+                .order("rating", { ascending: false })
+                .limit(15);
+              if (data) nearbyResults.push(...data);
+            }
+          } else {
+            const { data } = await supabase
+              .from("listings")
+              .select("*, cities!inner(slug, name), categories!inner(slug, name)")
+              .in("city_id", nearbyIds)
+              .order("rating", { ascending: false })
+              .limit(15);
+            if (data) nearbyResults.push(...data);
+          }
+        }
+      } else {
+        // ── No location specified: broad search ──
+        // 1. Exact name search
+        const { data: nameMatches } = await supabase
+          .from("listings")
+          .select("*, cities!inner(slug, name), categories!inner(slug, name)")
+          .ilike("name", `%${query.trim()}%`)
+          .limit(20);
+        if (nameMatches) exactResults.push(...nameMatches);
+
+        // 2. Category intent (no city filter)
+        if (intent.categorySlugs.length > 0) {
+          const { data: cats } = await supabase
+            .from("categories")
+            .select("id, slug")
+            .in("slug", intent.categorySlugs);
+          if (cats?.length) {
+            const catIds = cats.map(c => c.id);
+            const { data } = await supabase
+              .from("listings")
+              .select("*, cities!inner(slug, name), categories!inner(slug, name)")
+              .in("category_id", catIds)
+              .order("rating", { ascending: false })
+              .limit(30);
+            if (data) exactResults.push(...data);
+          }
+        }
+
+        // 3. Text search fallback
+        const textTerms = intent.keywords.filter(w => w.length > 2);
+        if (textTerms.length > 0) {
+          const orClauses = textTerms
+            .map(t => `name.ilike.%${t}%,short_description.ilike.%${t}%,description.ilike.%${t}%`)
+            .join(",");
+          const { data } = await supabase
+            .from("listings")
+            .select("*, cities!inner(slug, name), categories!inner(slug, name)")
+            .or(orClauses)
+            .limit(20);
+          if (data) exactResults.push(...data);
         }
       }
 
-      // 3. Text search on remaining keywords
-      const textTerms = queryWords.filter(w => w.length > 2);
-      if (textTerms.length > 0) {
-        const orClauses = textTerms
-          .map(t => `name.ilike.%${t}%,short_description.ilike.%${t}%,description.ilike.%${t}%`)
-          .join(",");
-
-        const { data } = await supabase
-          .from("listings")
-          .select("*, cities!inner(slug, name), categories!inner(slug, name)")
-          .or(orClauses)
-          .limit(30);
-        if (data) allResults.push(...data);
-      }
-
-      // Deduplicate by id
-      const seen = new Set<string>();
-      return allResults.filter(item => {
-        if (seen.has(item.id)) return false;
-        seen.add(item.id);
+      // Deduplicate
+      const seenExact = new Set<string>();
+      const uniqueExact = exactResults.filter(item => {
+        if (seenExact.has(item.id)) return false;
+        seenExact.add(item.id);
         return true;
       });
+      const uniqueNearby = nearbyResults.filter(item => {
+        if (seenExact.has(item.id)) return false;
+        seenExact.add(item.id);
+        return true;
+      });
+
+      return { exact: uniqueExact, nearby: uniqueNearby };
     },
-    enabled: !!query,
+    enabled: !!query && (intent.city ? resolvedCity !== undefined : true),
   });
 
   // Score and rank listings
-  const rankedListings = useMemo(() => {
-    if (!rawListings?.length) return [];
-    const scored = rawListings.map(item => ({
+  const { rankedExact, rankedNearby } = useMemo(() => {
+    if (!rawListings) return { rankedExact: [], rankedNearby: [] };
+
+    const scoredExact = rawListings.exact.map(item => ({
       item,
       score: scoreListing(item, query, intent),
     }));
-    const ranked = rankAndFilter(scored, 20);
-    const { unique } = deduplicateListings(ranked as any);
-    return filterCompleteListings(unique);
+    const exact = rankAndFilter(scoredExact, 20, intent.hasExplicitLocation);
+    const { unique: uniqueExact } = deduplicateListings(exact as any);
+    const filteredExact = filterCompleteListings(uniqueExact);
+
+    const scoredNearby = rawListings.nearby.map(item => ({
+      item,
+      score: scoreListing(item, query, { ...intent, city: null, hasExplicitLocation: false }),
+    }));
+    const nearby = rankAndFilter(scoredNearby, 20, false);
+    const { unique: uniqueNearby } = deduplicateListings(nearby as any);
+    const filteredNearby = filterCompleteListings(uniqueNearby);
+
+    return { rankedExact: filteredExact, rankedNearby: filteredNearby };
   }, [rawListings, query]);
 
-  // Search events with scoring
+  // Search events — location-filtered
   const { data: eventResults } = useQuery({
-    queryKey: ["search-events", query],
+    queryKey: ["search-events", query, resolvedCity?.id],
     queryFn: async () => {
       if (!query.trim()) return [];
       const today = new Date().toISOString().split("T")[0];
-      const queryWords = query.toLowerCase().split(/\s+/).filter(w => w.length > 1);
       const allEvents: any[] = [];
 
-      // Exact title match
-      const { data: exactEvents } = await supabase
+      let baseQuery = supabase
         .from("events")
         .select("*, cities!inner(slug, name)")
         .eq("status", "active")
-        .gte("date_start", today)
+        .gte("date_start", today);
+
+      // If location specified, filter events to that city
+      if (resolvedCity) {
+        baseQuery = baseQuery.eq("city_id", resolvedCity.id);
+      }
+
+      // Title match
+      const { data: titleMatches } = await baseQuery
         .ilike("title", `%${query.trim()}%`)
         .limit(12);
-      if (exactEvents) allEvents.push(...exactEvents);
+      if (titleMatches) allEvents.push(...titleMatches);
 
       // Text search
-      const textTerms = queryWords.filter(w => w.length > 2);
+      const textTerms = intent.keywords.filter(w => w.length > 2);
       if (textTerms.length > 0) {
         const orClauses = textTerms
-          .map(t => `title.ilike.%${t}%,short_description.ilike.%${t}%,venue_name.ilike.%${t}%,description.ilike.%${t}%`)
+          .map(t => `title.ilike.%${t}%,short_description.ilike.%${t}%,venue_name.ilike.%${t}%`)
           .join(",");
-        const { data } = await supabase
+        let q = supabase
           .from("events")
           .select("*, cities!inner(slug, name)")
           .eq("status", "active")
           .gte("date_start", today)
           .or(orClauses)
           .limit(12);
+        if (resolvedCity) q = q.eq("city_id", resolvedCity.id);
+        const { data } = await q;
         if (data) allEvents.push(...data);
       }
 
-      // Tag-based search for category intent
+      // Tag-based search
       if (intent.categorySlugs.length > 0) {
         for (const tag of intent.categorySlugs.slice(0, 3)) {
-          const { data } = await supabase
+          let q = supabase
             .from("events")
             .select("*, cities!inner(slug, name)")
             .eq("status", "active")
             .gte("date_start", today)
             .contains("tags", [tag])
             .limit(10);
+          if (resolvedCity) q = q.eq("city_id", resolvedCity.id);
+          const { data } = await q;
           if (data) allEvents.push(...data);
         }
       }
 
-      // Deduplicate
+      // Deduplicate + score
       const seen = new Set<string>();
       const unique = allEvents.filter(e => {
         if (seen.has(e.id)) return false;
@@ -173,17 +289,16 @@ const SearchPage = () => {
         return true;
       });
 
-      // Score and rank
       const scored = unique.map(item => ({
         item,
         score: scoreEvent(item, query, intent),
       }));
-      return rankAndFilter(scored, 10);
+      return rankAndFilter(scored, 10, intent.hasExplicitLocation);
     },
-    enabled: !!query,
+    enabled: !!query && (intent.city ? resolvedCity !== undefined : true),
   });
 
-  // Fetch related programmatic pages
+  // Related programmatic pages
   const { data: relatedPages } = useQuery({
     queryKey: ["search-pages", query],
     queryFn: async () => {
@@ -201,9 +316,11 @@ const SearchPage = () => {
     enabled: !!query && intent.suggestedPages.length > 0,
   });
 
-  const hasResults = rankedListings.length > 0;
+  const hasExactResults = rankedExact.length > 0;
+  const hasNearbyResults = rankedNearby.length > 0;
   const hasEvents = eventResults && eventResults.length > 0;
   const hasRelatedPages = relatedPages && relatedPages.length > 0;
+  const locationName = resolvedCity?.name || intent.city;
 
   return (
     <Layout>
@@ -216,18 +333,19 @@ const SearchPage = () => {
           {query ? `Results for "${query}"` : "Search"}
         </h1>
 
-        {query && intent.categorySlugs.length > 0 && (
+        {query && (intent.categorySlugs.length > 0 || intent.hasExplicitLocation) && (
           <div className="flex flex-wrap gap-1.5 mb-4">
+            {intent.hasExplicitLocation && locationName && (
+              <span className="text-xs bg-primary/10 text-primary px-2 py-0.5 rounded-full flex items-center gap-1">
+                <MapPin className="h-3 w-3" />
+                {locationName}
+              </span>
+            )}
             {intent.categorySlugs.slice(0, 5).map((cat) => (
               <span key={cat} className="text-xs bg-secondary text-secondary-foreground px-2 py-0.5 rounded-full">
                 {cat.replace(/-/g, " ")}
               </span>
             ))}
-            {intent.city && (
-              <span className="text-xs bg-primary/10 text-primary px-2 py-0.5 rounded-full">
-                {intent.city}
-              </span>
-            )}
           </div>
         )}
 
@@ -253,7 +371,7 @@ const SearchPage = () => {
             <div className="flex items-center gap-2 mb-4">
               <Calendar className="h-5 w-5 text-teal" />
               <h2 className="font-display font-semibold text-lg text-foreground">
-                Upcoming Events
+                {locationName ? `Upcoming Events in ${locationName}` : "Upcoming Events"}
               </h2>
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -286,12 +404,15 @@ const SearchPage = () => {
         )}
 
         <p className="text-sm text-muted-foreground mb-6">
-          {isLoading ? "Searching..." : `${rankedListings.length} places found`}
+          {isLoading
+            ? "Searching..."
+            : `${rankedExact.length} places found${locationName ? ` in ${locationName}` : ""}`}
         </p>
 
-        {hasResults && (
+        {/* Exact location results */}
+        {hasExactResults && (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-            {rankedListings.map((listing: any, i: number) => (
+            {rankedExact.map((listing: any, i: number) => (
               <ListingCard
                 key={listing.id}
                 name={listing.name}
@@ -318,20 +439,61 @@ const SearchPage = () => {
           </div>
         )}
 
-        {!isLoading && !hasResults && !hasEvents && query && (
+        {/* Nearby fallback results — clearly labelled */}
+        {hasNearbyResults && (
+          <section className="mt-10">
+            <div className="flex items-center gap-2 mb-4">
+              <MapPin className="h-5 w-5 text-muted-foreground" />
+              <h2 className="font-display font-semibold text-lg text-foreground">
+                Showing nearby results close to {locationName}
+              </h2>
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+              {rankedNearby.map((listing: any, i: number) => (
+                <ListingCard
+                  key={listing.id}
+                  name={listing.name}
+                  slug={listing.slug}
+                  citySlug={(listing.cities as any)?.slug || ""}
+                  shortDescription={listing.short_description || ""}
+                  rating={listing.rating}
+                  reviewCount={listing.review_count || 0}
+                  imageUrl={listing.image_url}
+                  imageSource={(listing as any).image_source}
+                  imageStatus={(listing as any).image_status}
+                  imageAlt={(listing as any).image_alt}
+                  categorySlug={(listing.categories as any)?.slug}
+                  categoryName={(listing.categories as any)?.name}
+                  cityName={(listing.cities as any)?.name}
+                  address={listing.address}
+                  priceLevel={listing.price_level}
+                  googleMapsLink={listing.google_maps_link}
+                  audienceTags={(listing as any).audience_tags}
+                  description={(listing as any).description}
+                  index={i}
+                />
+              ))}
+            </div>
+          </section>
+        )}
+
+        {/* Zero results */}
+        {!isLoading && !hasExactResults && !hasNearbyResults && !hasEvents && query && (
           <div className="text-center py-12">
             <Search className="h-10 w-10 text-muted-foreground/30 mx-auto mb-4" />
             <p className="text-muted-foreground mb-6">
-              No exact matches found. Try one of these popular searches:
+              {intent.hasExplicitLocation && locationName
+                ? `No results found in ${locationName}. Try a broader search.`
+                : "No exact matches found. Try one of these popular searches:"}
             </p>
             <div className="flex flex-wrap justify-center gap-2">
               {[
                 "best restaurants Belfast",
                 "things to do Belfast",
-                "cafes Belfast",
+                "things to do Antrim",
                 "markets Belfast",
                 "events Belfast",
-                "family activities Belfast",
+                "live music Derry",
               ].map((suggestion) => (
                 <Link
                   key={suggestion}
