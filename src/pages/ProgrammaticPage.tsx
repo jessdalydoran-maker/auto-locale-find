@@ -1248,7 +1248,7 @@ const ProgrammaticPage = () => {
           <div className="my-8">
             <h2 className="font-display font-semibold text-xl text-foreground mb-6">
               {modifier?.name || ""} {category?.name || "Events"} {locationFilter ? `in ${niCities.find(c => c.slug === locationFilter)?.name || ""}` : `Across ${locationName}`}
-              {parsed?.timeIntent ? ` ${formatTimeIntent(parsed.timeIntent)}` : ""}
+              {customDate ? ` on ${customDate.toLocaleDateString("en-GB", { weekday: "short", day: "numeric", month: "short" })}` : parsed?.timeIntent ? ` ${formatTimeIntent(parsed.timeIntent)}` : ""}
             </h2>
             {events && events.length > 0 ? (
               <>
