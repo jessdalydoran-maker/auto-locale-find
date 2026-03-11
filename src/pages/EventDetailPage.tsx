@@ -288,7 +288,7 @@ const EventDetailPage = () => {
 
               {event.time_start && (
                 <div className="flex items-start gap-2.5 text-sm">
-                  <Clock className="h-4 w-4 text-accent shrink-0 mt-0.5" />
+                  <Clock className="h-4 w-4 text-teal shrink-0 mt-0.5" />
                   <span className="text-muted-foreground">
                     {formatTime(event.time_start)}
                     {event.time_end && ` — ${formatTime(event.time_end)}`}
