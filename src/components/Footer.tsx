@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { MapPin } from "lucide-react";
+import logo from "@/assets/logo.png";
 
 const FOOTER_CITIES = [
   { name: "Belfast", slug: "belfast" },
