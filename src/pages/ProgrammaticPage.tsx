@@ -1093,15 +1093,23 @@ const ProgrammaticPage = () => {
               <Link
                 key={f.value || "all"}
                 to={f.url}
-                className={`px-3 py-1.5 text-xs font-medium rounded-full transition-colors ${
-                  (f as any).active
+                onClick={() => setCustomDate(undefined)}
+                className={cn(
+                  "px-3 py-1.5 text-xs font-medium rounded-full transition-colors",
+                  (f as any).active && !customDate
                     ? "bg-primary text-primary-foreground"
                     : "bg-muted text-muted-foreground hover:bg-primary hover:text-primary-foreground"
-                }`}
+                )}
               >
                 {f.label}
               </Link>
             ))}
+            {showEvents && (
+              <EventDatePicker
+                selectedDate={customDate}
+                onDateSelect={setCustomDate}
+              />
+            )}
           </div>
         )}
 
