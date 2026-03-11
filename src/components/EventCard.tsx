@@ -99,7 +99,7 @@ export const EventCard = ({
             onError={handleImageError}
           />
           <div className="absolute top-2.5 left-2.5 bg-card/95 backdrop-blur-sm rounded-md px-2.5 py-1.5 text-center">
-            <span className="block text-xs font-bold text-accent leading-tight">
+            <span className="block text-xs font-bold text-primary leading-tight">
               {new Date(dateStart + "T00:00:00").toLocaleDateString("en-GB", { day: "numeric" })}
             </span>
             <span className="block text-[10px] font-medium text-muted-foreground uppercase">
