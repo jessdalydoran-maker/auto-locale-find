@@ -234,7 +234,7 @@ const Index = () => {
               const catSlug = (listing.categories as any)?.slug;
               const catName = (listing.categories as any)?.name || "Place";
               const citySlug = (listing.cities as any)?.slug || "belfast";
-              const imgSrc = getImageUrl(listing.image_url, (listing as any).image_source, catSlug, citySlug, (listing as any).image_status);
+              const imgSrc = getImageUrl(listing.image_url, (listing as any).image_source, catSlug, citySlug, (listing as any).image_status, listing.name);
               return (
                 <Link
                   key={listing.id}
