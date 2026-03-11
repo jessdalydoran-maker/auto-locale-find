@@ -284,7 +284,7 @@ const Index = () => {
                     )}
                   </div>
                   <div className="p-4">
-                    <h3 className="font-display font-semibold text-base text-foreground group-hover:text-accent transition-colors mb-1.5">
+                    <h3 className="font-display font-semibold text-base text-foreground group-hover:text-primary transition-colors mb-1.5">
                       {listing.name}
                     </h3>
                     <p className="text-[13px] text-muted-foreground line-clamp-3 leading-relaxed mb-3">
