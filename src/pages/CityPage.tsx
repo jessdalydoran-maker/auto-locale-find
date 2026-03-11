@@ -258,7 +258,7 @@ const CityPage = () => {
               </div>
               <Link
                 to={`/events-${resolvedCitySlug}`}
-                className="text-sm text-accent hover:underline"
+                className="text-sm text-primary hover:underline"
               >
                 View all events →
               </Link>
