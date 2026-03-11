@@ -39,9 +39,7 @@ export const Footer = () => {
         <div className="grid grid-cols-2 md:grid-cols-5 gap-8">
           <div className="col-span-2 md:col-span-1">
             <div className="flex items-center gap-2 mb-3">
-              <div className="w-7 h-7 rounded-lg bg-accent flex items-center justify-center">
-                <MapPin className="h-4 w-4 text-accent-foreground" />
-              </div>
+              <img src={logo} alt="City Scout Guide" className="h-8 w-auto" />
               <span className="font-display font-bold text-[15px] text-foreground">City Scout Guide</span>
             </div>
             <p className="text-[13px] text-muted-foreground leading-relaxed">
