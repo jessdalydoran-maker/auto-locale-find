@@ -212,7 +212,7 @@ const PlaceDetailPage = () => {
             className="w-full h-full object-cover"
             width={1200}
             height={400}
-            onError={buildImageErrorHandler(catSlug, listing?.name)}
+            onError={buildImageErrorHandler(catSlug, listing?.name, listing?.audience_tags, listing?.description || listing?.short_description)}
           />
           <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent" />
           <div className="absolute bottom-0 left-0 right-0 p-6 md:p-8">
