@@ -174,7 +174,7 @@ const Index = () => {
       {/* Hero */}
       <section className="bg-card border-b border-border">
         <div className="container mx-auto px-4 py-14 md:py-20 text-center">
-          <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-accent/10 text-accent rounded-full text-xs font-medium mb-5">
+          <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-primary/10 text-primary rounded-full text-xs font-medium mb-5">
             <MapPin className="h-3 w-3" />
             Northern Ireland's Local Discovery Platform
           </div>
