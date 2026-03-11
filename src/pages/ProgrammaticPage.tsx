@@ -1413,7 +1413,7 @@ const ProgrammaticPage = () => {
         {!showEvents && shouldFetchEvents && events && events.length > 0 && (
           <div className="my-8">
             <h2 className="font-display font-semibold text-xl text-foreground mb-6">
-              <Calendar className="inline h-5 w-5 mr-2 text-accent" />
+              <Calendar className="inline h-5 w-5 mr-2 text-teal" />
               {isDateNightPage ? "Evening Events & Shows" : isFamilyPage ? "Family Events" : parsed?.modifierSlug === "free" ? "Free Events" : "Events"} {parsed?.timeIntent ? formatTimeIntent(parsed.timeIntent) : ""} {locationFilter ? `in ${niCities.find(c => c.slug === locationFilter)?.name || ""}` : isNIWide ? "Across Northern Ireland" : `in ${locationName}`}
             </h2>
             {eventsByCity && !locationFilter ? (
