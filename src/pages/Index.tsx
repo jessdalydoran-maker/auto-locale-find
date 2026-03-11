@@ -18,6 +18,7 @@ const QUICK_LINKS = [
   { label: "What's On", to: "/events", icon: Calendar },
   { label: "Things To Do", to: "/things-to-do", icon: Sparkles },
   { label: "LGBT+", to: "/belfast?category=lgbtq", icon: Rainbow },
+  { label: "Live Music", to: "/live-music-tonight", icon: Music },
   { label: "Restaurants", to: "/best-restaurants-belfast", icon: Utensils },
   { label: "Free", to: "/free-things-to-do", icon: Star },
   { label: "Date Night", to: "/date-night", icon: Heart },
