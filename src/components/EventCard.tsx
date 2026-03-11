@@ -115,7 +115,7 @@ export const EventCard = ({
 
       <div className="p-3.5">
         <Link to={detailUrl}>
-          <h3 className="font-display font-semibold text-sm text-foreground mb-1.5 line-clamp-2 group-hover:text-primary transition-colors">
+          <h3 className="font-display font-semibold text-[15px] md:text-base text-foreground mb-1.5 line-clamp-2 group-hover:text-primary transition-colors">
             {title}
           </h3>
         </Link>
