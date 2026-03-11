@@ -66,7 +66,36 @@ export const MUSIC_EXCLUDE_TAGS = [
 export const MUSIC_EVENT_TAGS = [
   "live-music", "music", "concert", "gig", "band", "acoustic",
   "jazz", "folk", "trad", "open-mic", "singer-songwriter",
-  "cabaret", "blues", "cover-band", "session",
+  "cabaret", "blues", "cover-band", "session", "dj",
+];
+
+/**
+ * Strong music indicators — at least one must appear in
+ * the title for keyword-only matches (not tag/category).
+ * This prevents weak matches like "session" pulling in sports.
+ */
+const STRONG_MUSIC_INDICATORS = [
+  "live music", "live band", "live act", "live performance",
+  "acoustic", "trad session", "trad night", "trad music",
+  "open mic", "open-mic", "singer", "songwriter",
+  "cover band", "covers band", "tribute",
+  "band night", "gig", "concert", "music night",
+  "jazz", "cabaret", "folk night", "blues night",
+  "dj set", "dj night", "disco",
+  "residency", "weekly music", "music every",
+  "pub music", "bar music", "lounge music",
+];
+
+/**
+ * Recurring music patterns — surface venue-based recurring nights
+ */
+const RECURRING_MUSIC_PATTERNS = [
+  /live music every/i,
+  /trad session?\s*(every|monday|tuesday|wednesday|thursday|friday|saturday|sunday)/i,
+  /acoustic night/i,
+  /music (every|each)\s*(monday|tuesday|wednesday|thursday|friday|saturday|sunday|week)/i,
+  /open mic (every|each)/i,
+  /weekly (live music|gig|session|acoustic|trad)/i,
 ];
 
 /**
@@ -86,19 +115,29 @@ export function isLiveMusicEvent(event: {
   const desc = ((event.short_description || "") + " " + (event.description || "")).toLowerCase();
   const combined = title + " " + desc;
 
-  // Exclude non-performance content first
+  // 1. Exclude sports and non-performance content first
+  if (tags.some(t => MUSIC_EXCLUDE_TAGS.includes(t))) return false;
   if (MUSIC_EXCLUDE_TERMS.some(t => combined.includes(t))) return false;
-  if (tags.includes("workshop") || tags.includes("workshops")) return false;
 
-  // Direct category match
+  // 2. Direct category match (still requires no exclusion tags)
   if (MUSIC_CATEGORY_SLUGS.includes(catSlug)) return true;
 
-  // Has a music-related tag
+  // 3. Has a music-related tag
   if (tags.some(t => MUSIC_EVENT_TAGS.includes(t))) return true;
 
-  // Title or description contains music keywords
-  if (MUSIC_KEYWORDS.some(k => title.includes(k))) return true;
-  if (MUSIC_KEYWORDS.some(k => desc.includes(k))) return true;
+  // 4. Recurring music pattern in title or description
+  if (RECURRING_MUSIC_PATTERNS.some(r => r.test(combined))) return true;
+
+  // 5. Strong music indicator in title (high confidence)
+  if (STRONG_MUSIC_INDICATORS.some(k => title.includes(k))) return true;
+
+  // 6. Strong indicator in description (require at least one in title too for weaker words)
+  if (STRONG_MUSIC_INDICATORS.some(k => desc.includes(k))) {
+    // Require the title to also hint at music to avoid false positives
+    const titleHasHint = STRONG_MUSIC_INDICATORS.some(k => title.includes(k)) ||
+      /\b(music|band|gig|acoustic|live|singer|trad|jazz|blues|folk|dj)\b/.test(title);
+    if (titleHasHint) return true;
+  }
 
   return false;
 }
