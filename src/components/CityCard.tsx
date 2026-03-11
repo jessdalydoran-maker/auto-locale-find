@@ -1,7 +1,7 @@
 import { Link } from "react-router-dom";
 import { MapPin } from "lucide-react";
-import { getImageUrl, generateCityAltText, getCategoryPlaceholder } from "@/lib/image-utils";
-import { useCallback } from "react";
+import { getImageUrl, generateCityAltText, buildImageErrorHandler } from "@/lib/image-utils";
+import { useMemo } from "react";
 
 interface CityCardProps {
   name: string;
