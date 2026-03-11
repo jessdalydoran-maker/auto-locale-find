@@ -1104,8 +1104,8 @@ const ProgrammaticPage = () => {
                 onClick={() => setLocationFilter(locationFilter === c.slug ? null : c.slug)}
                 className={`px-3 py-1.5 text-xs font-medium rounded-full transition-colors ${
                   locationFilter === c.slug
-                    ? "bg-accent text-accent-foreground"
-                    : "bg-muted text-muted-foreground hover:bg-accent hover:text-accent-foreground"
+                    ? "bg-primary text-primary-foreground"
+                    : "bg-muted text-muted-foreground hover:bg-primary hover:text-primary-foreground"
                 }`}
               >
                 {c.name}
