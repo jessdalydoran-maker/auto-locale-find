@@ -1,7 +1,8 @@
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
-import { Search } from "lucide-react";
+import { Search, MapPin, Tag, Calendar } from "lucide-react";
 import { getAutocompleteSuggestions } from "@/lib/search-intent";
+import { supabase } from "@/integrations/supabase/client";
 
 interface SearchBarProps {
   onClose?: () => void;
@@ -9,19 +10,110 @@ interface SearchBarProps {
   placeholder?: string;
 }
 
+interface Suggestion {
+  label: string;
+  type: "venue" | "event" | "city" | "category" | "static";
+}
+
 export const SearchBar = ({ onClose, large = false, placeholder = "Search by city, category or keyword..." }: SearchBarProps) => {
   const [query, setQuery] = useState("");
-  const [suggestions, setSuggestions] = useState<string[]>([]);
+  const [suggestions, setSuggestions] = useState<Suggestion[]>([]);
   const [selectedIndex, setSelectedIndex] = useState(-1);
   const [showSuggestions, setShowSuggestions] = useState(false);
   const navigate = useNavigate();
   const wrapperRef = useRef<HTMLDivElement>(null);
+  const debounceRef = useRef<ReturnType<typeof setTimeout>>();
+
+  // Live autocomplete from DB + static suggestions
+  const fetchSuggestions = useCallback(async (partial: string) => {
+    if (partial.length < 2) {
+      setSuggestions([]);
+      return;
+    }
+
+    const results: Suggestion[] = [];
+    const lower = partial.toLowerCase();
+
+    // Parallel DB queries for venues, events, cities, categories
+    const [venueRes, eventRes, cityRes, catRes] = await Promise.all([
+      supabase
+        .from("listings")
+        .select("name, cities(name)")
+        .ilike("name", `%${partial}%`)
+        .limit(5),
+      supabase
+        .from("events")
+        .select("title")
+        .eq("status", "active")
+        .gte("date_start", new Date().toISOString().split("T")[0])
+        .ilike("title", `%${partial}%`)
+        .limit(3),
+      supabase
+        .from("cities")
+        .select("name")
+        .ilike("name", `%${partial}%`)
+        .limit(3),
+      supabase
+        .from("categories")
+        .select("name")
+        .ilike("name", `%${partial}%`)
+        .eq("is_active", true)
+        .limit(3),
+    ]);
+
+    // Venues (with city name appended)
+    if (venueRes.data) {
+      for (const v of venueRes.data) {
+        const cityName = (v.cities as any)?.name;
+        results.push({
+          label: cityName ? `${v.name} – ${cityName}` : v.name,
+          type: "venue",
+        });
+      }
+    }
+
+    // Events
+    if (eventRes.data) {
+      for (const e of eventRes.data) {
+        results.push({ label: e.title, type: "event" });
+      }
+    }
+
+    // Cities
+    if (cityRes.data) {
+      for (const c of cityRes.data) {
+        results.push({ label: c.name, type: "city" });
+      }
+    }
+
+    // Categories
+    if (catRes.data) {
+      for (const c of catRes.data) {
+        results.push({ label: `${c.name} Belfast`, type: "category" });
+      }
+    }
+
+    // Static suggestions as fallback if DB returned few results
+    if (results.length < 4) {
+      const staticSugs = getAutocompleteSuggestions(partial);
+      for (const s of staticSugs) {
+        if (!results.some(r => r.label.toLowerCase() === s.toLowerCase())) {
+          results.push({ label: s, type: "static" });
+        }
+        if (results.length >= 8) break;
+      }
+    }
+
+    setSuggestions(results.slice(0, 8));
+    setSelectedIndex(-1);
+    setShowSuggestions(results.length > 0);
+  }, []);
 
   useEffect(() => {
-    setSuggestions(getAutocompleteSuggestions(query));
-    setSelectedIndex(-1);
-    setShowSuggestions(query.length >= 2);
-  }, [query]);
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+    debounceRef.current = setTimeout(() => fetchSuggestions(query), 150);
+    return () => { if (debounceRef.current) clearTimeout(debounceRef.current); };
+  }, [query, fetchSuggestions]);
 
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
@@ -35,7 +127,9 @@ export const SearchBar = ({ onClose, large = false, placeholder = "Search by cit
 
   const doSearch = (q: string) => {
     if (q.trim()) {
-      navigate(`/search?q=${encodeURIComponent(q.trim())}`);
+      // Strip " – CityName" suffix for venue suggestions
+      const clean = q.replace(/\s–\s.+$/, "").trim();
+      navigate(`/search?q=${encodeURIComponent(clean)}`);
       setShowSuggestions(false);
       onClose?.();
     }
@@ -44,7 +138,7 @@ export const SearchBar = ({ onClose, large = false, placeholder = "Search by cit
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (selectedIndex >= 0 && suggestions[selectedIndex]) {
-      doSearch(suggestions[selectedIndex]);
+      doSearch(suggestions[selectedIndex].label);
     } else {
       doSearch(query);
     }
@@ -60,6 +154,26 @@ export const SearchBar = ({ onClose, large = false, placeholder = "Search by cit
       setSelectedIndex((i) => Math.max(i - 1, -1));
     } else if (e.key === "Escape") {
       setShowSuggestions(false);
+    }
+  };
+
+  const getIcon = (type: Suggestion["type"]) => {
+    switch (type) {
+      case "venue": return <MapPin className="h-3.5 w-3.5 shrink-0 opacity-40" />;
+      case "event": return <Calendar className="h-3.5 w-3.5 shrink-0 opacity-40" />;
+      case "city": return <MapPin className="h-3.5 w-3.5 shrink-0 opacity-40" />;
+      case "category": return <Tag className="h-3.5 w-3.5 shrink-0 opacity-40" />;
+      default: return <Search className="h-3.5 w-3.5 shrink-0 opacity-40" />;
+    }
+  };
+
+  const getTypeLabel = (type: Suggestion["type"]) => {
+    switch (type) {
+      case "venue": return "Venue";
+      case "event": return "Event";
+      case "city": return "City";
+      case "category": return "Category";
+      default: return null;
     }
   };
 
@@ -87,7 +201,7 @@ export const SearchBar = ({ onClose, large = false, placeholder = "Search by cit
         <div className="absolute top-full left-0 right-0 mt-1 bg-card border border-border rounded-lg shadow-lg z-50 overflow-hidden">
           {suggestions.map((s, i) => (
             <button
-              key={s}
+              key={`${s.type}-${s.label}`}
               type="button"
               className={`w-full text-left px-3.5 py-2.5 text-[13px] flex items-center gap-2.5 transition-colors ${
                 i === selectedIndex
@@ -95,10 +209,17 @@ export const SearchBar = ({ onClose, large = false, placeholder = "Search by cit
                   : "text-muted-foreground hover:bg-secondary hover:text-foreground"
               }`}
               onMouseEnter={() => setSelectedIndex(i)}
-              onClick={() => doSearch(s)}
+              onClick={() => doSearch(s.label)}
             >
-              <Search className="h-3.5 w-3.5 shrink-0 opacity-40" />
-              {s}
+              {getIcon(s.type)}
+              <span className="flex-1 truncate">{s.label}</span>
+              {getTypeLabel(s.type) && (
+                <span className={`text-[10px] uppercase tracking-wider ${
+                  i === selectedIndex ? "text-primary-foreground/60" : "text-muted-foreground/50"
+                }`}>
+                  {getTypeLabel(s.type)}
+                </span>
+              )}
             </button>
           ))}
         </div>

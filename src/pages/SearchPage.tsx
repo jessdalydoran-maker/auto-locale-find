@@ -6,6 +6,7 @@ import { ListingCard } from "@/components/ListingCard";
 import { EventCard } from "@/components/EventCard";
 import { SearchBar } from "@/components/SearchBar";
 import { parseSearchIntent } from "@/lib/search-intent";
+import { scoreListing, scoreEvent, rankAndFilter } from "@/lib/search-scoring";
 import { Search, Calendar } from "lucide-react";
 import { deduplicateListings, filterCompleteListings } from "@/lib/page-validation";
 import { useMemo } from "react";
@@ -15,106 +16,169 @@ const SearchPage = () => {
   const query = searchParams.get("q") || "";
   const intent = parseSearchIntent(query);
 
-  // Main listings query using intent-based matching
-  const { data: listings, isLoading } = useQuery({
+  // Fetch all candidate listings (broad search, then score client-side)
+  const { data: rawListings, isLoading } = useQuery({
     queryKey: ["search", query],
     queryFn: async () => {
-      // Strategy 1: Match by resolved categories + city
-      if (intent.categorySlugs.length > 0 && intent.city) {
+      if (!query.trim()) return [];
+
+      const queryWords = query.toLowerCase().split(/\s+/).filter(w => w.length > 1);
+      const allResults: any[] = [];
+
+      // 1. Exact name search (top priority)
+      const { data: exactMatches } = await supabase
+        .from("listings")
+        .select("*, cities!inner(slug, name), categories!inner(slug, name)")
+        .ilike("name", `%${query.trim()}%`)
+        .limit(20);
+      if (exactMatches) allResults.push(...exactMatches);
+
+      // 2. Category + city intent match
+      if (intent.categorySlugs.length > 0) {
         const { data: cats } = await supabase
           .from("categories")
           .select("id, slug")
           .in("slug", intent.categorySlugs);
 
-        const { data: city } = await supabase
-          .from("cities")
-          .select("id")
-          .eq("slug", intent.city)
-          .maybeSingle();
+        let cityId: string | null = null;
+        if (intent.city) {
+          const { data: city } = await supabase
+            .from("cities")
+            .select("id")
+            .eq("slug", intent.city)
+            .maybeSingle();
+          cityId = city?.id || null;
+        }
 
-        if (cats?.length && city) {
-          const catIds = cats.map((c) => c.id);
+        if (cats?.length) {
+          const catIds = cats.map(c => c.id);
           let q = supabase
             .from("listings")
             .select("*, cities!inner(slug, name), categories!inner(slug, name)")
             .in("category_id", catIds)
-            .eq("city_id", city.id)
-            .order("rating", { ascending: false })
-            .limit(30);
-
+            .limit(40);
+          if (cityId) q = q.eq("city_id", cityId);
           const { data } = await q;
-          if (data && data.length > 0) return data;
+          if (data) allResults.push(...data);
+        }
+
+        // Also search by audience_tags for cross-category discovery
+        if (cats?.length) {
+          const tagSlugs = intent.categorySlugs.slice(0, 5);
+          for (const tag of tagSlugs) {
+            let q = supabase
+              .from("listings")
+              .select("*, cities!inner(slug, name), categories!inner(slug, name)")
+              .contains("audience_tags", [tag])
+              .limit(20);
+            if (cityId) q = q.eq("city_id", cityId);
+            const { data } = await q;
+            if (data) allResults.push(...data);
+          }
         }
       }
 
-      // Strategy 2: Text search fallback with broader matching
-      const textTerms = intent.keywords.length > 0
-        ? intent.keywords
-        : query.split(/\s+/).filter((w) => w.length > 2);
-
+      // 3. Text search on remaining keywords
+      const textTerms = queryWords.filter(w => w.length > 2);
       if (textTerms.length > 0) {
         const orClauses = textTerms
-          .map((t) => `name.ilike.%${t}%,short_description.ilike.%${t}%,description.ilike.%${t}%,address.ilike.%${t}%`)
+          .map(t => `name.ilike.%${t}%,short_description.ilike.%${t}%,description.ilike.%${t}%`)
           .join(",");
 
         const { data } = await supabase
           .from("listings")
           .select("*, cities!inner(slug, name), categories!inner(slug, name)")
           .or(orClauses)
-          .order("rating", { ascending: false })
-          .limit(20);
-
-        if (data && data.length > 0) return data;
+          .limit(30);
+        if (data) allResults.push(...data);
       }
 
-      // Strategy 3: If city matched, show top listings for that city
-      if (intent.city) {
-        const { data: city } = await supabase
-          .from("cities")
-          .select("id")
-          .eq("slug", intent.city)
-          .maybeSingle();
-
-        if (city) {
-          const { data } = await supabase
-            .from("listings")
-            .select("*, cities!inner(slug, name), categories!inner(slug, name)")
-            .eq("city_id", city.id)
-            .order("rating", { ascending: false })
-            .limit(20);
-
-          return data || [];
-        }
-      }
-
-      return [];
+      // Deduplicate by id
+      const seen = new Set<string>();
+      return allResults.filter(item => {
+        if (seen.has(item.id)) return false;
+        seen.add(item.id);
+        return true;
+      });
     },
     enabled: !!query,
   });
 
-  // Search events alongside listings
+  // Score and rank listings
+  const rankedListings = useMemo(() => {
+    if (!rawListings?.length) return [];
+    const scored = rawListings.map(item => ({
+      item,
+      score: scoreListing(item, query, intent),
+    }));
+    const ranked = rankAndFilter(scored, 20);
+    const { unique } = deduplicateListings(ranked as any);
+    return filterCompleteListings(unique);
+  }, [rawListings, query]);
+
+  // Search events with scoring
   const { data: eventResults } = useQuery({
     queryKey: ["search-events", query],
     queryFn: async () => {
+      if (!query.trim()) return [];
       const today = new Date().toISOString().split("T")[0];
-      const textTerms = query.split(/\s+/).filter((w) => w.length > 2);
+      const queryWords = query.toLowerCase().split(/\s+/).filter(w => w.length > 1);
+      const allEvents: any[] = [];
 
-      if (textTerms.length === 0) return [];
-
-      const orClauses = textTerms
-        .map((t) => `title.ilike.%${t}%,short_description.ilike.%${t}%,venue_name.ilike.%${t}%,description.ilike.%${t}%`)
-        .join(",");
-
-      const { data } = await supabase
+      // Exact title match
+      const { data: exactEvents } = await supabase
         .from("events")
         .select("*, cities!inner(slug, name)")
         .eq("status", "active")
         .gte("date_start", today)
-        .or(orClauses)
-        .order("date_start", { ascending: true })
+        .ilike("title", `%${query.trim()}%`)
         .limit(12);
+      if (exactEvents) allEvents.push(...exactEvents);
 
-      return data || [];
+      // Text search
+      const textTerms = queryWords.filter(w => w.length > 2);
+      if (textTerms.length > 0) {
+        const orClauses = textTerms
+          .map(t => `title.ilike.%${t}%,short_description.ilike.%${t}%,venue_name.ilike.%${t}%,description.ilike.%${t}%`)
+          .join(",");
+        const { data } = await supabase
+          .from("events")
+          .select("*, cities!inner(slug, name)")
+          .eq("status", "active")
+          .gte("date_start", today)
+          .or(orClauses)
+          .limit(12);
+        if (data) allEvents.push(...data);
+      }
+
+      // Tag-based search for category intent
+      if (intent.categorySlugs.length > 0) {
+        for (const tag of intent.categorySlugs.slice(0, 3)) {
+          const { data } = await supabase
+            .from("events")
+            .select("*, cities!inner(slug, name)")
+            .eq("status", "active")
+            .gte("date_start", today)
+            .contains("tags", [tag])
+            .limit(10);
+          if (data) allEvents.push(...data);
+        }
+      }
+
+      // Deduplicate
+      const seen = new Set<string>();
+      const unique = allEvents.filter(e => {
+        if (seen.has(e.id)) return false;
+        seen.add(e.id);
+        return true;
+      });
+
+      // Score and rank
+      const scored = unique.map(item => ({
+        item,
+        score: scoreEvent(item, query, intent),
+      }));
+      return rankAndFilter(scored, 10);
     },
     enabled: !!query,
   });
@@ -137,14 +201,7 @@ const SearchPage = () => {
     enabled: !!query && intent.suggestedPages.length > 0,
   });
 
-  // Deduplicate search results
-  const dedupedListings = useMemo(() => {
-    if (!listings) return [];
-    const { unique } = deduplicateListings(listings as any);
-    return filterCompleteListings(unique);
-  }, [listings]);
-
-  const hasResults = dedupedListings.length > 0;
+  const hasResults = rankedListings.length > 0;
   const hasEvents = eventResults && eventResults.length > 0;
   const hasRelatedPages = relatedPages && relatedPages.length > 0;
 
@@ -152,14 +209,13 @@ const SearchPage = () => {
     <Layout>
       <div className="container mx-auto px-4 py-8">
         <div className="max-w-xl mb-8">
-          <SearchBar large placeholder="Search..." />
+          <SearchBar large placeholder="Search venues, events, cities..." />
         </div>
 
         <h1 className="font-display font-bold text-2xl text-foreground mb-2">
           {query ? `Results for "${query}"` : "Search"}
         </h1>
 
-        {/* Intent debug info - show what we understood */}
         {query && intent.categorySlugs.length > 0 && (
           <div className="flex flex-wrap gap-1.5 mb-4">
             {intent.categorySlugs.slice(0, 5).map((cat) => (
@@ -172,15 +228,9 @@ const SearchPage = () => {
                 {intent.city}
               </span>
             )}
-            {intent.modifiers.map((m) => (
-              <span key={m} className="text-xs bg-primary/10 text-primary px-2 py-0.5 rounded-full">
-                {m}
-              </span>
-            ))}
           </div>
         )}
 
-        {/* Related pages */}
         {hasRelatedPages && (
           <div className="mb-8">
             <p className="text-sm text-muted-foreground mb-3">Related pages</p>
@@ -198,7 +248,6 @@ const SearchPage = () => {
           </div>
         )}
 
-        {/* Events section */}
         {hasEvents && (
           <section className="mb-10">
             <div className="flex items-center gap-2 mb-4">
@@ -237,14 +286,13 @@ const SearchPage = () => {
         )}
 
         <p className="text-sm text-muted-foreground mb-6">
-          {isLoading ? "Searching..." : `${dedupedListings.length} places found`}
+          {isLoading ? "Searching..." : `${rankedListings.length} places found`}
         </p>
 
-        {/* Results grid */}
         {hasResults && (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-            {dedupedListings.map((listing: any, i: number) => (
-            <ListingCard
+            {rankedListings.map((listing: any, i: number) => (
+              <ListingCard
                 key={listing.id}
                 name={listing.name}
                 slug={listing.slug}
@@ -270,7 +318,6 @@ const SearchPage = () => {
           </div>
         )}
 
-        {/* Zero-result protection */}
         {!isLoading && !hasResults && !hasEvents && query && (
           <div className="text-center py-12">
             <Search className="h-10 w-10 text-muted-foreground/30 mx-auto mb-4" />
