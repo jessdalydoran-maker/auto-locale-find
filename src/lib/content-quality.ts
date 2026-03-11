@@ -6,18 +6,20 @@
 
 /** Minimum items required before a page is considered publishable */
 export const CONTENT_THRESHOLDS = {
-  /** Minimum listings to show a category+city page */
-  LISTINGS_MIN: 5,
+  /** Minimum listings to show a city page */
+  LISTINGS_MIN: 6,
   /** Minimum events to show an events page */
   EVENTS_MIN: 1,
-  /** Minimum listings for modifier-specific pages (e.g. free, family) */
-  MODIFIER_LISTINGS_MIN: 4,
+  /** Minimum listings for category+city pages */
+  CATEGORY_LISTINGS_MIN: 6,
+  /** Minimum listings for modifier-specific / niche pages (e.g. cocktail bars in Ballyhackamore) */
+  MODIFIER_LISTINGS_MIN: 3,
   /** Minimum listings for a neighbourhood-specific page */
-  NEIGHBOURHOOD_LISTINGS_MIN: 3,
+  NEIGHBOURHOOD_LISTINGS_MIN: 4,
   /** Minimum events for a neighbourhood-specific page */
   NEIGHBOURHOOD_EVENTS_MIN: 1,
   /** Pages below this threshold show a "thin content" notice with links to richer pages */
-  THIN_CONTENT_WARNING: 3,
+  THIN_CONTENT_WARNING: 4,
 } as const;
 
 /**
