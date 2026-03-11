@@ -44,6 +44,7 @@ import {
   type PageValidationResult,
 } from "@/lib/page-validation";
 import { useEffect, useMemo, useState } from "react";
+import { EventDatePicker } from "@/components/EventDatePicker";
 
 const ProgrammaticPage = () => {
   const { "*": rawSlug } = useParams();
