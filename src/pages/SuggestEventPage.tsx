@@ -17,8 +17,8 @@ const SuggestEventPage = () => {
     <Layout>
       <div className="container mx-auto px-4 py-12 max-w-lg">
         <div className="text-center mb-8">
-          <div className="w-12 h-12 rounded-full bg-accent/10 flex items-center justify-center mx-auto mb-4">
-            <Calendar className="h-6 w-6 text-accent" />
+          <div className="w-12 h-12 rounded-full bg-teal/10 flex items-center justify-center mx-auto mb-4">
+            <Calendar className="h-6 w-6 text-teal" />
           </div>
           <h1 className="font-display font-bold text-2xl text-foreground mb-2">Suggest an Event</h1>
           <p className="text-muted-foreground text-sm">Know about an upcoming event in Northern Ireland? Help the community discover it.</p>

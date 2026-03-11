@@ -134,7 +134,7 @@ export const ListingCard = ({
               href={googleMapsLink}
               target="_blank"
               rel="noopener noreferrer"
-              className="text-[11px] text-accent hover:underline flex items-center gap-0.5 shrink-0"
+              className="text-[11px] text-primary hover:underline flex items-center gap-0.5 shrink-0"
               onClick={(e) => e.stopPropagation()}
             >
               Map <ExternalLink className="h-2.5 w-2.5" />

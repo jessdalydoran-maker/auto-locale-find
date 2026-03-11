@@ -64,7 +64,7 @@ const CategoriesPage = () => {
                   <Link
                     key={city.id}
                     to={`/best-${cat.slug}-${city.slug}`}
-                    className="text-xs px-2 py-1 bg-muted text-muted-foreground rounded hover:bg-accent hover:text-accent-foreground transition-colors"
+                    className="text-xs px-2 py-1 bg-muted text-muted-foreground rounded hover:bg-primary hover:text-primary-foreground transition-colors"
                   >
                     {city.name}
                   </Link>

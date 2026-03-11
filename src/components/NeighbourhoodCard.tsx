@@ -27,7 +27,7 @@ export const NeighbourhoodCard = ({ name, slug, citySlug, description, index = 0
           <p className="text-[12px] text-muted-foreground line-clamp-2 leading-relaxed">{description}</p>
         )}
       </div>
-      <ArrowRight className="h-4 w-4 text-muted-foreground/40 group-hover:text-accent transition-colors shrink-0 mt-0.5" />
+      <ArrowRight className="h-4 w-4 text-muted-foreground/40 group-hover:text-primary transition-colors shrink-0 mt-0.5" />
     </Link>
   );
 };
