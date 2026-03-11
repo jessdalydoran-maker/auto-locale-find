@@ -18,8 +18,8 @@ export const NeighbourhoodCard = ({ name, slug, citySlug, description, index = 0
     >
       <div>
         <div className="flex items-center gap-1.5 mb-1">
-          <MapPin className="h-3.5 w-3.5 text-accent" />
-          <h3 className="font-display font-semibold text-[13px] text-foreground group-hover:text-accent transition-colors">
+          <MapPin className="h-3.5 w-3.5 text-teal" />
+          <h3 className="font-display font-semibold text-[13px] text-foreground group-hover:text-primary transition-colors">
             {name}
           </h3>
         </div>
