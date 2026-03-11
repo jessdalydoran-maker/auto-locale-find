@@ -457,12 +457,13 @@ function isBlockedTourismImageUrl(url: string): boolean {
 export function detectCategoryFromKeywords(
   title?: string | null,
   tags?: string[] | null,
-  description?: string | null
+  description?: string | null,
+  categorySlug?: string | null
 ): string | null {
   const searchText = buildSearchText(title, tags, description);
   if (!searchText) return null;
 
-  const strictLgbtCategory = detectStrictLgbtCategory(searchText);
+  const strictLgbtCategory = detectStrictLgbtCategory(searchText, categorySlug);
   if (strictLgbtCategory) {
     return strictLgbtCategory;
   }
@@ -473,7 +474,7 @@ export function detectCategoryFromKeywords(
     }
   }
 
-  if (isLgbtContext(searchText)) {
+  if (isLgbtContext(searchText, categorySlug)) {
     return "lgbtq-community";
   }
 
@@ -492,10 +493,10 @@ export function getCategoryPlaceholder(
   description?: string | null
 ): string {
   const searchText = buildSearchText(title, tags, description);
-  const lgbtContext = isLgbtContext(searchText);
+  const lgbtContext = isLgbtContext(searchText, categorySlug);
 
   // 1. Try keyword-detected category first (more specific than slug)
-  const keywordCategory = detectCategoryFromKeywords(title, tags, description);
+  const keywordCategory = detectCategoryFromKeywords(title, tags, description, categorySlug);
   if (keywordCategory && FALLBACK_POOLS[keywordCategory]) {
     return pickFromPool(FALLBACK_POOLS[keywordCategory]);
   }
@@ -533,12 +534,16 @@ export function getImageUrl(
   description?: string | null
 ): string {
   const searchText = buildSearchText(title, tags, description);
+  const lgbtContext = isLgbtContext(searchText, categorySlug);
 
-  // 1) Always prefer an available image URL, unless it's a known tourism placeholder in LGBT context
+  // 1) Always prefer an available image URL, unless it's blocked in LGBT+ context
   if (imageUrl && imageUrl.trim().length > 0) {
     const candidate = ensureWebP(imageUrl);
-    if (isLgbtContext(searchText) && isTourismPlaceholderUrl(candidate)) {
-      return getCategoryPlaceholder(categorySlug, title, tags, description);
+    if (lgbtContext) {
+      const normalizedSource = (imageSource || "").toLowerCase();
+      if (normalizedSource === "fallback" || isBlockedTourismImageUrl(candidate)) {
+        return getCategoryPlaceholder(categorySlug, title, tags, description);
+      }
     }
     return candidate;
   }
@@ -560,15 +565,19 @@ export function buildImageErrorHandler(
   return (e: React.SyntheticEvent<HTMLImageElement>) => {
     const img = e.currentTarget;
     const attempt = parseInt(img.dataset.fallbackAttempt || "0", 10);
+    const searchText = buildSearchText(title, tags, description);
+    const lgbtContext = isLgbtContext(searchText, categorySlug);
 
     if (attempt === 0) {
       // First failure: try category-aware fallback
       img.dataset.fallbackAttempt = "1";
       img.src = getCategoryPlaceholder(categorySlug, title, tags, description);
     } else if (attempt === 1) {
-      // Second failure: try default NI placeholder
+      // Second failure: for LGBT+ keep safe context fallback only
       img.dataset.fallbackAttempt = "2";
-      img.src = DEFAULT_PLACEHOLDER;
+      img.src = lgbtContext
+        ? pickFromPool(FALLBACK_POOLS["lgbtq-community"])
+        : DEFAULT_PLACEHOLDER;
     } else {
       // All fallbacks failed – hide the broken icon
       img.style.display = "none";
