@@ -84,19 +84,25 @@ const CityPage = () => {
     enabled: !!resolvedCitySlug && !!city,
   });
 
-  // Fetch upcoming events for this city
+  // Fetch upcoming events for this city, filtered by category if active
   const { data: cityEvents } = useQuery({
-    queryKey: ["city-events", city?.id],
+    queryKey: ["city-events", city?.id, categoryFilter],
     queryFn: async () => {
       const today = new Date().toISOString().split("T")[0];
-      const { data } = await supabase
+      let query = supabase
         .from("events")
-        .select("*, cities!inner(slug, name)")
+        .select("*, cities!inner(slug, name), categories!inner(slug, name)")
         .eq("city_id", city!.id)
         .eq("status", "active")
         .gte("date_start", today)
         .order("date_start", { ascending: true })
-        .limit(6);
+        .limit(12);
+
+      if (categoryFilter) {
+        query = query.eq("categories.slug", categoryFilter);
+      }
+
+      const { data } = await query;
       return data || [];
     },
     enabled: !!city,
