@@ -45,7 +45,7 @@ const CityPage = () => {
     queryFn: async () => {
       let query = supabase
         .from("listings")
-        .select("*, cities!inner(slug, name), categories!inner(slug, name)")
+        .select("*, cities!inner(slug, name), categories!inner(slug, name, id)")
         .eq("cities.slug", resolvedCitySlug);
 
       if (categoryFilter) {
