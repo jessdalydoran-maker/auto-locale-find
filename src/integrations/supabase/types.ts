@@ -256,6 +256,7 @@ export type Database = {
           title: string
           updated_at: string
           venue_address: string | null
+          venue_listing_id: string | null
           venue_name: string | null
         }
         Insert: {
@@ -290,6 +291,7 @@ export type Database = {
           title: string
           updated_at?: string
           venue_address?: string | null
+          venue_listing_id?: string | null
           venue_name?: string | null
         }
         Update: {
@@ -324,6 +326,7 @@ export type Database = {
           title?: string
           updated_at?: string
           venue_address?: string | null
+          venue_listing_id?: string | null
           venue_name?: string | null
         }
         Relationships: [
@@ -346,6 +349,13 @@ export type Database = {
             columns: ["neighbourhood_id"]
             isOneToOne: false
             referencedRelation: "neighbourhoods"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "events_venue_listing_id_fkey"
+            columns: ["venue_listing_id"]
+            isOneToOne: false
+            referencedRelation: "listings"
             referencedColumns: ["id"]
           },
         ]
@@ -415,6 +425,7 @@ export type Database = {
           image_url: string | null
           is_approved: boolean
           is_archived: boolean
+          is_event_venue: boolean
           is_featured: boolean
           kids_friendly: boolean
           latitude: number | null
@@ -448,6 +459,7 @@ export type Database = {
           image_url?: string | null
           is_approved?: boolean
           is_archived?: boolean
+          is_event_venue?: boolean
           is_featured?: boolean
           kids_friendly?: boolean
           latitude?: number | null
@@ -481,6 +493,7 @@ export type Database = {
           image_url?: string | null
           is_approved?: boolean
           is_archived?: boolean
+          is_event_venue?: boolean
           is_featured?: boolean
           kids_friendly?: boolean
           latitude?: number | null
@@ -823,6 +836,7 @@ export type Database = {
           image_url: string | null
           is_approved: boolean
           is_archived: boolean
+          is_event_venue: boolean
           is_featured: boolean
           kids_friendly: boolean
           latitude: number | null
