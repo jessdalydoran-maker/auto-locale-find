@@ -323,7 +323,7 @@ const PlaceDetailPage = () => {
 
               {listing.price_level && (
                 <div className="flex items-start gap-2.5 text-sm">
-                  <DollarSign className="h-4 w-4 text-accent shrink-0 mt-0.5" />
+                  <DollarSign className="h-4 w-4 text-teal shrink-0 mt-0.5" />
                   <span className="text-muted-foreground">Price: {listing.price_level}</span>
                 </div>
               )}
