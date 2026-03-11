@@ -120,9 +120,23 @@ const FALLBACK_POOLS: Record<string, string[]> = {
 
   // LGBT+ / Pride / Community
   "lgbtq": [
-    "https://images.unsplash.com/photo-1562887250-9a52d844ad30?w=800&h=500&fit=crop&fm=webp&q=80",
-    "https://images.unsplash.com/photo-1561913618-35b46e18e0a5?w=800&h=500&fit=crop&fm=webp&q=80",
     "https://images.unsplash.com/photo-1620121692029-d088224ddc74?w=800&h=500&fit=crop&fm=webp&q=80",
+    "https://images.unsplash.com/photo-1573896900897-1f8d56adb227?w=800&h=500&fit=crop&fm=webp&q=80",
+    "https://images.unsplash.com/photo-1561913618-35b46e18e0a5?w=800&h=500&fit=crop&fm=webp&q=80",
+  ],
+  "lgbtq-nightlife": [
+    "https://images.unsplash.com/photo-1516450360452-9312f5e86fc7?w=800&h=500&fit=crop&fm=webp&q=80",
+    "https://images.unsplash.com/photo-1571266028243-e4733b0f0bb0?w=800&h=500&fit=crop&fm=webp&q=80",
+    "https://images.unsplash.com/photo-1543007630-9710e4a00a20?w=800&h=500&fit=crop&fm=webp&q=80",
+  ],
+  "lgbtq-community": [
+    "https://images.unsplash.com/photo-1529156069898-49953e39b3ac?w=800&h=500&fit=crop&fm=webp&q=80",
+    "https://images.unsplash.com/photo-1491438590914-bc09fcaaf77a?w=800&h=500&fit=crop&fm=webp&q=80",
+    "https://images.unsplash.com/photo-1517457373958-b7bdd4587205?w=800&h=500&fit=crop&fm=webp&q=80",
+  ],
+  "choir": [
+    "https://images.unsplash.com/photo-1477233534935-f5e6fe7c1159?w=800&h=500&fit=crop&fm=webp&q=80",
+    "https://images.unsplash.com/photo-1514320291840-2e0a9bf2a9ae?w=800&h=500&fit=crop&fm=webp&q=80",
   ],
 
   // Other categories
