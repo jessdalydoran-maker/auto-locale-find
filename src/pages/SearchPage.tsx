@@ -6,6 +6,8 @@ import { ListingCard } from "@/components/ListingCard";
 import { SearchBar } from "@/components/SearchBar";
 import { parseSearchIntent } from "@/lib/search-intent";
 import { Search } from "lucide-react";
+import { deduplicateListings, filterCompleteListings } from "@/lib/page-validation";
+import { useMemo } from "react";
 
 const SearchPage = () => {
   const [searchParams] = useSearchParams();
