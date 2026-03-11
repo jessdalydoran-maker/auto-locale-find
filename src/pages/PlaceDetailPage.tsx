@@ -3,10 +3,11 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Layout } from "@/components/Layout";
 import { ListingCard } from "@/components/ListingCard";
+import { EventCard } from "@/components/EventCard";
 import { getImageUrl, isPlaceholderImage, generateListingAltText, getCategoryPlaceholder } from "@/lib/image-utils";
 import {
   Star, MapPin, ExternalLink, Globe, ChevronRight, ArrowLeft,
-  Clock, Tag, DollarSign, Phone, Navigation,
+  Clock, Tag, DollarSign, Phone, Navigation, CalendarDays,
 } from "lucide-react";
 import { useEffect } from "react";
 import NotFound from "./NotFound";
