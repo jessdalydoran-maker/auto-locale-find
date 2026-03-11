@@ -7,7 +7,8 @@ import { ListingCard } from "@/components/ListingCard";
 import { EventCard } from "@/components/EventCard";
 import { NeighbourhoodCard } from "@/components/NeighbourhoodCard";
 import { AdPlaceholder } from "@/components/AdPlaceholder";
-import { ArrowRight, Calendar, Utensils, MapPin, Star, Sparkles, Heart, TrendingUp, Moon, Users, CloudRain, Coins, PartyPopper, Coffee } from "lucide-react";
+import { ArrowRight, Calendar, Utensils, MapPin, Star, Sparkles, Heart, TrendingUp, Moon, Users, CloudRain, Coins, PartyPopper, Coffee, Plus } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import { getImageUrl, getCategoryPlaceholder } from "@/lib/image-utils";
 import { Link } from "react-router-dom";
 
@@ -172,19 +173,21 @@ const Index = () => {
     <Layout>
       {/* Hero */}
       <section className="bg-card border-b border-border">
-        <div className="container mx-auto px-4 py-12 md:py-16 text-center">
-          <h1 className="font-display font-bold text-3xl md:text-[2.75rem] text-foreground mb-3 leading-[1.15] tracking-tight">
-            Discover the Best of
-            <br />
-            <span className="text-accent">Belfast & Northern Ireland</span>
+        <div className="container mx-auto px-4 py-14 md:py-20 text-center">
+          <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-accent/10 text-accent rounded-full text-xs font-medium mb-5">
+            <MapPin className="h-3 w-3" />
+            Northern Ireland's Local Discovery Platform
+          </div>
+          <h1 className="font-display font-bold text-3xl md:text-[2.75rem] text-foreground mb-4 leading-[1.15] tracking-tight max-w-2xl mx-auto">
+            Find Things To Do Across Northern Ireland
           </h1>
           <p className="text-muted-foreground text-[15px] md:text-base max-w-xl mx-auto mb-8 leading-relaxed">
-            Find events, things to do, restaurants, cafes, bars and hidden gems across Belfast and beyond.
+            Discover events, markets, restaurants, family activities and hidden gems near you.
           </p>
           <div className="max-w-lg mx-auto mb-8">
-            <SearchBar large placeholder="Search events, restaurants, things to do..." />
+            <SearchBar large placeholder="Search by event, place, town or category..." />
           </div>
-          <div className="flex flex-wrap justify-center gap-2">
+          <div className="flex flex-wrap justify-center gap-2 mb-6">
             {QUICK_LINKS.map((link) => (
               <Link
                 key={link.to}
@@ -195,6 +198,20 @@ const Index = () => {
                 {link.label}
               </Link>
             ))}
+          </div>
+          <div className="flex justify-center gap-3">
+            <Link to="/submit-venue">
+              <Button variant="outline" size="sm" className="text-[13px] gap-1.5">
+                <Plus className="h-3.5 w-3.5" />
+                Submit a Venue
+              </Button>
+            </Link>
+            <Link to="/suggest-event">
+              <Button variant="outline" size="sm" className="text-[13px] gap-1.5">
+                <Calendar className="h-3.5 w-3.5" />
+                Suggest an Event
+              </Button>
+            </Link>
           </div>
         </div>
       </section>

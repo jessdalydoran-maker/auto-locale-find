@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { Search, Menu, X, ChevronDown } from "lucide-react";
+import { Search, Menu, X, ChevronDown, MapPin } from "lucide-react";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { SearchBar } from "./SearchBar";
@@ -47,10 +47,13 @@ export const Header = () => {
       <div className="container mx-auto px-4">
         <div className="flex items-center justify-between h-14">
           <Link to="/" className="flex items-center gap-2">
-            <div className="w-7 h-7 rounded-lg bg-foreground flex items-center justify-center">
-              <span className="font-display font-bold text-primary-foreground text-[10px] tracking-tight">BL</span>
+            <div className="w-7 h-7 rounded-lg bg-accent flex items-center justify-center">
+              <MapPin className="h-4 w-4 text-accent-foreground" />
             </div>
-            <span className="font-display font-bold text-[15px] text-foreground">BestLocal</span>
+            <div className="flex flex-col leading-none">
+              <span className="font-display font-bold text-[15px] text-foreground">City Scout Guide</span>
+              <span className="text-[10px] text-muted-foreground hidden sm:block">Discover Northern Ireland</span>
+            </div>
           </Link>
 
           <nav className="hidden lg:flex items-center gap-0.5">

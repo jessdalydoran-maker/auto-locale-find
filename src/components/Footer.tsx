@@ -1,4 +1,5 @@
 import { Link } from "react-router-dom";
+import { MapPin } from "lucide-react";
 
 const FOOTER_CITIES = [
   { name: "Belfast", slug: "belfast" },
@@ -38,13 +39,13 @@ export const Footer = () => {
         <div className="grid grid-cols-2 md:grid-cols-5 gap-8">
           <div className="col-span-2 md:col-span-1">
             <div className="flex items-center gap-2 mb-3">
-              <div className="w-7 h-7 rounded-lg bg-foreground flex items-center justify-center">
-                <span className="font-display font-bold text-primary-foreground text-[10px] tracking-tight">BL</span>
+              <div className="w-7 h-7 rounded-lg bg-accent flex items-center justify-center">
+                <MapPin className="h-4 w-4 text-accent-foreground" />
               </div>
-              <span className="font-display font-bold text-[15px] text-foreground">BestLocal</span>
+              <span className="font-display font-bold text-[15px] text-foreground">City Scout Guide</span>
             </div>
             <p className="text-[13px] text-muted-foreground leading-relaxed">
-              Discover events, things to do, restaurants and hidden gems across Belfast, Northern Ireland and the UK.
+              Discover events, markets, restaurants, family activities and hidden gems across Northern Ireland.
             </p>
           </div>
           <div>
@@ -90,11 +91,16 @@ export const Footer = () => {
             </nav>
           </div>
           <div>
-            <h4 className="font-display font-semibold text-[13px] text-foreground mb-3">About</h4>
+            <h4 className="font-display font-semibold text-[13px] text-foreground mb-3">Contribute</h4>
             <nav className="flex flex-col gap-1.5">
+              <Link to="/submit-venue" className="text-[13px] text-muted-foreground hover:text-foreground transition-colors">
+                Submit a Venue
+              </Link>
+              <Link to="/suggest-event" className="text-[13px] text-muted-foreground hover:text-foreground transition-colors">
+                Suggest an Event
+              </Link>
               <span className="text-[13px] text-muted-foreground">Contact</span>
               <span className="text-[13px] text-muted-foreground">Privacy Policy</span>
-              <span className="text-[13px] text-muted-foreground">Terms of Service</span>
               <Link to="/admin" className="text-[13px] text-muted-foreground hover:text-foreground transition-colors">
                 Admin
               </Link>
@@ -125,7 +131,7 @@ export const Footer = () => {
               </Link>
             ))}
           </div>
-          <p className="text-xs text-muted-foreground">© {new Date().getFullYear()} BestLocal. All rights reserved.</p>
+          <p className="text-xs text-muted-foreground">© {new Date().getFullYear()} City Scout Guide. All rights reserved.</p>
         </div>
       </div>
     </footer>
