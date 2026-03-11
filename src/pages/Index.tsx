@@ -551,7 +551,7 @@ const Index = () => {
             <Link
               key={combo}
               to={`/${combo}`}
-              className="text-xs px-3 py-1.5 bg-card border border-border text-muted-foreground rounded-full hover:border-accent/40 hover:text-accent transition-colors"
+              className="text-xs px-3 py-1.5 bg-card border border-border text-muted-foreground rounded-full hover:border-primary/40 hover:text-primary transition-colors"
             >
               {combo.split("-").map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(" ")}
             </Link>
