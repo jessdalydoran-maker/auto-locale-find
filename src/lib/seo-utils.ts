@@ -45,6 +45,8 @@ const KNOWN_TIME_INTENTS = [
   "today",
   "tomorrow",
   "rainy-day",
+  "next-7-days",
+  "next-30-days",
 ];
 
 const CATEGORY_ALIASES: Record<string, string> = {
