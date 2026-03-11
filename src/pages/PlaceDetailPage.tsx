@@ -3,10 +3,11 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Layout } from "@/components/Layout";
 import { ListingCard } from "@/components/ListingCard";
+import { EventCard } from "@/components/EventCard";
 import { getImageUrl, isPlaceholderImage, generateListingAltText, getCategoryPlaceholder } from "@/lib/image-utils";
 import {
   Star, MapPin, ExternalLink, Globe, ChevronRight, ArrowLeft,
-  Clock, Tag, DollarSign, Phone, Navigation,
+  Clock, Tag, DollarSign, Phone, Navigation, CalendarDays,
 } from "lucide-react";
 import { useEffect } from "react";
 import NotFound from "./NotFound";
@@ -45,6 +46,26 @@ const PlaceDetailPage = () => {
       return data || [];
     },
     enabled: !!listing,
+  });
+
+  // Venue events: upcoming events linked to this venue
+  const { data: venueEvents } = useQuery({
+    queryKey: ["venue-events", listing?.id],
+    queryFn: async () => {
+      if (!listing) return [];
+      const today = new Date().toISOString().split("T")[0];
+      // Match by venue_listing_id or by venue_name
+      const { data } = await supabase
+        .from("events")
+        .select("*, cities!inner(name, slug), categories(name, slug)")
+        .or(`venue_listing_id.eq.${listing.id},venue_name.ilike.%${listing.name.replace(/'/g, "''")}%`)
+        .gte("date_start", today)
+        .eq("status", "active")
+        .order("date_start", { ascending: true })
+        .limit(6);
+      return data || [];
+    },
+    enabled: !!listing && !!(listing as any).is_event_venue,
   });
 
   const city = listing?.cities as any;
@@ -350,6 +371,45 @@ const PlaceDetailPage = () => {
             </div>
           </div>
         </div>
+
+        {/* Upcoming Events at this Venue */}
+        {venueEvents && venueEvents.length > 0 && (
+          <section className="mt-12 pt-8 border-t border-border">
+            <div className="flex items-center gap-2 mb-6">
+              <CalendarDays className="h-5 w-5 text-accent" />
+              <h2 className="font-display font-semibold text-lg text-foreground">
+                Upcoming Events at {listing.name}
+              </h2>
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+              {venueEvents.map((event: any, i: number) => (
+                <EventCard
+                  key={event.id}
+                  title={event.title}
+                  slug={event.slug}
+                  shortDescription={event.short_description}
+                  dateStart={event.date_start}
+                  dateEnd={event.date_end}
+                  timeStart={event.time_start}
+                  venueName={event.venue_name}
+                  venueAddress={event.venue_address}
+                  imageUrl={event.image_url}
+                  imageSource={event.image_source}
+                  imageAlt={event.image_alt}
+                  imageStatus={event.image_status}
+                  categorySlug={event.categories?.slug}
+                  cityName={(event.cities as any)?.name}
+                  isFree={event.is_free}
+                  isFamilyFriendly={event.is_family_friendly}
+                  ticketUrl={event.ticket_url}
+                  price={event.price}
+                  tags={event.tags || []}
+                  index={i}
+                />
+              ))}
+            </div>
+          </section>
+        )}
 
         {/* Related Listings */}
         {relatedListings && relatedListings.length > 0 && (
