@@ -15,16 +15,16 @@
     --popover: 0 0% 100%;
     --popover-foreground: 220 20% 14%;
 
-    --primary: 220 20% 14%;
+    --primary: 262 53% 50%;
     --primary-foreground: 0 0% 100%;
 
-    --secondary: 216 12% 95%;
-    --secondary-foreground: 220 20% 14%;
+    --secondary: 179 44% 33%;
+    --secondary-foreground: 0 0% 100%;
 
     --muted: 216 12% 95%;
     --muted-foreground: 220 10% 46%;
 
-    --accent: 217 91% 53%;
+    --accent: 38 92% 50%;
     --accent-foreground: 0 0% 100%;
 
     --destructive: 0 84% 60%;
@@ -32,21 +32,23 @@
 
     --border: 220 13% 91%;
     --input: 220 13% 91%;
-    --ring: 217 91% 53%;
+    --ring: 262 53% 50%;
 
     --radius: 0.625rem;
 
     --card-shadow: 0 1px 2px 0 hsl(220 20% 14% / 0.03), 0 1px 3px -1px hsl(220 20% 14% / 0.04);
     --card-shadow-hover: 0 4px 16px -4px hsl(220 20% 14% / 0.08), 0 2px 6px -2px hsl(220 20% 14% / 0.04);
 
+    --brand-light: 160 47% 94%;
+
     --sidebar-background: 0 0% 100%;
     --sidebar-foreground: 220 20% 14%;
-    --sidebar-primary: 220 20% 14%;
+    --sidebar-primary: 262 53% 50%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 216 12% 95%;
+    --sidebar-accent: 160 47% 94%;
     --sidebar-accent-foreground: 220 20% 14%;
     --sidebar-border: 220 13% 91%;
-    --sidebar-ring: 217 91% 53%;
+    --sidebar-ring: 262 53% 50%;
   }
 }
 
