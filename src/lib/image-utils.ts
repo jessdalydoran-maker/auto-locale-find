@@ -271,6 +271,16 @@ const KEYWORD_CATEGORY_MAP: Array<{ keywords: string[]; category: string }> = [
     keywords: ["quiz", "pub quiz", "trivia"],
     category: "bars",
   },
+  // Shopping / Retail
+  {
+    keywords: ["shopping", "retail", "outlet", "mall", "shopping centre", "retail park"],
+    category: "shopping",
+  },
+  // Leisure / Entertainment
+  {
+    keywords: ["bowling", "trampoline", "airtastic", "leisure", "soft play", "climbing wall", "arcade", "laser tag", "activity centre", "entertainment", "vertigo", "leisureplex"],
+    category: "leisure-entertainment",
+  },
   // (Sports moved above live-music for priority)
 ];
 
