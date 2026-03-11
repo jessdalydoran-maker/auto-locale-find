@@ -1553,7 +1553,7 @@ const ProgrammaticPage = () => {
                         .map(([cityGroupName, cityListings]) => (
                           <div key={cityGroupName}>
                             <h3 className="font-display font-semibold text-lg text-foreground mb-4 flex items-center gap-2">
-                              <MapPin className="h-4 w-4 text-accent" />
+                              <MapPin className="h-4 w-4 text-teal" />
                               {cityGroupName}
                               <span className="text-xs text-muted-foreground font-normal">({cityListings.length})</span>
                             </h3>
