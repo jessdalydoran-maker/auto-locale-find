@@ -148,6 +148,8 @@ const ProgrammaticPage = () => {
 
   // Location filter state for NI-wide pages
   const [locationFilter, setLocationFilter] = useState<string | null>(null);
+  // Custom calendar date filter
+  const [customDate, setCustomDate] = useState<Date | undefined>(undefined);
 
   // NI cities for location filter
   const niCities = useMemo(() => {
