@@ -25,8 +25,8 @@ export const CATEGORY_PLACEHOLDERS: Record<string, string> = {
   "italian": "https://images.unsplash.com/photo-1498579150354-977475b7ea0b?w=800&h=500&fit=crop&fm=webp&q=80",
 
   // Activities & Attractions
-  "things-to-do": "https://images.unsplash.com/photo-1501594907352-04cda38ebc29?w=800&h=500&fit=crop&fm=webp&q=80",
-  "attractions": "https://images.unsplash.com/photo-1506744038136-46273834b3fb?w=800&h=500&fit=crop&fm=webp&q=80",
+  "things-to-do": "https://images.unsplash.com/photo-1533154683836-84ea7a0bc310?w=800&h=500&fit=crop&fm=webp&q=80", // Belfast skyline
+  "attractions": "https://images.unsplash.com/photo-1590073844006-33379778ae09?w=800&h=500&fit=crop&fm=webp&q=80", // Giant's Causeway
   "museums": "https://images.unsplash.com/photo-1565060299509-453c4f3bc905?w=800&h=500&fit=crop&fm=webp&q=80",
   "tours": "https://images.unsplash.com/photo-1469854523086-cc02fe5d8800?w=800&h=500&fit=crop&fm=webp&q=80",
   "parks": "https://images.unsplash.com/photo-1441974231531-c6227db76b6e?w=800&h=500&fit=crop&fm=webp&q=80",
@@ -36,7 +36,7 @@ export const CATEGORY_PLACEHOLDERS: Record<string, string> = {
   "indoor-activities": "https://images.unsplash.com/photo-1545558014-8692077e9b5c?w=800&h=500&fit=crop&fm=webp&q=80",
   "family-activities": "https://images.unsplash.com/photo-1472162072942-cd5147eb3902?w=800&h=500&fit=crop&fm=webp&q=80",
   "date-night": "https://images.unsplash.com/photo-1529543544282-ea8407407d89?w=800&h=500&fit=crop&fm=webp&q=80",
-  "hidden-gems": "https://images.unsplash.com/photo-1476514525535-07fb3b4ae5f1?w=800&h=500&fit=crop&fm=webp&q=80",
+  "hidden-gems": "https://images.unsplash.com/photo-1564959130747-897a8e5c33c6?w=800&h=500&fit=crop&fm=webp&q=80", // NI coastal scenery
   "gyms": "https://images.unsplash.com/photo-1534438327276-14e5300c3a48?w=800&h=500&fit=crop&fm=webp&q=80",
 
   // Events
@@ -133,7 +133,7 @@ export function getEventImageByKeywords(
   return null;
 }
 
-const DEFAULT_PLACEHOLDER = "https://images.unsplash.com/photo-1501594907352-04cda38ebc29?w=800&h=500&fit=crop&fm=webp&q=80";
+const DEFAULT_PLACEHOLDER = "https://images.unsplash.com/photo-1533154683836-84ea7a0bc310?w=800&h=500&fit=crop&fm=webp&q=80"; // Belfast skyline
 
 /** Trusted image sources that bypass verification */
 const TRUSTED_SOURCES = new Set(["google_places", "manual", "official", "website"]);
