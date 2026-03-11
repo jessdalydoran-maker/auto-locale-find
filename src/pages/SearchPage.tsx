@@ -341,7 +341,7 @@ const SearchPage = () => {
 
   // Search events — strict location-first (same 3-tier hierarchy)
   const { data: eventResults } = useQuery({
-    queryKey: ["search-events", query, resolvedCity?.id, nearbyCities?.map(c => c.id).join(",")],
+    queryKey: ["search-events", query, resolvedCity?.id, nearbyCities?.map(c => c.id).join(","), intent.strictTownMode],
     queryFn: async () => {
       if (!query.trim()) return { local: [] as any[], nearby: [] as any[] };
       const today = new Date().toISOString().split("T")[0];
