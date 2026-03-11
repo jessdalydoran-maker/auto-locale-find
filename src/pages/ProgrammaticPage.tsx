@@ -934,10 +934,41 @@ const ProgrammaticPage = () => {
   // Filter options
   const filterOptions = useMemo(() => {
     if (!parsed || !city) return [];
-    const filters: { label: string; value: string; url: string }[] = [];
-    // For NI-wide pages, omit city slug from URLs (parser defaults to NI-wide)
+    const filters: { label: string; value: string; url: string; active?: boolean }[] = [];
     const urlCity = isNIWide ? null : parsed.citySlug;
 
+    // For event pages, show comprehensive time filters
+    if (showEvents) {
+      const TIME_FILTERS = [
+        { label: "All Upcoming", value: "", time: null },
+        { label: "Tonight", value: "tonight", time: "tonight" },
+        { label: "Tomorrow", value: "tomorrow", time: "tomorrow" },
+        { label: "This Weekend", value: "this-weekend", time: "this-weekend" },
+        { label: "This Week", value: "this-week", time: "this-week" },
+      ];
+
+      for (const tf of TIME_FILTERS) {
+        const isActive = (parsed.timeIntent || null) === tf.time;
+        filters.push({
+          label: tf.label,
+          value: tf.value,
+          url: buildPageUrl(parsed.modifierSlug, parsed.categorySlug, parsed.neighbourhoodSlug, urlCity as any, tf.time),
+          active: isActive,
+        });
+      }
+
+      // Add modifier filters
+      if (parsed.modifierSlug !== "free") {
+        filters.push({ label: "Free", value: "free", url: buildPageUrl("free", parsed.categorySlug, parsed.neighbourhoodSlug, urlCity as any, parsed.timeIntent) });
+      }
+      if (parsed.modifierSlug !== "family") {
+        filters.push({ label: "Family", value: "family", url: buildPageUrl("family", parsed.categorySlug, parsed.neighbourhoodSlug, urlCity as any, parsed.timeIntent) });
+      }
+
+      return filters;
+    }
+
+    // For non-event pages, keep existing filter logic
     if (!parsed.timeIntent) {
       filters.push(
         { label: "Today", value: "today", url: buildPageUrl(parsed.modifierSlug, parsed.categorySlug, parsed.neighbourhoodSlug, urlCity as any, "today") },
@@ -953,7 +984,7 @@ const ProgrammaticPage = () => {
     }
 
     return filters;
-  }, [parsed, city]);
+  }, [parsed, city, showEvents, isNIWide]);
 
   return (
     <Layout>
