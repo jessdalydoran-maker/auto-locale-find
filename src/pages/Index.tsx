@@ -263,7 +263,11 @@ const Index = () => {
               <Link
                 key={link.to}
                 to={link.to}
-                className="flex items-center gap-1.5 px-3.5 py-2 bg-secondary text-foreground rounded-full text-[13px] font-medium hover:text-primary hover:bg-primary/10 transition-colors"
+                className={`flex items-center gap-1.5 px-3.5 py-2 rounded-full text-[13px] font-medium transition-colors ${
+                  link.label === "LGBT+"
+                    ? "bg-accent text-accent-foreground hover:bg-primary hover:text-primary-foreground"
+                    : "bg-secondary text-foreground hover:text-primary hover:bg-primary/10"
+                }`}
               >
                 <link.icon className="h-3.5 w-3.5" />
                 {link.label}
