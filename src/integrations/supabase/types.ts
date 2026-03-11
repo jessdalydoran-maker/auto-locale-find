@@ -119,6 +119,7 @@ export type Database = {
       cities: {
         Row: {
           country: string
+          county: string | null
           created_at: string
           description: string | null
           id: string
@@ -127,10 +128,12 @@ export type Database = {
           latitude: number | null
           longitude: number | null
           name: string
+          nearby_city_slugs: string[] | null
           slug: string
         }
         Insert: {
           country?: string
+          county?: string | null
           created_at?: string
           description?: string | null
           id?: string
@@ -139,10 +142,12 @@ export type Database = {
           latitude?: number | null
           longitude?: number | null
           name: string
+          nearby_city_slugs?: string[] | null
           slug: string
         }
         Update: {
           country?: string
+          county?: string | null
           created_at?: string
           description?: string | null
           id?: string
@@ -151,6 +156,7 @@ export type Database = {
           latitude?: number | null
           longitude?: number | null
           name?: string
+          nearby_city_slugs?: string[] | null
           slug?: string
         }
         Relationships: []
@@ -394,6 +400,7 @@ export type Database = {
       listings: {
         Row: {
           address: string | null
+          age_groups: string[] | null
           audience_tags: string[] | null
           category_id: string
           city_id: string
@@ -426,6 +433,7 @@ export type Database = {
         }
         Insert: {
           address?: string | null
+          age_groups?: string[] | null
           audience_tags?: string[] | null
           category_id: string
           city_id: string
@@ -458,6 +466,7 @@ export type Database = {
         }
         Update: {
           address?: string | null
+          age_groups?: string[] | null
           audience_tags?: string[] | null
           category_id?: string
           city_id?: string
@@ -799,6 +808,7 @@ export type Database = {
         }
         Returns: {
           address: string | null
+          age_groups: string[] | null
           audience_tags: string[] | null
           category_id: string
           city_id: string
