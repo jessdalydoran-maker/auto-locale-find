@@ -3,7 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Layout } from "@/components/Layout";
 import { EventCard } from "@/components/EventCard";
-import { getImageUrl, getEventImageByKeywords, isPlaceholderImage, generateEventAltText } from "@/lib/image-utils";
+import { getImageUrl, getEventImageByKeywords, isPlaceholderImage, generateEventAltText, getCategoryPlaceholder } from "@/lib/image-utils";
 import {
   Calendar, Clock, MapPin, Ticket, ExternalLink, ChevronRight,
   ArrowLeft, Users, Tag, Globe,
@@ -193,6 +193,11 @@ const EventDetailPage = () => {
             className="w-full h-full object-cover"
             width={1200}
             height={400}
+            onError={(e) => {
+              const img = e.currentTarget;
+              const fb = getCategoryPlaceholder(category?.slug || "events");
+              if (img.src !== fb) img.src = fb;
+            }}
           />
           <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent" />
           <div className="absolute bottom-0 left-0 right-0 p-6 md:p-8">
