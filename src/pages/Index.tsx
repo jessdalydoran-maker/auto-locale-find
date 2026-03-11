@@ -312,7 +312,7 @@ const Index = () => {
               <Link
                 key={link.to}
                 to={link.to}
-                className="text-xs px-3 py-1.5 bg-secondary text-muted-foreground rounded-full hover:text-accent transition-colors"
+                className="text-xs px-3 py-1.5 bg-secondary text-foreground rounded-full hover:text-primary transition-colors"
               >
                 {link.label}
               </Link>
