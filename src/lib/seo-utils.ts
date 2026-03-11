@@ -181,11 +181,6 @@ export function parseSlug(
   let categorySlug = remaining || "things-to-do";
 
   // Apply aliases — some aliases carry embedded time intents
-  const TIME_EMBEDDED_ALIASES: Record<string, { category: string; time: string }> = {
-    "events-tonight": { category: "events", time: "tonight" },
-    "events-tomorrow": { category: "events", time: "tomorrow" },
-  };
-
   if (TIME_EMBEDDED_ALIASES[categorySlug]) {
     const alias = TIME_EMBEDDED_ALIASES[categorySlug];
     categorySlug = alias.category;
