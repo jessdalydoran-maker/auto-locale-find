@@ -77,11 +77,8 @@ const ProgrammaticPageOrCity = () => {
   // Exact city match → CityPage
   if (city) return <CityPage />;
 
-  // Contains hyphens or matches known patterns → programmatic page
-  if (slug.includes("-")) return <ProgrammaticPage />;
-
-  // Nothing matched
-  return <NotFound />;
+  // Everything else → programmatic page (handles its own 404 for unmatched slugs)
+  return <ProgrammaticPage />;
 };
 
 export default App;
