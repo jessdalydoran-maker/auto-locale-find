@@ -130,7 +130,7 @@ export const EventCard = ({
 
         <div className="space-y-1">
           <div className="flex items-center gap-1.5 text-[11px] text-muted-foreground">
-            <Calendar className="h-3 w-3 shrink-0 text-accent" />
+            <Calendar className="h-3 w-3 shrink-0 text-teal" />
             <span>
               {formatDate(dateStart)}
               {dateEnd && dateEnd !== dateStart && ` – ${formatDate(dateEnd)}`}
