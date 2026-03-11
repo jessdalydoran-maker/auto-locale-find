@@ -310,7 +310,7 @@ const EventDetailPage = () => {
 
               {event.price && !event.is_free && (
                 <div className="flex items-start gap-2.5 text-sm">
-                  <Ticket className="h-4 w-4 text-accent shrink-0 mt-0.5" />
+                  <Ticket className="h-4 w-4 text-teal shrink-0 mt-0.5" />
                   <span className="text-muted-foreground">{event.price}</span>
                 </div>
               )}
