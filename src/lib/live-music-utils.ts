@@ -48,6 +48,18 @@ export const MUSIC_EXCLUDE_TERMS = [
   "workshop", "workshops", "lesson", "lessons",
   "recording", "tutorial", "music theory",
   "instrument repair", "piano tuning",
+  // Sports exclusions
+  "football", "rugby", "hockey", "ice hockey", "hurling", "gaelic",
+  "soccer", "match day", "league game", "arena sports",
+  "cricket", "boxing", "wrestling", "athletics",
+  "sports fixture", "fixture", "vs ", " v ",
+];
+
+/** Tags that should exclude from live music */
+export const MUSIC_EXCLUDE_TAGS = [
+  "sport", "sports", "football", "rugby", "hockey", "ice-hockey",
+  "hurling", "gaelic", "soccer", "match", "game", "league",
+  "workshop", "workshops", "class", "classes",
 ];
 
 /** Tags on events that qualify as music */
