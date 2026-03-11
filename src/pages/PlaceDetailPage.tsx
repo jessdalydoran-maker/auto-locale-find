@@ -3,7 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Layout } from "@/components/Layout";
 import { ListingCard } from "@/components/ListingCard";
-import { getImageUrl, isPlaceholderImage, generateListingAltText } from "@/lib/image-utils";
+import { getImageUrl, isPlaceholderImage, generateListingAltText, getCategoryPlaceholder } from "@/lib/image-utils";
 import {
   Star, MapPin, ExternalLink, Globe, ChevronRight, ArrowLeft,
   Clock, Tag, DollarSign, Phone, Navigation,
