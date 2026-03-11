@@ -620,7 +620,7 @@ const Index = () => {
                     onError={buildImageErrorHandler("live-music", item.title)}
                   />
                   <span className="absolute top-2 left-2 bg-card/90 backdrop-blur-sm text-foreground text-[10px] font-semibold px-2 py-0.5 rounded">
-                    Live Music
+                    {(item as any).type === "venue" ? "Music Venue" : "Live Music"}
                   </span>
                   {item.badge && (
                     <span className="absolute top-2 right-2 bg-teal text-teal-foreground text-[10px] font-semibold px-2 py-0.5 rounded">
