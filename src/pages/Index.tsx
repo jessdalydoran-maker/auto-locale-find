@@ -326,13 +326,18 @@ const Index = () => {
               >
                 <div className="relative aspect-[16/10] overflow-hidden">
                   <img
-                    src={item.imageUrl || getCategoryPlaceholder(item.category.toLowerCase())}
+                    src={item.imageUrl || getCategoryPlaceholder(item.category.toLowerCase(), item.title)}
                     alt={item.imageAlt || `${item.title} — ${item.category} in Belfast`}
                     className="w-full h-full object-cover group-hover:scale-[1.03] transition-transform duration-300"
                     loading="lazy"
                     decoding="async"
                     width={400}
                     height={250}
+                    onError={(e) => {
+                      const img = e.currentTarget;
+                      const fb = getCategoryPlaceholder(item.category.toLowerCase(), item.title);
+                      if (img.src !== fb) img.src = fb;
+                    }}
                   />
                   <span className="absolute top-2 left-2 bg-card/90 backdrop-blur-sm text-foreground text-[10px] font-semibold px-2 py-0.5 rounded">
                     {item.category}
