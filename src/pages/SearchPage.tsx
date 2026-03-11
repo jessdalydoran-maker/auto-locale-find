@@ -105,7 +105,10 @@ const SearchPage = () => {
         }
       }
 
-      if (resolvedCity.nearby_city_slugs?.length) {
+      if (
+        resolvedCity.nearby_city_slugs?.length &&
+        (resolvedCity.latitude == null || resolvedCity.longitude == null || nearby.length === 0)
+      ) {
         const { data: configuredNearby } = await supabase
           .from("cities")
           .select("id, slug, name")
