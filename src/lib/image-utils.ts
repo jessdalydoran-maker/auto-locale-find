@@ -34,9 +34,9 @@ const FALLBACK_POOLS: Record<string, string[]> = {
 
   // Restaurants / Dining / Food
   "restaurants": [
-    "https://images.unsplash.com/photo-1414235077428-338989a2e8c0?w=800&h=500&fit=crop&fm=webp&q=80",
     "https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=800&h=500&fit=crop&fm=webp&q=80",
     "https://images.unsplash.com/photo-1559339352-11d035aa65de?w=800&h=500&fit=crop&fm=webp&q=80",
+    "https://images.unsplash.com/photo-1550966871-3ed3cdb51f3a?w=800&h=500&fit=crop&fm=webp&q=80",
   ],
   "brunch": [
     "https://images.unsplash.com/photo-1525351484163-7529414344d8?w=800&h=500&fit=crop&fm=webp&q=80",
