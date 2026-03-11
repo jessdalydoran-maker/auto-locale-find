@@ -375,6 +375,7 @@ const ProgrammaticPage = () => {
       }
 
       if (isFamilyPage) {
+        // First: fetch from the specific city
         let familyQuery = supabase
           .from("listings")
           .select("*, cities!inner(slug, name), categories!inner(slug, name)")
@@ -395,7 +396,8 @@ const ProgrammaticPage = () => {
           results = familyData;
         }
 
-        results = results.filter((l: any) => {
+        // Filter for family-tagged listings
+        const filterFamily = (items: any[]) => items.filter((l: any) => {
           const tags: string[] = (l as any).audience_tags || [];
           const catSlug = (l.categories as any)?.slug || "";
           const isFamilyTagged = tags.includes("family") || tags.includes("kids") || (l as any).family_friendly === true || (l as any).kids_friendly === true;
@@ -404,6 +406,37 @@ const ProgrammaticPage = () => {
           return isFamilyTagged;
         });
 
+        results = filterFamily(results);
+
+        // RADIUS EXPANSION: If we have few results, expand to nearby towns
+        if (results.length < 8 && !isNIWide) {
+          // Fetch nearby_city_slugs for the current city
+          const { data: cityData } = await supabase
+            .from("cities")
+            .select("nearby_city_slugs")
+            .eq("slug", parsed!.citySlug)
+            .maybeSingle();
+
+          const nearbySlugs: string[] = (cityData as any)?.nearby_city_slugs || [];
+          if (nearbySlugs.length > 0) {
+            const existingIds = new Set(results.map((r: any) => r.id));
+            // Fetch from nearby towns
+            const { data: nearbyFamilyData } = await supabase
+              .from("listings")
+              .select("*, cities!inner(slug, name), categories!inner(slug, name)")
+              .eq("is_approved", true)
+              .in("cities.slug", nearbySlugs)
+              .order("rating", { ascending: false })
+              .limit(100);
+
+            if (nearbyFamilyData) {
+              const nearbyFiltered = filterFamily(nearbyFamilyData).filter((l: any) => !existingIds.has(l.id));
+              results = [...results, ...nearbyFiltered];
+            }
+          }
+        }
+
+        // Sort: prioritise family+kids tagged, then family, then kids
         results.sort((a: any, b: any) => {
           const aTags: string[] = a.audience_tags || [];
           const bTags: string[] = b.audience_tags || [];
