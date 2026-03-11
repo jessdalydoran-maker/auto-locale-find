@@ -380,14 +380,41 @@ export function getImageUrl(
   tags?: string[] | null,
   description?: string | null
 ): string {
-  const isVerified = imageStatus === "verified";
-  const isTrustedSource = imageSource ? TRUSTED_SOURCES.has(imageSource) : false;
-
-  if (imageUrl && (isVerified || isTrustedSource)) {
+  // Try the actual image URL if it exists and looks valid
+  if (imageUrl && imageUrl.trim().length > 0) {
     return ensureWebP(imageUrl);
   }
 
   return getCategoryPlaceholder(categorySlug, title, tags, description);
+}
+
+/**
+ * Build a robust onError handler that chains: category fallback → default placeholder.
+ * Prevents infinite loops by tracking attempts on the element.
+ */
+export function buildImageErrorHandler(
+  categorySlug?: string | null,
+  title?: string | null,
+  tags?: string[] | null,
+  description?: string | null
+): (e: React.SyntheticEvent<HTMLImageElement>) => void {
+  return (e: React.SyntheticEvent<HTMLImageElement>) => {
+    const img = e.currentTarget;
+    const attempt = parseInt(img.dataset.fallbackAttempt || "0", 10);
+
+    if (attempt === 0) {
+      // First failure: try category-aware fallback
+      img.dataset.fallbackAttempt = "1";
+      img.src = getCategoryPlaceholder(categorySlug, title, tags, description);
+    } else if (attempt === 1) {
+      // Second failure: try default NI placeholder
+      img.dataset.fallbackAttempt = "2";
+      img.src = DEFAULT_PLACEHOLDER;
+    } else {
+      // All fallbacks failed – hide the broken icon
+      img.style.display = "none";
+    }
+  };
 }
 
 /**
