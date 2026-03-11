@@ -155,29 +155,38 @@ const SearchPage = () => {
         : { data: [] as Array<{ id: string; slug: string }> };
       const categoryIds = (categoryRows || []).map((c) => c.id);
 
-      async function fetchForCities(cityIds: string[], limit: number) {
+      async function fetchForCities(cityIds: string[] | null, limit: number) {
         const results: any[] = [];
+
+        const applyCityFilter = <T,>(queryBuilder: T) => {
+          if (cityIds && cityIds.length > 0) {
+            return (queryBuilder as any).in("city_id", cityIds);
+          }
+          return queryBuilder;
+        };
 
         // Intent/category-first query within strict city scope
         if (categoryIds.length > 0) {
-          const { data } = await supabase
+          let categoryQuery = supabase
             .from("listings")
             .select(selectFields)
-            .in("city_id", cityIds)
             .in("category_id", categoryIds)
             .order("rating", { ascending: false })
             .limit(limit);
+          categoryQuery = applyCityFilter(categoryQuery);
+          const { data } = await categoryQuery;
           if (data) results.push(...data);
         }
 
         // Audience tag query within strict city scope
         for (const tag of effectiveCategorySlugs.slice(0, 3)) {
-          const { data } = await supabase
+          let audienceQuery = supabase
             .from("listings")
             .select(selectFields)
             .contains("audience_tags", [tag])
-            .in("city_id", cityIds)
             .limit(Math.ceil(limit / 2));
+          audienceQuery = applyCityFilter(audienceQuery);
+          const { data } = await audienceQuery;
           if (data) results.push(...data);
         }
 
@@ -187,23 +196,25 @@ const SearchPage = () => {
           const orClauses = textTerms
             .map((t) => `name.ilike.%${t}%,short_description.ilike.%${t}%,description.ilike.%${t}%`)
             .join(",");
-          const { data } = await supabase
+          let keywordQuery = supabase
             .from("listings")
             .select(selectFields)
-            .in("city_id", cityIds)
             .or(orClauses)
             .limit(limit);
+          keywordQuery = applyCityFilter(keywordQuery);
+          const { data } = await keywordQuery;
           if (data) results.push(...data);
         }
 
         // Venue name query for direct venue searches
         if (query.trim().length > 2) {
-          const { data: nameMatches } = await supabase
+          let nameQuery = supabase
             .from("listings")
             .select(selectFields)
-            .in("city_id", cityIds)
             .ilike("name", `%${query.trim()}%`)
             .limit(Math.ceil(limit / 2));
+          nameQuery = applyCityFilter(nameQuery);
+          const { data: nameMatches } = await nameQuery;
           if (nameMatches) results.push(...nameMatches);
         }
 
@@ -214,12 +225,13 @@ const SearchPage = () => {
           effectiveCategorySlugs.length === 0;
 
         if (isThingsToDoSearch || results.length < 8) {
-          const { data } = await supabase
+          let topRatedQuery = supabase
             .from("listings")
             .select(selectFields)
-            .in("city_id", cityIds)
             .order("rating", { ascending: false })
             .limit(limit);
+          topRatedQuery = applyCityFilter(topRatedQuery);
+          const { data } = await topRatedQuery;
           if (data) results.push(...data);
         }
 
