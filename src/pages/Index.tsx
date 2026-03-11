@@ -366,7 +366,7 @@ const Index = () => {
                   )}
                 </div>
                 <div className="p-3">
-                  <h3 className="font-display font-semibold text-sm text-foreground line-clamp-1 group-hover:text-accent transition-colors">
+                  <h3 className="font-display font-semibold text-sm text-foreground line-clamp-1 group-hover:text-primary transition-colors">
                     {item.title}
                   </h3>
                   <p className="text-xs text-muted-foreground line-clamp-2 mt-1 leading-relaxed">
