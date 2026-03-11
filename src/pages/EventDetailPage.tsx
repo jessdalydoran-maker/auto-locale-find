@@ -3,7 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Layout } from "@/components/Layout";
 import { EventCard } from "@/components/EventCard";
-import { getImageUrl, getEventImageByKeywords, isPlaceholderImage, generateEventAltText } from "@/lib/image-utils";
+import { getImageUrl, getEventImageByKeywords, isPlaceholderImage, generateEventAltText, getCategoryPlaceholder } from "@/lib/image-utils";
 import {
   Calendar, Clock, MapPin, Ticket, ExternalLink, ChevronRight,
   ArrowLeft, Users, Tag, Globe,
