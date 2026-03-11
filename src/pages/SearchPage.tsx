@@ -202,7 +202,7 @@ const SearchPage = () => {
         {hasEvents && (
           <section className="mb-10">
             <div className="flex items-center gap-2 mb-4">
-              <Calendar className="h-5 w-5 text-accent" />
+              <Calendar className="h-5 w-5 text-teal" />
               <h2 className="font-display font-semibold text-lg text-foreground">
                 Upcoming Events
               </h2>

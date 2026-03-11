@@ -304,7 +304,7 @@ const CityPage = () => {
               <Link
                 key={cat.id}
                 to={`/best-${cat.slug}-${resolvedCitySlug}`}
-                className="text-xs px-3 py-1.5 bg-muted text-muted-foreground rounded-full hover:bg-accent hover:text-accent-foreground transition-colors"
+                className="text-xs px-3 py-1.5 bg-muted text-muted-foreground rounded-full hover:bg-primary hover:text-primary-foreground transition-colors"
               >
                 Best {cat.name} {city.name}
               </Link>

@@ -376,7 +376,7 @@ const PlaceDetailPage = () => {
         {venueEvents && venueEvents.length > 0 && (
           <section className="mt-12 pt-8 border-t border-border">
             <div className="flex items-center gap-2 mb-6">
-              <CalendarDays className="h-5 w-5 text-accent" />
+              <CalendarDays className="h-5 w-5 text-teal" />
               <h2 className="font-display font-semibold text-lg text-foreground">
                 Upcoming Events at {listing.name}
               </h2>
