@@ -118,25 +118,42 @@ const FALLBACK_POOLS: Record<string, string[]> = {
     "https://images.unsplash.com/photo-1475721027785-f74eccf877e2?w=800&h=500&fit=crop&fm=webp&q=80",
   ],
 
-  // LGBT+ / Pride / Community
-  "lgbtq": [
+  // LGBT+ strict fallback groups
+  // A. Pride / LGBTQ+ events / parades / community festivals
+  "pride-event": [
     "https://images.unsplash.com/photo-1620121692029-d088224ddc74?w=800&h=500&fit=crop&fm=webp&q=80",
-    "https://images.unsplash.com/photo-1573896900897-1f8d56adb227?w=800&h=500&fit=crop&fm=webp&q=80",
     "https://images.unsplash.com/photo-1561913618-35b46e18e0a5?w=800&h=500&fit=crop&fm=webp&q=80",
+    "https://images.unsplash.com/photo-1573896900897-1f8d56adb227?w=800&h=500&fit=crop&fm=webp&q=80",
   ],
+  // B. LGBT+ nightlife venues
   "lgbtq-nightlife": [
     "https://images.unsplash.com/photo-1516450360452-9312f5e86fc7?w=800&h=500&fit=crop&fm=webp&q=80",
     "https://images.unsplash.com/photo-1571266028243-e4733b0f0bb0?w=800&h=500&fit=crop&fm=webp&q=80",
     "https://images.unsplash.com/photo-1543007630-9710e4a00a20?w=800&h=500&fit=crop&fm=webp&q=80",
   ],
+  // C. LGBT+ community organisations
   "lgbtq-community": [
     "https://images.unsplash.com/photo-1529156069898-49953e39b3ac?w=800&h=500&fit=crop&fm=webp&q=80",
     "https://images.unsplash.com/photo-1491438590914-bc09fcaaf77a?w=800&h=500&fit=crop&fm=webp&q=80",
     "https://images.unsplash.com/photo-1517457373958-b7bdd4587205?w=800&h=500&fit=crop&fm=webp&q=80",
   ],
-  "choir": [
+  // D. Choirs / music groups
+  "choir-music": [
     "https://images.unsplash.com/photo-1477233534935-f5e6fe7c1159?w=800&h=500&fit=crop&fm=webp&q=80",
     "https://images.unsplash.com/photo-1514320291840-2e0a9bf2a9ae?w=800&h=500&fit=crop&fm=webp&q=80",
+    "https://images.unsplash.com/photo-1460723237483-7a6dc9d0b212?w=800&h=500&fit=crop&fm=webp&q=80",
+  ],
+  // E. Arts festivals / theatre / cabaret / drag
+  "arts-performance": [
+    "https://images.unsplash.com/photo-1503095396549-807759245b35?w=800&h=500&fit=crop&fm=webp&q=80",
+    "https://images.unsplash.com/photo-1460881680858-30d872d5b530?w=800&h=500&fit=crop&fm=webp&q=80",
+    "https://images.unsplash.com/photo-1507676184212-d03ab07a01bf?w=800&h=500&fit=crop&fm=webp&q=80",
+  ],
+  // Generic LGBT+ safe fallback (never tourism)
+  "lgbtq": [
+    "https://images.unsplash.com/photo-1620121692029-d088224ddc74?w=800&h=500&fit=crop&fm=webp&q=80",
+    "https://images.unsplash.com/photo-1529156069898-49953e39b3ac?w=800&h=500&fit=crop&fm=webp&q=80",
+    "https://images.unsplash.com/photo-1491438590914-bc09fcaaf77a?w=800&h=500&fit=crop&fm=webp&q=80",
   ],
 
   // Other categories
@@ -192,26 +209,6 @@ const FALLBACK_POOLS: Record<string, string[]> = {
 // ─── Keyword → category mapping for title/tag matching ───
 
 const KEYWORD_CATEGORY_MAP: Array<{ keywords: string[]; category: string }> = [
-  // LGBT+ / Pride / Queer — check early so pride/drag events get correct imagery
-  {
-    keywords: ["lgbtq", "lgbt", "pride", "queer", "drag", "cabaret", "rainbow project", "cara friend", "here ni", "outburst"],
-    category: "lgbtq",
-  },
-  // LGBT+ nightlife venues
-  {
-    keywords: ["kremlin", "maverick belfast", "union street bar"],
-    category: "lgbtq-nightlife",
-  },
-  // Choir / singing groups
-  {
-    keywords: ["choir", "choral", "singing group", "vocal ensemble"],
-    category: "choir",
-  },
-  // LGBT+ community organisations
-  {
-    keywords: ["support", "counselling", "advocacy", "wellbeing", "health service", "community group", "youth group"],
-    category: "lgbtq-community",
-  },
   // Theatre & Performance — check first so "Beauty and the Beast" → theatre, not attractions
   {
     keywords: ["theatre", "theater", "musical", "pantomime", "panto", "stage", "play", "drama", "ballet", "opera", "performance", "jnr", "junior", "production"],
@@ -226,6 +223,11 @@ const KEYWORD_CATEGORY_MAP: Array<{ keywords: string[]; category: string }> = [
   {
     keywords: ["marathon", "half marathon", "5k", "10k", "parkrun", "race week", "cycling", "sport", "gym", "fitness", "swimming", "boxing", "mma", "pfl", "fight", "v wilson", "v ", "rugby", "gaa", "hurling", "football"],
     category: "sports",
+  },
+  // Choir / vocal groups
+  {
+    keywords: ["choir", "choral", "vocal ensemble", "rehearsal"],
+    category: "choir-music",
   },
   // Live Music / Gigs
   {
@@ -359,6 +361,72 @@ const DEFAULT_PLACEHOLDER = "https://images.unsplash.com/photo-1533154683836-84e
 
 const TRUSTED_SOURCES = new Set(["google_places", "manual", "official", "website", "unsplash"]);
 
+const LGBT_ENTITY_PRIORITY_MAP: Array<{ keywords: string[]; category: string }> = [
+  { keywords: ["belfast lgbt choir", "lgbt choir"], category: "choir-music" },
+  { keywords: ["belfast pride parade", "pride parade", "belfast pride festival", "pride festival", "belfast pride"], category: "pride-event" },
+  { keywords: ["kremlin belfast", "maverick belfast", "union street bar belfast", "union street bar"], category: "lgbtq-nightlife" },
+  { keywords: ["cara friend", "the rainbow project", "rainbow project", "here ni"], category: "lgbtq-community" },
+  { keywords: ["outburst arts festival", "outburst"], category: "arts-performance" },
+];
+
+const LGBT_CONTEXT_KEYWORDS = [
+  "lgbtq", "lgbt", "lgbt+", "lgbtq+", "pride", "queer", "drag", "cabaret",
+  "rainbow project", "cara friend", "here ni", "kremlin", "maverick", "union street bar", "outburst", "belfast lgbt choir",
+];
+
+const LGBT_BLOCKED_CATEGORY_SLUGS = new Set(["attractions", "things-to-do", "tours", "parks", "hidden-gems"]);
+const TOURISM_POOL_URLS = ["attractions", "things-to-do", "tours", "parks", "hidden-gems"]
+  .flatMap((slug) => FALLBACK_POOLS[slug] ?? []);
+
+function buildSearchText(title?: string | null, tags?: string[] | null, description?: string | null): string {
+  return [title, ...(tags || []), description]
+    .filter(Boolean)
+    .join(" ")
+    .toLowerCase();
+}
+
+function isLgbtContext(searchText: string): boolean {
+  if (!searchText) return false;
+  return LGBT_CONTEXT_KEYWORDS.some((kw) => searchText.includes(kw));
+}
+
+function detectStrictLgbtCategory(searchText: string): string | null {
+  if (!isLgbtContext(searchText)) return null;
+
+  for (const entry of LGBT_ENTITY_PRIORITY_MAP) {
+    if (entry.keywords.some((kw) => searchText.includes(kw))) {
+      return entry.category;
+    }
+  }
+
+  if (["pride", "parade", "rainbow", "march", "community celebration"].some((kw) => searchText.includes(kw))) {
+    return "pride-event";
+  }
+
+  if (["nightlife", "nightclub", "night club", "bar", "club", "cocktail", "dancefloor"].some((kw) => searchText.includes(kw))) {
+    return "lgbtq-nightlife";
+  }
+
+  if (["choir", "choral", "vocal", "rehearsal", "singers", "live vocal"].some((kw) => searchText.includes(kw))) {
+    return "choir-music";
+  }
+
+  if (["theatre", "theater", "cabaret", "drag", "stage", "performance", "arts"].some((kw) => searchText.includes(kw))) {
+    return "arts-performance";
+  }
+
+  if (["support", "advocacy", "charity", "community", "wellbeing", "youth", "health"].some((kw) => searchText.includes(kw))) {
+    return "lgbtq-community";
+  }
+
+  return "lgbtq-community";
+}
+
+function isTourismPlaceholderUrl(url: string): boolean {
+  const normalized = url.split("?")[0];
+  return TOURISM_POOL_URLS.some((img) => normalized.includes(img.split("?")[0]));
+}
+
 // ─── Public API ───
 
 /**
@@ -369,14 +437,24 @@ export function detectCategoryFromKeywords(
   tags?: string[] | null,
   description?: string | null
 ): string | null {
-  const searchText = [title, ...(tags || []), description].filter(Boolean).join(" ").toLowerCase();
+  const searchText = buildSearchText(title, tags, description);
   if (!searchText) return null;
+
+  const strictLgbtCategory = detectStrictLgbtCategory(searchText);
+  if (strictLgbtCategory) {
+    return strictLgbtCategory;
+  }
 
   for (const entry of KEYWORD_CATEGORY_MAP) {
     if (entry.keywords.some((kw) => searchText.includes(kw))) {
       return entry.category;
     }
   }
+
+  if (isLgbtContext(searchText)) {
+    return "lgbtq-community";
+  }
+
   return null;
 }
 
@@ -391,18 +469,29 @@ export function getCategoryPlaceholder(
   tags?: string[] | null,
   description?: string | null
 ): string {
+  const searchText = buildSearchText(title, tags, description);
+  const lgbtContext = isLgbtContext(searchText);
+
   // 1. Try keyword-detected category first (more specific than slug)
   const keywordCategory = detectCategoryFromKeywords(title, tags, description);
   if (keywordCategory && FALLBACK_POOLS[keywordCategory]) {
     return pickFromPool(FALLBACK_POOLS[keywordCategory]);
   }
 
-  // 2. Try the direct category slug
+  // 2. Try the direct category slug (with LGBT tourism-guard)
   if (categorySlug && FALLBACK_POOLS[categorySlug]) {
+    if (lgbtContext && LGBT_BLOCKED_CATEGORY_SLUGS.has(categorySlug)) {
+      return pickFromPool(FALLBACK_POOLS["lgbtq-community"]);
+    }
     return pickFromPool(FALLBACK_POOLS[categorySlug]);
   }
 
-  // 3. Fallback to NI default
+  // 3. LGBT context should never fall back to tourism/landmark imagery
+  if (lgbtContext) {
+    return pickFromPool(FALLBACK_POOLS["lgbtq-community"]);
+  }
+
+  // 4. Global fallback
   return DEFAULT_PLACEHOLDER;
 }
 
@@ -421,11 +510,18 @@ export function getImageUrl(
   tags?: string[] | null,
   description?: string | null
 ): string {
-  // Try the actual image URL if it exists and looks valid
+  const searchText = buildSearchText(title, tags, description);
+
+  // 1) Always prefer an available image URL, unless it's a known tourism placeholder in LGBT context
   if (imageUrl && imageUrl.trim().length > 0) {
-    return ensureWebP(imageUrl);
+    const candidate = ensureWebP(imageUrl);
+    if (isLgbtContext(searchText) && isTourismPlaceholderUrl(candidate)) {
+      return getCategoryPlaceholder(categorySlug, title, tags, description);
+    }
+    return candidate;
   }
 
+  // 2) Fall back using strict context rules
   return getCategoryPlaceholder(categorySlug, title, tags, description);
 }
 
