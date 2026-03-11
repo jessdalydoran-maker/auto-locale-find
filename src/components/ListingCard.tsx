@@ -102,7 +102,7 @@ export const ListingCard = ({
         <div className="flex items-start justify-between gap-2 mb-1.5">
           <Link
             to={detailUrl}
-            className="font-display font-semibold text-sm text-foreground hover:text-accent transition-colors line-clamp-1"
+            className="font-display font-semibold text-sm text-foreground hover:text-primary transition-colors line-clamp-1"
           >
             {name}
           </Link>
