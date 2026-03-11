@@ -58,7 +58,7 @@ const EventDetailPage = () => {
   const resolvedImage = event
     ? (keywordImage && (!event.image_url || event.image_status !== "verified")
         ? keywordImage
-        : getImageUrl(event.image_url, event.image_source, category?.slug || "events", null, event.image_status))
+        : getImageUrl(event.image_url, event.image_source, category?.slug || "events", null, event.image_status, event.title, event.tags, event.short_description))
     : "";
   const usingPlaceholder = !event || isPlaceholderImage(resolvedImage) || (event.image_status !== "verified" && !keywordImage);
   const altText = event
