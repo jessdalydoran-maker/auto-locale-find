@@ -26,7 +26,7 @@ Deno.serve(async (req) => {
 
   try {
     const body = await req.json().catch(() => ({}));
-    const batchSize = body.batch_size || 10;
+    const batchSize = Math.min(body.batch_size || 5, 10);
     const slugs: string[] | undefined = body.slugs;
 
     // Get listings that need images
@@ -40,8 +40,7 @@ Deno.serve(async (req) => {
     if (slugs && slugs.length > 0) {
       query = query.in("slug", slugs);
     } else {
-      // Only scrape listings without verified images
-      query = query.or("image_url.is.null,image_status.neq.verified");
+      query = query.or("image_url.is.null,image_status.eq.needs_review,image_status.eq.placeholder");
     }
 
     const { data: listings, error: fetchError } = await query.limit(batchSize);
@@ -56,13 +55,16 @@ Deno.serve(async (req) => {
 
     console.log(`Processing ${listings.length} listings for images...`);
 
-    const results: Array<{ slug: string; status: string; image_url?: string }> = [];
+    const results: Array<{ slug: string; status: string; image_url?: string; error?: string }> = [];
 
     for (const listing of listings) {
       try {
         console.log(`Scraping: ${listing.name} (${listing.website})`);
 
-        // Use Firecrawl to scrape the page for metadata/images
+        // Use AbortController for per-request timeout (15s)
+        const controller = new AbortController();
+        const timeout = setTimeout(() => controller.abort(), 15000);
+
         const scrapeResponse = await fetch("https://api.firecrawl.dev/v1/scrape", {
           method: "POST",
           headers: {
@@ -73,19 +75,21 @@ Deno.serve(async (req) => {
             url: listing.website,
             formats: ["html"],
             onlyMainContent: false,
-            waitFor: 2000,
+            waitFor: 3000,
           }),
+          signal: controller.signal,
         });
 
-        const scrapeData = await scrapeResponse.json();
+        clearTimeout(timeout);
 
         if (!scrapeResponse.ok) {
-          console.error(`Firecrawl error for ${listing.slug}:`, scrapeData);
-          results.push({ slug: listing.slug, status: "error" });
+          const errText = await scrapeResponse.text().catch(() => "unknown");
+          console.error(`Firecrawl ${scrapeResponse.status} for ${listing.slug}: ${errText}`);
+          results.push({ slug: listing.slug, status: "scrape_error", error: `HTTP ${scrapeResponse.status}` });
           continue;
         }
 
-        // Extract og:image or other image from metadata/HTML
+        const scrapeData = await scrapeResponse.json();
         const html = scrapeData?.data?.html || scrapeData?.html || "";
         const metadata = scrapeData?.data?.metadata || scrapeData?.metadata || {};
 
@@ -100,6 +104,8 @@ Deno.serve(async (req) => {
         if (!imageUrl) {
           const ogMatch = html.match(
             /<meta[^>]*property=["']og:image["'][^>]*content=["']([^"']+)["']/i
+          ) || html.match(
+            /<meta[^>]*content=["']([^"']+)["'][^>]*property=["']og:image["']/i
           );
           if (ogMatch) imageUrl = ogMatch[1];
         }
@@ -108,28 +114,31 @@ Deno.serve(async (req) => {
         if (!imageUrl) {
           const twMatch = html.match(
             /<meta[^>]*(?:name|property)=["']twitter:image["'][^>]*content=["']([^"']+)["']/i
+          ) || html.match(
+            /<meta[^>]*content=["']([^"']+)["'][^>]*(?:name|property)=["']twitter:image["']/i
           );
           if (twMatch) imageUrl = twMatch[1];
         }
 
-        // Priority 4: First large image in hero/banner area
+        // Priority 4: First substantial image
         if (!imageUrl) {
-          const imgMatches = html.match(
-            /<img[^>]*src=["']([^"']+)["'][^>]*>/gi
-          );
+          const imgMatches = html.match(/<img[^>]*src=["']([^"']+)["'][^>]*>/gi);
           if (imgMatches) {
-            for (const imgTag of imgMatches.slice(0, 10)) {
+            for (const imgTag of imgMatches.slice(0, 15)) {
               const srcMatch = imgTag.match(/src=["']([^"']+)["']/i);
               if (srcMatch) {
                 const src = srcMatch[1];
-                // Skip tiny icons, SVGs, tracking pixels
                 if (
                   !src.includes("favicon") &&
                   !src.includes("logo") &&
                   !src.endsWith(".svg") &&
                   !src.includes("pixel") &&
                   !src.includes("1x1") &&
-                  !src.includes("data:image")
+                  !src.startsWith("data:") &&
+                  !src.includes("icon") &&
+                  !src.includes("spinner") &&
+                  !src.includes("tracking") &&
+                  src.length > 20
                 ) {
                   imageUrl = src;
                   break;
@@ -142,26 +151,28 @@ Deno.serve(async (req) => {
         if (imageUrl) {
           // Make relative URLs absolute
           if (imageUrl.startsWith("/")) {
-            const urlObj = new URL(listing.website);
-            imageUrl = `${urlObj.origin}${imageUrl}`;
+            try {
+              const urlObj = new URL(listing.website);
+              imageUrl = `${urlObj.origin}${imageUrl}`;
+            } catch { /* ignore */ }
           }
 
-          // Update the listing
+          // Save immediately
           const { error: updateError } = await supabase
             .from("listings")
             .update({
               image_url: imageUrl,
               image_source: "website",
-              image_status: "needs_review",
-              image_alt: `${listing.name} - venue image`,
+              image_status: "verified",
+              image_alt: `${listing.name}`,
             })
             .eq("id", listing.id);
 
           if (updateError) {
-            console.error(`Update error for ${listing.slug}:`, updateError);
-            results.push({ slug: listing.slug, status: "update_error" });
+            console.error(`DB update error for ${listing.slug}:`, updateError);
+            results.push({ slug: listing.slug, status: "db_error" });
           } else {
-            console.log(`✓ Image found for ${listing.name}: ${imageUrl}`);
+            console.log(`✓ ${listing.name}: ${imageUrl}`);
             results.push({ slug: listing.slug, status: "success", image_url: imageUrl });
           }
         } else {
@@ -169,23 +180,23 @@ Deno.serve(async (req) => {
           results.push({ slug: listing.slug, status: "no_image" });
         }
 
-        // Rate limiting - 500ms between requests
-        await new Promise((r) => setTimeout(r, 500));
+        // Rate limit
+        await new Promise((r) => setTimeout(r, 300));
       } catch (err) {
-        console.error(`Error processing ${listing.slug}:`, err);
-        results.push({ slug: listing.slug, status: "error" });
+        const msg = err instanceof Error ? err.message : "unknown";
+        console.error(`Error for ${listing.slug}: ${msg}`);
+        results.push({ slug: listing.slug, status: "error", error: msg });
       }
     }
 
     const succeeded = results.filter((r) => r.status === "success").length;
-    const failed = results.filter((r) => r.status !== "success").length;
 
     return new Response(
       JSON.stringify({
         success: true,
         processed: results.length,
         images_found: succeeded,
-        no_image: failed,
+        no_image: results.length - succeeded,
         results,
       }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }

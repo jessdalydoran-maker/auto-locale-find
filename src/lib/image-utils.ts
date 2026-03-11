@@ -136,7 +136,7 @@ export function getEventImageByKeywords(
 const DEFAULT_PLACEHOLDER = "https://images.unsplash.com/photo-1501594907352-04cda38ebc29?w=800&h=500&fit=crop&fm=webp&q=80";
 
 /** Trusted image sources that bypass verification */
-const TRUSTED_SOURCES = new Set(["google_places", "manual", "official"]);
+const TRUSTED_SOURCES = new Set(["google_places", "manual", "official", "website"]);
 
 /**
  * Get the image URL for a listing or event.
