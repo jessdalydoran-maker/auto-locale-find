@@ -347,6 +347,9 @@ const SearchPage = () => {
     queryKey: ["search-events", query, resolvedCity?.id, nearbyCities?.map(c => c.id).join(","), intent.strictTownMode],
     queryFn: async () => {
       if (!query.trim()) return { local: [] as any[], nearby: [] as any[] };
+      if (intent.hasExplicitLocation && !resolvedCity) {
+        return { local: [] as any[], nearby: [] as any[] };
+      }
       const today = new Date().toISOString().split("T")[0];
 
       async function fetchEventsForCities(cityIds: string[] | null, limit: number) {
