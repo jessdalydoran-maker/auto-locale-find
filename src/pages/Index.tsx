@@ -172,6 +172,72 @@ const Index = () => {
     },
   });
 
+  // Tonight Near You: events + nightlife + live music happening today
+  const { data: tonightItems } = useQuery({
+    queryKey: ["tonight-near-you"],
+    queryFn: async () => {
+      const today = new Date().toISOString().split("T")[0];
+
+      // Today's events across NI
+      const { data: todayEvents } = await supabase
+        .from("events")
+        .select("id, title, slug, short_description, date_start, time_start, image_url, image_source, image_alt, image_status, is_free, venue_name, tags, cities!inner(slug, name)")
+        .eq("status", "active")
+        .eq("date_start", today)
+        .order("time_start", { ascending: true })
+        .limit(12);
+
+      // Also fetch nightlife/bars listings for "tonight" feel
+      const { data: nightlifeListings } = await supabase
+        .from("listings")
+        .select("id, name, slug, short_description, image_url, image_source, image_alt, image_status, address, cities!inner(slug, name), categories!inner(slug, name)")
+        .eq("is_approved", true)
+        .in("categories.slug", ["bars", "cocktail-bars", "nightlife", "live-music"])
+        .order("rating", { ascending: false })
+        .limit(4);
+
+      const items: Array<{
+        id: string; title: string; slug: string; description: string;
+        imageUrl: string | null; imageSource: string | null; imageAlt: string | null; imageStatus: string;
+        cityName: string; citySlug: string; type: "event" | "listing"; link: string;
+        badge?: string; time?: string | null; tags?: string[];
+      }> = [];
+
+      for (const e of (todayEvents || [])) {
+        items.push({
+          id: e.id, title: e.title, slug: e.slug,
+          description: e.short_description || "",
+          imageUrl: e.image_url, imageSource: e.image_source as string | null,
+          imageAlt: e.image_alt as string | null, imageStatus: e.image_status || "needs_review",
+          cityName: (e.cities as any)?.name || "", citySlug: (e.cities as any)?.slug || "",
+          type: "event", link: `/event/${e.slug}`,
+          badge: e.is_free ? "Free" : undefined,
+          time: e.time_start, tags: e.tags || [],
+        });
+      }
+
+      for (const l of (nightlifeListings || [])) {
+        items.push({
+          id: l.id, title: l.name, slug: l.slug,
+          description: l.short_description || "",
+          imageUrl: l.image_url, imageSource: l.image_source as string | null,
+          imageAlt: l.image_alt as string | null, imageStatus: l.image_status || "needs_review",
+          cityName: (l.cities as any)?.name || "", citySlug: (l.cities as any)?.slug || "",
+          type: "listing", link: `/${(l.cities as any)?.slug || "belfast"}/${l.slug}`,
+          tags: [],
+        });
+      }
+
+      // Deduplicate
+      const seen = new Set<string>();
+      return items.filter(i => {
+        if (seen.has(i.id)) return false;
+        seen.add(i.id);
+        return true;
+      }).slice(0, 8);
+    },
+  });
+
   useEffect(() => { setPageCanonical("/"); }, []);
 
   return (
