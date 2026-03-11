@@ -477,7 +477,7 @@ const ProgrammaticPage = () => {
   // Fetch venue listings for event-category pages (live-music, theatre, comedy etc)
   // so we show both events AND related venues
   const VENUE_CATEGORY_MAP: Record<string, string[]> = {
-    "live-music": ["bars", "nightlife", "live-music"],
+    "live-music": ["bars", "pubs", "nightlife", "live-music", "restaurants", "hotels"],
     "theatre": ["theatre", "attractions"],
     "comedy": ["comedy", "bars", "nightlife"],
     "exhibitions": ["exhibitions", "museums", "attractions"],
