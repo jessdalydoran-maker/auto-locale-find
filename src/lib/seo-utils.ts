@@ -43,6 +43,7 @@ const KNOWN_TIME_INTENTS = [
   "this-week",
   "tonight",
   "today",
+  "tomorrow",
   "rainy-day",
 ];
 
@@ -58,6 +59,9 @@ const CATEGORY_ALIASES: Record<string, string> = {
   "acoustic": "live-music",
   "concerts": "live-music",
   "bands": "live-music",
+  "upcoming-events": "events",
+  "events-tonight": "events",
+  "events-tomorrow": "events",
 };
 
 /** City slug aliases — allows short forms like "ni" for "northern-ireland" */
@@ -155,8 +159,17 @@ export function parseSlug(
   // 6. Whatever remains is the category slug
   let categorySlug = remaining || "things-to-do";
 
-  // Apply aliases
-  if (CATEGORY_ALIASES[categorySlug]) {
+  // Apply aliases — some aliases carry embedded time intents
+  const TIME_EMBEDDED_ALIASES: Record<string, { category: string; time: string }> = {
+    "events-tonight": { category: "events", time: "tonight" },
+    "events-tomorrow": { category: "events", time: "tomorrow" },
+  };
+
+  if (TIME_EMBEDDED_ALIASES[categorySlug]) {
+    const alias = TIME_EMBEDDED_ALIASES[categorySlug];
+    categorySlug = alias.category;
+    if (!timeIntent) timeIntent = alias.time;
+  } else if (CATEGORY_ALIASES[categorySlug]) {
     categorySlug = CATEGORY_ALIASES[categorySlug];
   }
 
@@ -373,6 +386,7 @@ export function formatTimeIntent(timeIntent?: string | null): string {
   const map: Record<string, string> = {
     "today": "Today",
     "tonight": "Tonight",
+    "tomorrow": "Tomorrow",
     "this-week": "This Week",
     "this-weekend": "This Weekend",
     "rainy-day": "Rainy Day",
@@ -393,6 +407,12 @@ export function getTimeIntentDateRange(timeIntent: string | null): { start: stri
     case "today":
     case "tonight":
       return { start: today, end: today };
+    case "tomorrow": {
+      const tmrw = new Date(now);
+      tmrw.setDate(now.getDate() + 1);
+      const tmrwStr = tmrw.toISOString().split("T")[0];
+      return { start: tmrwStr, end: tmrwStr };
+    }
     case "this-week": {
       const endOfWeek = new Date(now);
       const daysUntilSunday = 7 - now.getDay();

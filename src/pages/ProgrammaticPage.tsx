@@ -934,10 +934,41 @@ const ProgrammaticPage = () => {
   // Filter options
   const filterOptions = useMemo(() => {
     if (!parsed || !city) return [];
-    const filters: { label: string; value: string; url: string }[] = [];
-    // For NI-wide pages, omit city slug from URLs (parser defaults to NI-wide)
+    const filters: { label: string; value: string; url: string; active?: boolean }[] = [];
     const urlCity = isNIWide ? null : parsed.citySlug;
 
+    // For event pages, show comprehensive time filters
+    if (showEvents) {
+      const TIME_FILTERS = [
+        { label: "All Upcoming", value: "", time: null },
+        { label: "Tonight", value: "tonight", time: "tonight" },
+        { label: "Tomorrow", value: "tomorrow", time: "tomorrow" },
+        { label: "This Weekend", value: "this-weekend", time: "this-weekend" },
+        { label: "This Week", value: "this-week", time: "this-week" },
+      ];
+
+      for (const tf of TIME_FILTERS) {
+        const isActive = (parsed.timeIntent || null) === tf.time;
+        filters.push({
+          label: tf.label,
+          value: tf.value,
+          url: buildPageUrl(parsed.modifierSlug, parsed.categorySlug, parsed.neighbourhoodSlug, urlCity as any, tf.time),
+          active: isActive,
+        });
+      }
+
+      // Add modifier filters
+      if (parsed.modifierSlug !== "free") {
+        filters.push({ label: "Free", value: "free", url: buildPageUrl("free", parsed.categorySlug, parsed.neighbourhoodSlug, urlCity as any, parsed.timeIntent) });
+      }
+      if (parsed.modifierSlug !== "family") {
+        filters.push({ label: "Family", value: "family", url: buildPageUrl("family", parsed.categorySlug, parsed.neighbourhoodSlug, urlCity as any, parsed.timeIntent) });
+      }
+
+      return filters;
+    }
+
+    // For non-event pages, keep existing filter logic
     if (!parsed.timeIntent) {
       filters.push(
         { label: "Today", value: "today", url: buildPageUrl(parsed.modifierSlug, parsed.categorySlug, parsed.neighbourhoodSlug, urlCity as any, "today") },
@@ -953,7 +984,7 @@ const ProgrammaticPage = () => {
     }
 
     return filters;
-  }, [parsed, city]);
+  }, [parsed, city, showEvents, isNIWide]);
 
   return (
     <Layout>
@@ -1067,21 +1098,17 @@ const ProgrammaticPage = () => {
             <Filter className="h-4 w-4 text-muted-foreground" />
             {filterOptions.map((f) => (
               <Link
-                key={f.value}
+                key={f.value || "all"}
                 to={f.url}
-                className="px-3 py-1.5 text-xs font-medium bg-muted text-muted-foreground rounded-full hover:bg-primary hover:text-primary-foreground transition-colors"
+                className={`px-3 py-1.5 text-xs font-medium rounded-full transition-colors ${
+                  (f as any).active
+                    ? "bg-primary text-primary-foreground"
+                    : "bg-muted text-muted-foreground hover:bg-primary hover:text-primary-foreground"
+                }`}
               >
                 {f.label}
               </Link>
             ))}
-            {parsed?.timeIntent && (
-              <Link
-                to={buildPageUrl(parsed.modifierSlug, parsed.categorySlug, parsed.neighbourhoodSlug, isNIWide ? null as any : parsed.citySlug)}
-                className="px-3 py-1.5 text-xs font-medium bg-primary text-primary-foreground rounded-full"
-              >
-                {formatTimeIntent(parsed.timeIntent)} ✕
-              </Link>
-            )}
           </div>
         )}
 
