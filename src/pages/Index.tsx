@@ -1,4 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
+import { isLiveMusicEvent, isLiveMusicVenue, MUSIC_VENUE_CATEGORY_SLUGS } from "@/lib/live-music-utils";
 import { supabase } from "@/integrations/supabase/client";
 import { Layout } from "@/components/Layout";
 import { SearchBar } from "@/components/SearchBar";
