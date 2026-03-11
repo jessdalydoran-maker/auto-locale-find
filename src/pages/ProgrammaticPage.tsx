@@ -1092,8 +1092,8 @@ const ProgrammaticPage = () => {
               onClick={() => setLocationFilter(null)}
               className={`px-3 py-1.5 text-xs font-medium rounded-full transition-colors ${
                 !locationFilter
-                  ? "bg-accent text-accent-foreground"
-                  : "bg-muted text-muted-foreground hover:bg-accent hover:text-accent-foreground"
+                  ? "bg-primary text-primary-foreground"
+                  : "bg-muted text-muted-foreground hover:bg-primary hover:text-primary-foreground"
               }`}
             >
               All Northern Ireland
