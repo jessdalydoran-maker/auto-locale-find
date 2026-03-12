@@ -8,22 +8,35 @@ import { ListingCard } from "@/components/ListingCard";
 import { EventCard } from "@/components/EventCard";
 import { NeighbourhoodCard } from "@/components/NeighbourhoodCard";
 import { AdPlaceholder } from "@/components/AdPlaceholder";
-import { ArrowRight, Calendar, Utensils, MapPin, Star, Sparkles, Heart, TrendingUp, Moon, Users, CloudRain, Coins, PartyPopper, Coffee, Plus, Rainbow, Zap, Music } from "lucide-react";
+import {
+  ArrowRight, Calendar, Utensils, MapPin, Star, Sparkles, Heart,
+  TrendingUp, Moon, Users, CloudRain, Coins, PartyPopper, Coffee,
+  Plus, Rainbow, Zap, Music, Compass, Wine, Theater,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { getImageUrl, getCategoryPlaceholder, buildImageErrorHandler } from "@/lib/image-utils";
 import { Link } from "react-router-dom";
 import { setPageCanonical } from "@/lib/canonical";
 import { useEffect } from "react";
 
-const QUICK_LINKS = [
-  { label: "What's On", to: "/whats-on-belfast", icon: Calendar },
-  { label: "Things To Do", to: "/things-to-do", icon: Sparkles },
-  { label: "LGBT+", to: "/belfast?category=lgbtq", icon: Rainbow },
-  { label: "Live Music", to: "/live-music", icon: Music },
-  { label: "Restaurants", to: "/best-restaurants-belfast", icon: Utensils },
-  { label: "Free", to: "/free-things-to-do", icon: Star },
-  { label: "Date Night", to: "/date-night", icon: Heart },
-  { label: "This Weekend", to: "/things-to-do-this-weekend", icon: Calendar },
+const DISCOVERY_LINKS = [
+  { label: "What's On", to: "/whats-on-belfast", icon: Calendar, accent: false },
+  { label: "Things To Do", to: "/things-to-do", icon: Compass, accent: false },
+  { label: "Live Music", to: "/live-music", icon: Music, accent: false },
+  { label: "Restaurants", to: "/best-restaurants-belfast", icon: Utensils, accent: false },
+  { label: "Date Night", to: "/date-night", icon: Heart, accent: false },
+  { label: "This Weekend", to: "/things-to-do-this-weekend", icon: Calendar, accent: false },
+  { label: "Free", to: "/free-things-to-do", icon: Star, accent: false },
+  { label: "LGBT+", to: "/belfast?category=lgbtq", icon: Rainbow, accent: true },
+];
+
+const MOOD_CARDS = [
+  { label: "Date Night", to: "/date-night", icon: Heart, desc: "Romantic restaurants, cocktail bars & evening activities" },
+  { label: "Family Day Out", to: "/family-activities", icon: Users, desc: "Kids activities, parks & family-friendly fun" },
+  { label: "Rainy Day Ideas", to: "/rainy-day-activities", icon: CloudRain, desc: "Museums, indoor activities & escape rooms" },
+  { label: "Cheap & Free", to: "/free-things-to-do", icon: Coins, desc: "Free events, parks, walks & budget-friendly fun" },
+  { label: "Nightlife", to: "/nightlife", icon: PartyPopper, desc: "Bars, clubs, live music & late-night spots" },
+  { label: "Brunch & Coffee", to: "/best-brunch-belfast", icon: Coffee, desc: "Top brunch spots, specialty coffee & bakeries" },
 ];
 
 const POPULAR_SEARCHES = [
@@ -108,7 +121,6 @@ const Index = () => {
     },
   });
 
-  // Trending This Weekend: events + popular listings for Belfast
   const { data: weekendItems } = useQuery({
     queryKey: ["weekend-trending"],
     queryFn: async () => {
@@ -124,7 +136,6 @@ const Index = () => {
       const friStr = friday.toISOString().split("T")[0];
       const sunStr = sunday.toISOString().split("T")[0];
 
-      // Fetch weekend events — Belfast only
       const { data: events } = await supabase
         .from("events")
         .select("id, title, slug, short_description, date_start, image_url, image_source, image_alt, is_free, venue_name, cities!inner(slug, name), category_id")
@@ -135,7 +146,6 @@ const Index = () => {
         .order("date_start", { ascending: true })
         .limit(4);
 
-      // Fetch popular listings to supplement — Belfast only
       const { data: listings } = await supabase
         .from("listings")
         .select("id, name, slug, short_description, rating, image_url, image_source, image_alt, image_status, address, cities!inner(slug, name), categories!inner(slug, name)")
@@ -144,7 +154,6 @@ const Index = () => {
         .order("rating", { ascending: false })
         .limit(4);
 
-      // Combine into a unified "weekend card" list
       const items: Array<{
         id: string; title: string; slug: string; description: string;
         imageUrl: string | null; imageSource: string | null; imageAlt: string | null;
@@ -178,13 +187,11 @@ const Index = () => {
     },
   });
 
-  // Tonight Near You: events + nightlife + live music happening today
   const { data: tonightItems } = useQuery({
     queryKey: ["tonight-near-you"],
     queryFn: async () => {
       const today = new Date().toISOString().split("T")[0];
 
-      // Today's events across NI
       const { data: todayEvents } = await supabase
         .from("events")
         .select("id, title, slug, short_description, date_start, time_start, image_url, image_source, image_alt, image_status, is_free, venue_name, tags, cities!inner(slug, name)")
@@ -193,7 +200,6 @@ const Index = () => {
         .order("time_start", { ascending: true })
         .limit(12);
 
-      // Also fetch nightlife/bars listings for "tonight" feel
       const { data: nightlifeListings } = await supabase
         .from("listings")
         .select("id, name, slug, short_description, image_url, image_source, image_alt, image_status, address, cities!inner(slug, name), categories!inner(slug, name)")
@@ -234,7 +240,6 @@ const Index = () => {
         });
       }
 
-      // Deduplicate
       const seen = new Set<string>();
       return items.filter(i => {
         if (seen.has(i.id)) return false;
@@ -244,13 +249,11 @@ const Index = () => {
     },
   });
 
-  // Live Music Tonight: music events + music venue listings happening today across NI
   const { data: liveMusicItems } = useQuery({
     queryKey: ["live-music-tonight"],
     queryFn: async () => {
       const today = new Date().toISOString().split("T")[0];
 
-      // Fetch today's events broadly (filter client-side for music)
       const [eventRes, venueRes] = await Promise.all([
         supabase
           .from("events")
@@ -259,7 +262,6 @@ const Index = () => {
           .eq("date_start", today)
           .order("time_start", { ascending: true })
           .limit(30),
-        // Also fetch venues known for live music as fallback
         supabase
           .from("listings")
           .select("id, name, slug, short_description, description, image_url, image_source, image_alt, image_status, address, audience_tags, is_event_venue, cities!inner(slug, name), categories!inner(slug, name)")
@@ -276,7 +278,6 @@ const Index = () => {
         type: "event" | "venue";
       }> = [];
 
-      // Filter events using shared logic
       for (const e of (eventRes.data || [])) {
         const catSlug = (e.categories as any)?.slug || "";
         if (isLiveMusicEvent({ title: e.title, tags: e.tags, short_description: e.short_description, description: e.description, categorySlug: catSlug, venue_name: e.venue_name })) {
@@ -294,7 +295,6 @@ const Index = () => {
         }
       }
 
-      // If fewer than 6 music events, supplement with live music venues
       if (items.length < 6) {
         for (const l of (venueRes.data || [])) {
           if (items.length >= 10) break;
@@ -324,79 +324,117 @@ const Index = () => {
 
   return (
     <Layout>
-      {/* Hero */}
-      <section className="bg-card border-b border-border">
-        <div className="container mx-auto px-4 py-14 md:py-20 text-center">
-          <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-primary/10 text-primary rounded-full text-xs font-medium mb-5">
-            <MapPin className="h-3 w-3" />
-            Northern Ireland's Local Discovery Platform
+      {/* ═══════ HERO ═══════ */}
+      <section className="relative overflow-hidden" style={{
+        background: `linear-gradient(135deg, hsl(var(--hero-gradient-start)) 0%, hsl(var(--hero-gradient-mid)) 45%, hsl(var(--hero-gradient-end)) 100%)`,
+      }}>
+        {/* Decorative orbs */}
+        <div className="absolute -top-32 -right-32 w-96 h-96 rounded-full opacity-10" style={{ background: 'radial-gradient(circle, hsl(var(--accent)) 0%, transparent 70%)' }} />
+        <div className="absolute -bottom-24 -left-24 w-72 h-72 rounded-full opacity-8" style={{ background: 'radial-gradient(circle, hsl(var(--teal)) 0%, transparent 70%)' }} />
+
+        <div className="container mx-auto px-4 pt-12 pb-14 md:pt-16 md:pb-20 relative z-10">
+          <div className="text-center max-w-2xl mx-auto">
+            <p className="inline-flex items-center gap-1.5 px-3 py-1 bg-primary-foreground/10 backdrop-blur-sm text-primary-foreground/80 rounded-full text-xs font-medium mb-6 border border-primary-foreground/10">
+              <MapPin className="h-3 w-3" />
+              Northern Ireland's Local Discovery Platform
+            </p>
+
+            <h1 className="font-display font-bold text-3xl md:text-[2.875rem] text-primary-foreground mb-4 leading-[1.12] tracking-tight">
+              Discover What's Happening<br className="hidden md:block" /> Across Northern Ireland
+            </h1>
+
+            <p className="text-primary-foreground/70 text-[15px] md:text-base max-w-xl mx-auto mb-8 leading-relaxed">
+              Events, markets, restaurants, live music, family activities and hidden gems — all in one place.
+            </p>
+
+            <div className="max-w-lg mx-auto mb-8">
+              <SearchBar large placeholder="Search by event, place, town or category..." />
+            </div>
+
+            {/* Discovery pills */}
+            <div className="flex flex-wrap justify-center gap-2">
+              {DISCOVERY_LINKS.map((link) => (
+                <Link
+                  key={link.to}
+                  to={link.to}
+                  className={`flex items-center gap-1.5 px-4 py-2 rounded-full text-[13px] font-medium backdrop-blur-sm transition-all duration-200 border ${
+                    link.accent
+                      ? "bg-accent/20 text-primary-foreground border-accent/30 hover:bg-accent/30"
+                      : "bg-primary-foreground/10 text-primary-foreground/90 border-primary-foreground/10 hover:bg-primary-foreground/20"
+                  }`}
+                >
+                  <link.icon className="h-3.5 w-3.5" />
+                  {link.label}
+                </Link>
+              ))}
+            </div>
           </div>
-          <h1 className="font-display font-bold text-3xl md:text-[2.75rem] text-foreground mb-4 leading-[1.15] tracking-tight max-w-2xl mx-auto">
-            Find Things To Do Across Northern Ireland
-          </h1>
-          <p className="text-muted-foreground text-[15px] md:text-base max-w-xl mx-auto mb-8 leading-relaxed">
-            Discover events, markets, restaurants, family activities and hidden gems near you.
-          </p>
-          <div className="max-w-lg mx-auto mb-8">
-            <SearchBar large placeholder="Search by event, place, town or category..." />
-          </div>
-          <div className="flex flex-wrap justify-center gap-2 mb-6">
-            {QUICK_LINKS.map((link) => (
-              <Link
-                key={link.to}
-                to={link.to}
-                className={`flex items-center gap-1.5 px-3.5 py-2 rounded-full text-[13px] font-medium transition-colors ${
-                  link.label === "LGBT+"
-                    ? "bg-accent text-accent-foreground hover:bg-primary hover:text-primary-foreground"
-                    : "bg-secondary text-foreground hover:text-primary hover:bg-primary/10"
-                }`}
-              >
-                <link.icon className="h-3.5 w-3.5" />
-                {link.label}
-              </Link>
-            ))}
-          </div>
-          <div className="flex justify-center gap-3">
-            <Link to="/submit-venue">
-              <Button variant="outline" size="sm" className="text-[13px] gap-1.5">
-                <Plus className="h-3.5 w-3.5" />
-                Submit a Venue
-              </Button>
-            </Link>
-            <Link to="/suggest-event">
-              <Button variant="outline" size="sm" className="text-[13px] gap-1.5">
-                <Calendar className="h-3.5 w-3.5" />
-                Suggest an Event
-              </Button>
-            </Link>
-          </div>
+        </div>
+
+        {/* Bottom fade into page background */}
+        <div className="absolute bottom-0 left-0 right-0 h-16" style={{
+          background: 'linear-gradient(to bottom, transparent, hsl(var(--background)))',
+        }} />
+      </section>
+
+      {/* ═══════ QUICK ACTIONS ═══════ */}
+      <section className="container mx-auto px-4 -mt-4 relative z-20">
+        <div className="flex items-center justify-center gap-3">
+          <Link to="/submit-venue">
+            <Button variant="outline" size="sm" className="text-[13px] gap-1.5 bg-card card-shadow">
+              <Plus className="h-3.5 w-3.5" />
+              Submit a Venue
+            </Button>
+          </Link>
+          <Link to="/suggest-event">
+            <Button variant="outline" size="sm" className="text-[13px] gap-1.5 bg-card card-shadow">
+              <Calendar className="h-3.5 w-3.5" />
+              Suggest an Event
+            </Button>
+          </Link>
         </div>
       </section>
 
       <AdPlaceholder slot="header" />
 
-      {/* Popular Belfast Searches */}
+      {/* ═══════ EXPLORE BY MOOD ═══════ */}
       <section className="container mx-auto px-4 py-10">
-        <h2 className="font-display font-semibold text-lg text-foreground mb-4">Popular Belfast Searches</h2>
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2">
-          {POPULAR_SEARCHES.map((s) => (
+        <div className="mb-6">
+          <h2 className="font-display font-bold text-xl md:text-2xl text-foreground">Explore by Mood</h2>
+          <p className="text-sm text-muted-foreground mt-1">Find the perfect outing for any occasion</p>
+        </div>
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
+          {MOOD_CARDS.map((mood, i) => (
             <Link
-              key={s.to}
-              to={s.to}
-              className="px-3.5 py-2.5 bg-card border border-border rounded-lg text-[13px] text-foreground hover:border-primary/40 hover:text-primary transition-colors card-shadow"
+              key={mood.to}
+              to={mood.to}
+              className="group relative bg-card border border-border rounded-xl p-4 text-center card-shadow hover:card-shadow-hover hover:border-teal/40 transition-all duration-200 animate-fade-in flex flex-col items-center gap-2.5 overflow-hidden"
+              style={{ animationDelay: `${i * 60}ms` }}
             >
-              {s.label}
+              <div className="absolute inset-0 bg-gradient-to-br from-teal/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+              <div className="relative w-12 h-12 rounded-full bg-teal/10 flex items-center justify-center group-hover:bg-teal/20 group-hover:scale-110 transition-all duration-300">
+                <mood.icon className="h-5 w-5 text-teal" />
+              </div>
+              <h3 className="relative font-display font-semibold text-sm text-foreground group-hover:text-teal transition-colors">
+                {mood.label}
+              </h3>
+              <p className="relative text-[11px] text-muted-foreground leading-snug line-clamp-2">
+                {mood.desc}
+              </p>
             </Link>
           ))}
         </div>
       </section>
 
-      {/* Belfast Highlights — Editorial */}
+      {/* ═══════ BELFAST HIGHLIGHTS (EDITORIAL) ═══════ */}
       {featuredListings && featuredListings.length > 0 && (
         <section className="container mx-auto px-4 py-10">
           <div className="flex items-center justify-between mb-6">
             <div>
-              <h2 className="font-display font-bold text-xl md:text-2xl text-foreground">Belfast Highlights</h2>
+              <h2 className="font-display font-bold text-xl md:text-2xl text-foreground flex items-center gap-2">
+                <Sparkles className="h-5 w-5 text-accent" />
+                Belfast Highlights
+              </h2>
               <p className="text-sm text-muted-foreground mt-1">Curated places and experiences we recommend</p>
             </div>
             <Link to="/things-to-do" className="text-[13px] text-primary font-medium flex items-center gap-1 hover:underline">
@@ -408,8 +446,8 @@ const Index = () => {
               const catSlug = (listing.categories as any)?.slug;
               const catName = (listing.categories as any)?.name || "Place";
               const citySlug = (listing.cities as any)?.slug || "belfast";
-               const imgSrc = getImageUrl(listing.image_url, (listing as any).image_source, catSlug, citySlug, (listing as any).image_status, listing.name, (listing as any).audience_tags, listing.description);
-               return (
+              const imgSrc = getImageUrl(listing.image_url, (listing as any).image_source, catSlug, citySlug, (listing as any).image_status, listing.name, (listing as any).audience_tags, listing.description);
+              return (
                 <Link
                   key={listing.id}
                   to={`/${citySlug}/${listing.slug}`}
@@ -427,6 +465,7 @@ const Index = () => {
                       height={400}
                       onError={buildImageErrorHandler(catSlug, listing.name, (listing as any).audience_tags, listing.description)}
                     />
+                    <div className="absolute inset-0 bg-gradient-to-t from-foreground/40 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
                     <span className="absolute top-3 left-3 bg-teal text-teal-foreground text-[11px] font-semibold px-2.5 py-1 rounded-md">
                       {catName}
                     </span>
@@ -454,86 +493,73 @@ const Index = () => {
               );
             })}
           </div>
-          <div className="flex flex-wrap gap-2 mt-6">
-            {[
-              { label: "Things To Do", to: "/things-to-do" },
-              { label: "Best Restaurants Belfast", to: "/best-restaurants-belfast" },
-              { label: "Best Cafes Belfast", to: "/best-cafes-belfast" },
-              { label: "Bars Belfast", to: "/bars-belfast" },
-              { label: "This Weekend", to: "/things-to-do-this-weekend" },
-            ].map((link) => (
-              <Link
-                key={link.to}
-                to={link.to}
-                className="text-xs px-3 py-1.5 bg-secondary text-foreground rounded-full hover:text-primary transition-colors"
-              >
-                {link.label}
-              </Link>
-            ))}
-          </div>
         </section>
       )}
 
-      {/* Trending This Weekend */}
+      {/* ═══════ TRENDING THIS WEEKEND ═══════ */}
       {weekendItems && weekendItems.length > 0 && (
-        <section className="container mx-auto px-4 py-8">
-          <div className="flex items-center justify-between mb-5">
-            <h2 className="font-display font-semibold text-lg text-foreground flex items-center gap-2">
-              <TrendingUp className="h-5 w-5 text-teal" />
-              Trending This Weekend
-            </h2>
-            <Link to="/things-to-do-this-weekend" className="text-[13px] text-primary font-medium flex items-center gap-1 hover:underline">
-              See all <ArrowRight className="h-3.5 w-3.5" />
-            </Link>
-          </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-            {weekendItems.map((item, i) => (
-              <Link
-                key={item.id}
-                to={item.link}
-                className="group bg-card rounded-lg border border-border overflow-hidden card-shadow hover:card-shadow-hover transition-all duration-200 animate-fade-in"
-                style={{ animationDelay: `${i * 60}ms` }}
-              >
-                <div className="relative aspect-[16/10] overflow-hidden">
-                  <img
-                    src={item.imageUrl || getCategoryPlaceholder(item.category.toLowerCase(), item.title)}
-                    alt={item.imageAlt || `${item.title} — ${item.category} in Belfast`}
-                    className="w-full h-full object-cover group-hover:scale-[1.03] transition-transform duration-300"
-                    loading="lazy"
-                    decoding="async"
-                    width={400}
-                    height={250}
-                    onError={buildImageErrorHandler(item.category.toLowerCase(), item.title)}
-                  />
-                  <span className="absolute top-2 left-2 bg-card/90 backdrop-blur-sm text-foreground text-[10px] font-semibold px-2 py-0.5 rounded">
-                    {item.category}
-                  </span>
-                  {item.badge && (
-                    <span className="absolute top-2 right-2 bg-teal text-teal-foreground text-[10px] font-semibold px-2 py-0.5 rounded">
-                      {item.badge}
-                    </span>
-                  )}
-                </div>
-                <div className="p-3">
-                  <h3 className="font-display font-semibold text-sm text-foreground line-clamp-1 group-hover:text-primary transition-colors">
-                    {item.title}
-                  </h3>
-                  <p className="text-xs text-muted-foreground line-clamp-2 mt-1 leading-relaxed">
-                    {item.description}
-                  </p>
-                </div>
+        <section className="relative py-10 overflow-hidden" style={{
+          background: `linear-gradient(180deg, hsl(var(--background)) 0%, hsl(var(--secondary)) 50%, hsl(var(--background)) 100%)`,
+        }}>
+          <div className="container mx-auto px-4">
+            <div className="flex items-center justify-between mb-5">
+              <h2 className="font-display font-bold text-lg md:text-xl text-foreground flex items-center gap-2">
+                <TrendingUp className="h-5 w-5 text-teal" />
+                Trending This Weekend
+              </h2>
+              <Link to="/things-to-do-this-weekend" className="text-[13px] text-primary font-medium flex items-center gap-1 hover:underline">
+                See all <ArrowRight className="h-3.5 w-3.5" />
               </Link>
-            ))}
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+              {weekendItems.map((item, i) => (
+                <Link
+                  key={item.id}
+                  to={item.link}
+                  className="group bg-card rounded-lg border border-border overflow-hidden card-shadow hover:card-shadow-hover transition-all duration-200 animate-fade-in"
+                  style={{ animationDelay: `${i * 60}ms` }}
+                >
+                  <div className="relative aspect-[16/10] overflow-hidden">
+                    <img
+                      src={item.imageUrl || getCategoryPlaceholder(item.category.toLowerCase(), item.title)}
+                      alt={item.imageAlt || `${item.title} — ${item.category} in Belfast`}
+                      className="w-full h-full object-cover group-hover:scale-[1.03] transition-transform duration-300"
+                      loading="lazy"
+                      decoding="async"
+                      width={400}
+                      height={250}
+                      onError={buildImageErrorHandler(item.category.toLowerCase(), item.title)}
+                    />
+                    <span className="absolute top-2 left-2 bg-card/90 backdrop-blur-sm text-foreground text-[10px] font-semibold px-2 py-0.5 rounded">
+                      {item.category}
+                    </span>
+                    {item.badge && (
+                      <span className="absolute top-2 right-2 bg-teal text-teal-foreground text-[10px] font-semibold px-2 py-0.5 rounded">
+                        {item.badge}
+                      </span>
+                    )}
+                  </div>
+                  <div className="p-3">
+                    <h3 className="font-display font-semibold text-sm text-foreground line-clamp-1 group-hover:text-primary transition-colors">
+                      {item.title}
+                    </h3>
+                    <p className="text-xs text-muted-foreground line-clamp-2 mt-1 leading-relaxed">
+                      {item.description}
+                    </p>
+                  </div>
+                </Link>
+              ))}
+            </div>
           </div>
         </section>
       )}
 
-      {/* Tonight Near You */}
+      {/* ═══════ TONIGHT NEAR YOU ═══════ */}
       {tonightItems && tonightItems.length > 0 && (
-        <section className="container mx-auto px-4 py-8">
+        <section className="container mx-auto px-4 py-10">
           <div className="flex items-center justify-between mb-5">
-            <h2 className="font-display font-semibold text-lg text-foreground flex items-center gap-2">
-              <Zap className="h-5 w-5 text-teal" />
+            <h2 className="font-display font-bold text-lg md:text-xl text-foreground flex items-center gap-2">
+              <Zap className="h-5 w-5 text-accent" />
               Tonight Near You
             </h2>
             <Link to="/events-tonight" className="text-[13px] text-primary font-medium flex items-center gap-1 hover:underline">
@@ -592,75 +618,82 @@ const Index = () => {
         </section>
       )}
 
-      {/* Live Music Tonight */}
+      {/* ═══════ LIVE MUSIC TONIGHT ═══════ */}
       {liveMusicItems && liveMusicItems.length > 0 && (
-        <section className="container mx-auto px-4 py-8">
-          <div className="flex items-center justify-between mb-5">
-            <h2 className="font-display font-semibold text-lg text-foreground flex items-center gap-2">
-              <Music className="h-5 w-5 text-teal" />
-              Live Music Tonight
-            </h2>
-            <Link to="/live-music-tonight" className="text-[13px] text-primary font-medium flex items-center gap-1 hover:underline">
-              See all <ArrowRight className="h-3.5 w-3.5" />
-            </Link>
-          </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-            {liveMusicItems.slice(0, 8).map((item, i) => (
-              <Link
-                key={item.id}
-                to={item.link}
-                className="group bg-card rounded-lg border border-border overflow-hidden card-shadow hover:card-shadow-hover transition-all duration-200 animate-fade-in"
-                style={{ animationDelay: `${i * 60}ms` }}
-              >
-                <div className="relative aspect-[16/10] overflow-hidden">
-                  <img
-                    src={item.imageUrl || getCategoryPlaceholder("live-music", item.title)}
-                    alt={item.imageAlt || `${item.title} — Live Music Tonight`}
-                    className="w-full h-full object-cover group-hover:scale-[1.03] transition-transform duration-300"
-                    loading="lazy"
-                    decoding="async"
-                    width={400}
-                    height={250}
-                    onError={buildImageErrorHandler("live-music", item.title)}
-                  />
-                  <span className="absolute top-2 left-2 bg-card/90 backdrop-blur-sm text-foreground text-[10px] font-semibold px-2 py-0.5 rounded">
-                    {(item as any).type === "venue" ? "Music Venue" : "Live Music"}
-                  </span>
-                  {item.badge && (
-                    <span className="absolute top-2 right-2 bg-teal text-teal-foreground text-[10px] font-semibold px-2 py-0.5 rounded">
-                      {item.badge}
-                    </span>
-                  )}
-                  {item.time && (
-                    <span className="absolute bottom-2 left-2 bg-primary/90 text-primary-foreground text-[10px] font-semibold px-2 py-0.5 rounded">
-                      {item.time.slice(0, 5)}
-                    </span>
-                  )}
-                </div>
-                <div className="p-3">
-                  <h3 className="font-display font-semibold text-sm text-foreground line-clamp-1 group-hover:text-primary transition-colors">
-                    {item.title}
-                  </h3>
-                  {item.venueName && (
-                    <p className="text-xs text-muted-foreground mt-1 line-clamp-1">{item.venueName}</p>
-                  )}
-                  {item.cityName && (
-                    <p className="text-[11px] text-muted-foreground mt-1 flex items-center gap-1">
-                      <MapPin className="h-3 w-3" /> {item.cityName}
-                    </p>
-                  )}
-                </div>
+        <section className="relative py-10 overflow-hidden" style={{
+          background: `linear-gradient(135deg, hsl(var(--hero-gradient-start)) 0%, hsl(var(--hero-gradient-mid)) 100%)`,
+        }}>
+          <div className="container mx-auto px-4">
+            <div className="flex items-center justify-between mb-5">
+              <h2 className="font-display font-bold text-lg md:text-xl text-primary-foreground flex items-center gap-2">
+                <Music className="h-5 w-5 text-accent" />
+                Live Music Tonight
+              </h2>
+              <Link to="/live-music-tonight" className="text-[13px] text-primary-foreground/70 font-medium flex items-center gap-1 hover:text-primary-foreground transition-colors">
+                See all <ArrowRight className="h-3.5 w-3.5" />
               </Link>
-            ))}
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+              {liveMusicItems.slice(0, 8).map((item, i) => (
+                <Link
+                  key={item.id}
+                  to={item.link}
+                  className="group bg-primary-foreground/10 backdrop-blur-sm rounded-lg border border-primary-foreground/10 overflow-hidden hover:bg-primary-foreground/15 transition-all duration-200 animate-fade-in"
+                  style={{ animationDelay: `${i * 60}ms` }}
+                >
+                  <div className="relative aspect-[16/10] overflow-hidden">
+                    <img
+                      src={item.imageUrl || getCategoryPlaceholder("live-music", item.title)}
+                      alt={item.imageAlt || `${item.title} — Live Music Tonight`}
+                      className="w-full h-full object-cover group-hover:scale-[1.03] transition-transform duration-300"
+                      loading="lazy"
+                      decoding="async"
+                      width={400}
+                      height={250}
+                      onError={buildImageErrorHandler("live-music", item.title)}
+                    />
+                    <span className="absolute top-2 left-2 bg-accent/90 text-accent-foreground text-[10px] font-semibold px-2 py-0.5 rounded">
+                      {(item as any).type === "venue" ? "Music Venue" : "Live Music"}
+                    </span>
+                    {item.badge && (
+                      <span className="absolute top-2 right-2 bg-teal text-teal-foreground text-[10px] font-semibold px-2 py-0.5 rounded">
+                        {item.badge}
+                      </span>
+                    )}
+                    {item.time && (
+                      <span className="absolute bottom-2 left-2 bg-primary-foreground/90 text-foreground text-[10px] font-semibold px-2 py-0.5 rounded">
+                        {item.time.slice(0, 5)}
+                      </span>
+                    )}
+                  </div>
+                  <div className="p-3">
+                    <h3 className="font-display font-semibold text-sm text-primary-foreground line-clamp-1 group-hover:text-accent transition-colors">
+                      {item.title}
+                    </h3>
+                    {item.venueName && (
+                      <p className="text-xs text-primary-foreground/60 mt-1 line-clamp-1">{item.venueName}</p>
+                    )}
+                    {item.cityName && (
+                      <p className="text-[11px] text-primary-foreground/50 mt-1 flex items-center gap-1">
+                        <MapPin className="h-3 w-3" /> {item.cityName}
+                      </p>
+                    )}
+                  </div>
+                </Link>
+              ))}
+            </div>
           </div>
         </section>
       )}
 
-
+      {/* ═══════ UPCOMING EVENTS ═══════ */}
       {upcomingEvents && upcomingEvents.length > 0 && (
-        <section className="container mx-auto px-4 py-8">
+        <section className="container mx-auto px-4 py-10">
           <div className="flex items-center justify-between mb-5">
-            <h2 className="font-display font-semibold text-lg text-foreground">Upcoming Events</h2>
+            <h2 className="font-display font-bold text-lg md:text-xl text-foreground flex items-center gap-2">
+              <Calendar className="h-5 w-5 text-primary" />
+              Upcoming Events
+            </h2>
             <Link to="/events-belfast" className="text-[13px] text-primary font-medium flex items-center gap-1 hover:underline">
               View all <ArrowRight className="h-3.5 w-3.5" />
             </Link>
@@ -694,7 +727,23 @@ const Index = () => {
         </section>
       )}
 
-      {/* Featured Neighbourhoods - Belfast */}
+      {/* ═══════ POPULAR SEARCHES ═══════ */}
+      <section className="container mx-auto px-4 py-10">
+        <h2 className="font-display font-semibold text-lg text-foreground mb-4">Popular Belfast Searches</h2>
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2">
+          {POPULAR_SEARCHES.map((s) => (
+            <Link
+              key={s.to}
+              to={s.to}
+              className="px-3.5 py-2.5 bg-card border border-border rounded-lg text-[13px] text-foreground hover:border-teal/40 hover:text-teal transition-colors card-shadow"
+            >
+              {s.label}
+            </Link>
+          ))}
+        </div>
+      </section>
+
+      {/* ═══════ NEIGHBOURHOODS ═══════ */}
       {belfastNeighbourhoods && belfastNeighbourhoods.length > 0 && (
         <section className="container mx-auto px-4 py-8">
           <h2 className="font-display font-semibold text-lg text-foreground mb-4">Explore Belfast Neighbourhoods</h2>
@@ -715,7 +764,7 @@ const Index = () => {
 
       <AdPlaceholder slot="mid-content" />
 
-      {/* Cities */}
+      {/* ═══════ CITIES ═══════ */}
       <section className="container mx-auto px-4 py-8">
         <div className="flex items-center justify-between mb-5">
           <h2 className="font-display font-semibold text-lg text-foreground">Explore Cities</h2>
@@ -737,7 +786,7 @@ const Index = () => {
         </div>
       </section>
 
-      {/* Featured Places */}
+      {/* ═══════ FEATURED PLACES ═══════ */}
       {featuredListings && featuredListings.length > 0 && (
         <section className="container mx-auto px-4 py-10">
           <div className="flex items-center justify-between mb-5">
@@ -774,42 +823,7 @@ const Index = () => {
         </section>
       )}
 
-      {/* Explore Belfast by Mood */}
-      <section className="container mx-auto px-4 py-10">
-        <div className="mb-6">
-          <h2 className="font-display font-bold text-xl md:text-2xl text-foreground">Explore by Mood</h2>
-          <p className="text-sm text-muted-foreground mt-1">Find the perfect outing for any occasion</p>
-        </div>
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
-          {[
-            { label: "Date Night", to: "/date-night", icon: Heart, desc: "Romantic restaurants, cocktail bars & evening activities", color: "hsl(var(--accent))" },
-            { label: "Family Day Out", to: "/family-activities", icon: Users, desc: "Kids activities, parks & family-friendly attractions", color: "hsl(var(--accent))" },
-            { label: "Rainy Day Ideas", to: "/rainy-day-activities", icon: CloudRain, desc: "Museums, indoor activities, cafes & escape rooms", color: "hsl(var(--accent))" },
-            { label: "Cheap & Free", to: "/free-things-to-do", icon: Coins, desc: "Free events, parks, walks & budget-friendly fun", color: "hsl(var(--accent))" },
-            { label: "Nightlife", to: "/nightlife", icon: PartyPopper, desc: "Bars, clubs, live music & late-night spots", color: "hsl(var(--accent))" },
-            { label: "Brunch & Coffee", to: "/best-brunch-belfast", icon: Coffee, desc: "Top brunch spots, specialty coffee & bakeries", color: "hsl(var(--accent))" },
-          ].map((mood, i) => (
-            <Link
-              key={mood.to}
-              to={mood.to}
-              className="group bg-card border border-border rounded-xl p-4 text-center card-shadow hover:card-shadow-hover hover:border-primary/40 transition-all duration-200 animate-fade-in flex flex-col items-center gap-2.5"
-              style={{ animationDelay: `${i * 60}ms` }}
-            >
-              <div className="w-11 h-11 rounded-full bg-teal/10 flex items-center justify-center group-hover:bg-teal/20 transition-colors">
-                <mood.icon className="h-5 w-5 text-teal" />
-              </div>
-              <h3 className="font-display font-semibold text-sm text-foreground group-hover:text-primary transition-colors">
-                {mood.label}
-              </h3>
-              <p className="text-[11px] text-muted-foreground leading-snug line-clamp-2">
-                {mood.desc}
-              </p>
-            </Link>
-          ))}
-        </div>
-      </section>
-
-      {/* SEO Internal Links */}
+      {/* ═══════ SEO INTERNAL LINKS ═══════ */}
       <section className="container mx-auto px-4 py-10 border-t border-border">
         <h2 className="font-display font-semibold text-base text-foreground mb-4">More Searches</h2>
         <div className="flex flex-wrap gap-1.5">
@@ -836,22 +850,25 @@ const Index = () => {
         </div>
       </section>
 
-      {/* Newsletter */}
+      {/* ═══════ NEWSLETTER ═══════ */}
       <section className="container mx-auto px-4 py-10">
-        <div className="bg-card border border-border rounded-xl p-8 md:p-10 text-center card-shadow">
-          <h2 className="font-display font-semibold text-lg text-foreground mb-2">Stay in the Loop</h2>
-          <p className="text-muted-foreground text-[13px] mb-6 max-w-md mx-auto leading-relaxed">
-            Get the best events, things to do and places to eat delivered to your inbox every week.
-          </p>
-          <div className="flex gap-2 max-w-sm mx-auto">
-            <input
-              type="email"
-              placeholder="your@email.com"
-              className="flex-1 px-4 py-2.5 bg-background border border-border rounded-lg text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring"
-            />
-            <button className="px-5 py-2.5 bg-primary text-primary-foreground rounded-lg text-sm font-medium hover:bg-primary/90 transition-colors">
-              Subscribe
-            </button>
+        <div className="relative bg-card border border-border rounded-xl p-8 md:p-10 text-center card-shadow overflow-hidden">
+          <div className="absolute inset-0 bg-gradient-to-br from-teal/5 via-transparent to-primary/5" />
+          <div className="relative">
+            <h2 className="font-display font-semibold text-lg text-foreground mb-2">Stay in the Loop</h2>
+            <p className="text-muted-foreground text-[13px] mb-6 max-w-md mx-auto leading-relaxed">
+              Get the best events, things to do and places to eat delivered to your inbox every week.
+            </p>
+            <div className="flex gap-2 max-w-sm mx-auto">
+              <input
+                type="email"
+                placeholder="your@email.com"
+                className="flex-1 px-4 py-2.5 bg-background border border-border rounded-lg text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring"
+              />
+              <button className="px-5 py-2.5 bg-primary text-primary-foreground rounded-lg text-sm font-medium hover:bg-primary/90 transition-colors">
+                Subscribe
+              </button>
+            </div>
           </div>
         </div>
       </section>

@@ -2,15 +2,15 @@ import { Link } from "react-router-dom";
 import { Utensils, Coffee, Wine, Compass, Dumbbell, Egg, Pizza, Store, Rainbow } from "lucide-react";
 
 const iconMap: Record<string, React.ReactNode> = {
-  utensils: <Utensils className="h-5 w-5" />,
-  coffee: <Coffee className="h-5 w-5" />,
-  wine: <Wine className="h-5 w-5" />,
-  compass: <Compass className="h-5 w-5" />,
-  dumbbell: <Dumbbell className="h-5 w-5" />,
-  egg: <Egg className="h-5 w-5" />,
-  pizza: <Pizza className="h-5 w-5" />,
-  store: <Store className="h-5 w-5" />,
-  rainbow: <Rainbow className="h-5 w-5" />,
+  utensils: <Utensils className="h-4 w-4" />,
+  coffee: <Coffee className="h-4 w-4" />,
+  wine: <Wine className="h-4 w-4" />,
+  compass: <Compass className="h-4 w-4" />,
+  dumbbell: <Dumbbell className="h-4 w-4" />,
+  egg: <Egg className="h-4 w-4" />,
+  pizza: <Pizza className="h-4 w-4" />,
+  store: <Store className="h-4 w-4" />,
+  rainbow: <Rainbow className="h-4 w-4" />,
 };
 
 interface CategoryPillProps {
@@ -26,10 +26,12 @@ export const CategoryPill = ({ name, slug, icon, citySlug }: CategoryPillProps) 
   return (
     <Link
       to={to}
-      className="flex items-center gap-2 px-4 py-2.5 bg-card border border-border rounded-full text-sm font-medium text-foreground hover:border-teal hover:text-teal transition-all card-shadow hover:card-shadow-hover"
+      className="group flex items-center gap-2.5 px-5 py-3 bg-card border border-border rounded-xl text-sm font-medium text-foreground hover:border-teal/50 hover:text-teal transition-all duration-200 card-shadow hover:card-shadow-hover"
     >
       {icon && iconMap[icon] ? (
-        <span className="text-teal">{iconMap[icon]}</span>
+        <span className="w-8 h-8 rounded-lg bg-teal/10 flex items-center justify-center text-teal group-hover:bg-teal/20 transition-colors">
+          {iconMap[icon]}
+        </span>
       ) : null}
       {name}
     </Link>
