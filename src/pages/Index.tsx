@@ -12,22 +12,21 @@ import {
   ArrowRight, Calendar, Utensils, MapPin, Star, Sparkles, Heart,
   TrendingUp, Moon, Users, CloudRain, Coins, PartyPopper, Coffee,
   Plus, Rainbow, Zap, Music, Compass, Wine, Theater,
+  Beer, Hotel, Baby, Ticket, ChevronDown,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { getImageUrl, getCategoryPlaceholder, buildImageErrorHandler } from "@/lib/image-utils";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { setPageCanonical } from "@/lib/canonical";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 
-const DISCOVERY_LINKS = [
-  { label: "What's On", to: "/whats-on-belfast", icon: Calendar, accent: false },
-  { label: "Things To Do", to: "/things-to-do", icon: Compass, accent: false },
-  { label: "Live Music", to: "/live-music", icon: Music, accent: false },
-  { label: "Restaurants", to: "/best-restaurants-belfast", icon: Utensils, accent: false },
-  { label: "Date Night", to: "/date-night", icon: Heart, accent: false },
-  { label: "This Weekend", to: "/things-to-do-this-weekend", icon: Calendar, accent: false },
-  { label: "Free", to: "/free-things-to-do", icon: Star, accent: false },
-  { label: "LGBT+", to: "/belfast?category=lgbtq", icon: Rainbow, accent: true },
+const HERO_CATEGORIES = [
+  { label: "Restaurants & Cafes", icon: Utensils, slugs: "restaurants,cafes" },
+  { label: "Pubs & Bars", icon: Beer, slugs: "bars,pubs,cocktail-bars" },
+  { label: "Hotels & B&Bs", icon: Hotel, slugs: "hotels,b-and-bs,accommodation" },
+  { label: "Family Activities", icon: Baby, slugs: "family-activities,attractions" },
+  { label: "Live Music & Events", icon: Music, slugs: "live-music,events" },
+  { label: "Things To Do", icon: Compass, slugs: "things-to-do,attractions,leisure-centres" },
 ];
 
 const MOOD_CARDS = [
