@@ -58,6 +58,34 @@ const POPULAR_SEARCHES = [
 ];
 
 const Index = () => {
+  const navigate = useNavigate();
+  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+  const [selectedTown, setSelectedTown] = useState<string | null>(null);
+  const [townOpen, setTownOpen] = useState(false);
+
+  // Apply combined filters
+  const applyFilters = (cat: string | null, town: string | null) => {
+    if (!cat && !town) return;
+    const params = new URLSearchParams();
+    if (cat) params.set("category", cat);
+    if (town) params.set("town", town);
+    navigate(`/search?${params.toString()}`);
+  };
+
+  const handleCategoryClick = (slugs: string) => {
+    const next = selectedCategory === slugs ? null : slugs;
+    setSelectedCategory(next);
+    if (next || selectedTown) applyFilters(next, selectedTown);
+  };
+
+  const handleTownSelect = (townSlug: string) => {
+    const next = selectedTown === townSlug ? null : townSlug;
+    setSelectedTown(next);
+    setTownOpen(false);
+    if (next || selectedCategory) applyFilters(selectedCategory, next);
+  };
+
+const _IndexInner = () => {
   const { data: cities } = useQuery({
     queryKey: ["cities"],
     queryFn: async () => {
