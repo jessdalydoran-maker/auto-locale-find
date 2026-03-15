@@ -167,9 +167,9 @@ export const SearchBar = ({ onClose, large = false, placeholder = "Search by cit
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (selectedIndex >= 0 && suggestions[selectedIndex]) {
-      doSearch(suggestions[selectedIndex].label);
+      doSearch(suggestions[selectedIndex]);
     } else {
-      doSearch(query);
+      doSearch();
     }
   };
 
