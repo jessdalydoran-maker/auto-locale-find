@@ -241,9 +241,18 @@ export const SearchBar = ({ onClose, large = false, placeholder = "Search by cit
               onClick={() => doSearch(s)}
             >
               {getIcon(s.type)}
-              <span className="flex-1 truncate">{s.label}</span>
+              <div className="flex-1 min-w-0">
+                <span className="block truncate">{s.label}</span>
+                {s.subtitle && (
+                  <span className={`block text-[11px] truncate ${
+                    i === selectedIndex ? "text-primary-foreground/60" : "text-muted-foreground/60"
+                  }`}>
+                    {s.subtitle}
+                  </span>
+                )}
+              </div>
               {getTypeLabel(s.type) && (
-                <span className={`text-[10px] uppercase tracking-wider ${
+                <span className={`text-[10px] uppercase tracking-wider shrink-0 ${
                   i === selectedIndex ? "text-primary-foreground/60" : "text-muted-foreground/50"
                 }`}>
                   {getTypeLabel(s.type)}
