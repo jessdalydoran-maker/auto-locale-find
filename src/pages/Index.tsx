@@ -12,22 +12,21 @@ import {
   ArrowRight, Calendar, Utensils, MapPin, Star, Sparkles, Heart,
   TrendingUp, Moon, Users, CloudRain, Coins, PartyPopper, Coffee,
   Plus, Rainbow, Zap, Music, Compass, Wine, Theater,
+  Beer, Hotel, Baby, Ticket, ChevronDown,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { getImageUrl, getCategoryPlaceholder, buildImageErrorHandler } from "@/lib/image-utils";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { setPageCanonical } from "@/lib/canonical";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 
-const DISCOVERY_LINKS = [
-  { label: "What's On", to: "/whats-on-belfast", icon: Calendar, accent: false },
-  { label: "Things To Do", to: "/things-to-do", icon: Compass, accent: false },
-  { label: "Live Music", to: "/live-music", icon: Music, accent: false },
-  { label: "Restaurants", to: "/best-restaurants-belfast", icon: Utensils, accent: false },
-  { label: "Date Night", to: "/date-night", icon: Heart, accent: false },
-  { label: "This Weekend", to: "/things-to-do-this-weekend", icon: Calendar, accent: false },
-  { label: "Free", to: "/free-things-to-do", icon: Star, accent: false },
-  { label: "LGBT+", to: "/belfast?category=lgbtq", icon: Rainbow, accent: true },
+const HERO_CATEGORIES = [
+  { label: "Restaurants & Cafes", icon: Utensils, slugs: "restaurants,cafes" },
+  { label: "Pubs & Bars", icon: Beer, slugs: "bars,pubs,cocktail-bars" },
+  { label: "Hotels & B&Bs", icon: Hotel, slugs: "hotels,b-and-bs,accommodation" },
+  { label: "Family Activities", icon: Baby, slugs: "family-activities,attractions" },
+  { label: "Live Music & Events", icon: Music, slugs: "live-music,events" },
+  { label: "Things To Do", icon: Compass, slugs: "things-to-do,attractions,leisure-centres" },
 ];
 
 const MOOD_CARDS = [
@@ -59,6 +58,32 @@ const POPULAR_SEARCHES = [
 ];
 
 const Index = () => {
+  const navigate = useNavigate();
+  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+  const [selectedTown, setSelectedTown] = useState<string | null>(null);
+  const [townOpen, setTownOpen] = useState(false);
+
+  const applyFilters = (cat: string | null, town: string | null) => {
+    if (!cat && !town) return;
+    const params = new URLSearchParams();
+    if (cat) params.set("category", cat);
+    if (town) params.set("town", town);
+    navigate(`/search?${params.toString()}`);
+  };
+
+  const handleCategoryClick = (slugs: string) => {
+    const next = selectedCategory === slugs ? null : slugs;
+    setSelectedCategory(next);
+    if (next || selectedTown) applyFilters(next, selectedTown);
+  };
+
+  const handleTownSelect = (townSlug: string) => {
+    const next = selectedTown === townSlug ? null : townSlug;
+    setSelectedTown(next);
+    setTownOpen(false);
+    if (next || selectedCategory) applyFilters(selectedCategory, next);
+  };
+
   const { data: cities } = useQuery({
     queryKey: ["cities"],
     queryFn: async () => {
@@ -351,22 +376,62 @@ const Index = () => {
               <SearchBar large placeholder="Search by event, place, town or category..." />
             </div>
 
-            {/* Discovery pills */}
-            <div className="flex flex-wrap justify-center gap-2">
-              {DISCOVERY_LINKS.map((link) => (
-                <Link
-                  key={link.to}
-                  to={link.to}
+            {/* Category filter buttons */}
+            <div className="flex flex-wrap justify-center gap-2 mb-4">
+              {HERO_CATEGORIES.map((cat) => (
+                <button
+                  key={cat.slugs}
+                  onClick={() => handleCategoryClick(cat.slugs)}
                   className={`flex items-center gap-1.5 px-4 py-2 rounded-full text-[13px] font-medium backdrop-blur-sm transition-all duration-200 border ${
-                    link.accent
-                      ? "bg-accent/20 text-primary-foreground border-accent/30 hover:bg-accent/30"
+                    selectedCategory === cat.slugs
+                      ? "bg-primary-foreground text-primary border-primary-foreground"
                       : "bg-primary-foreground/10 text-primary-foreground/90 border-primary-foreground/10 hover:bg-primary-foreground/20"
                   }`}
                 >
-                  <link.icon className="h-3.5 w-3.5" />
-                  {link.label}
-                </Link>
+                  <cat.icon className="h-3.5 w-3.5" />
+                  {cat.label}
+                </button>
               ))}
+            </div>
+
+            {/* Town dropdown */}
+            <div className="relative inline-block">
+              <button
+                onClick={() => setTownOpen(!townOpen)}
+                className="flex items-center gap-1.5 px-4 py-2 rounded-full text-[13px] font-medium backdrop-blur-sm transition-all duration-200 border bg-primary-foreground/10 text-primary-foreground/90 border-primary-foreground/10 hover:bg-primary-foreground/20"
+              >
+                <MapPin className="h-3.5 w-3.5" />
+                {selectedTown ? cities?.find(c => c.slug === selectedTown)?.name || "All Towns" : "Select Town"}
+                <ChevronDown className={`h-3 w-3 transition-transform ${townOpen ? "rotate-180" : ""}`} />
+              </button>
+              {townOpen && cities && (
+                <div className="absolute top-full mt-1 left-1/2 -translate-x-1/2 bg-card border border-border rounded-lg shadow-lg z-50 max-h-48 overflow-y-auto min-w-[180px]">
+                  {selectedTown && (
+                    <button
+                      onClick={() => { setSelectedTown(null); setTownOpen(false); }}
+                      className="w-full text-left px-3.5 py-2 text-[13px] text-muted-foreground hover:bg-secondary hover:text-foreground transition-colors"
+                    >
+                      All Towns
+                    </button>
+                  )}
+                  {cities
+                    .slice()
+                    .sort((a, b) => a.name.localeCompare(b.name))
+                    .map((city) => (
+                    <button
+                      key={city.id}
+                      onClick={() => handleTownSelect(city.slug)}
+                      className={`w-full text-left px-3.5 py-2 text-[13px] transition-colors ${
+                        selectedTown === city.slug
+                          ? "bg-primary text-primary-foreground"
+                          : "text-muted-foreground hover:bg-secondary hover:text-foreground"
+                      }`}
+                    >
+                      {city.name}
+                    </button>
+                  ))}
+                </div>
+              )}
             </div>
           </div>
         </div>
