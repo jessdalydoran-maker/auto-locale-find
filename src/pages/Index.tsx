@@ -376,22 +376,62 @@ const Index = () => {
               <SearchBar large placeholder="Search by event, place, town or category..." />
             </div>
 
-            {/* Discovery pills */}
-            <div className="flex flex-wrap justify-center gap-2">
-              {DISCOVERY_LINKS.map((link) => (
-                <Link
-                  key={link.to}
-                  to={link.to}
+            {/* Category filter buttons */}
+            <div className="flex flex-wrap justify-center gap-2 mb-4">
+              {HERO_CATEGORIES.map((cat) => (
+                <button
+                  key={cat.slugs}
+                  onClick={() => handleCategoryClick(cat.slugs)}
                   className={`flex items-center gap-1.5 px-4 py-2 rounded-full text-[13px] font-medium backdrop-blur-sm transition-all duration-200 border ${
-                    link.accent
-                      ? "bg-accent/20 text-primary-foreground border-accent/30 hover:bg-accent/30"
+                    selectedCategory === cat.slugs
+                      ? "bg-primary-foreground text-primary border-primary-foreground"
                       : "bg-primary-foreground/10 text-primary-foreground/90 border-primary-foreground/10 hover:bg-primary-foreground/20"
                   }`}
                 >
-                  <link.icon className="h-3.5 w-3.5" />
-                  {link.label}
-                </Link>
+                  <cat.icon className="h-3.5 w-3.5" />
+                  {cat.label}
+                </button>
               ))}
+            </div>
+
+            {/* Town dropdown */}
+            <div className="relative inline-block">
+              <button
+                onClick={() => setTownOpen(!townOpen)}
+                className="flex items-center gap-1.5 px-4 py-2 rounded-full text-[13px] font-medium backdrop-blur-sm transition-all duration-200 border bg-primary-foreground/10 text-primary-foreground/90 border-primary-foreground/10 hover:bg-primary-foreground/20"
+              >
+                <MapPin className="h-3.5 w-3.5" />
+                {selectedTown ? cities?.find(c => c.slug === selectedTown)?.name || "All Towns" : "Select Town"}
+                <ChevronDown className={`h-3 w-3 transition-transform ${townOpen ? "rotate-180" : ""}`} />
+              </button>
+              {townOpen && cities && (
+                <div className="absolute top-full mt-1 left-1/2 -translate-x-1/2 bg-card border border-border rounded-lg shadow-lg z-50 max-h-48 overflow-y-auto min-w-[180px]">
+                  {selectedTown && (
+                    <button
+                      onClick={() => { setSelectedTown(null); setTownOpen(false); }}
+                      className="w-full text-left px-3.5 py-2 text-[13px] text-muted-foreground hover:bg-secondary hover:text-foreground transition-colors"
+                    >
+                      All Towns
+                    </button>
+                  )}
+                  {cities
+                    .slice()
+                    .sort((a, b) => a.name.localeCompare(b.name))
+                    .map((city) => (
+                    <button
+                      key={city.id}
+                      onClick={() => handleTownSelect(city.slug)}
+                      className={`w-full text-left px-3.5 py-2 text-[13px] transition-colors ${
+                        selectedTown === city.slug
+                          ? "bg-primary text-primary-foreground"
+                          : "text-muted-foreground hover:bg-secondary hover:text-foreground"
+                      }`}
+                    >
+                      {city.name}
+                    </button>
+                  ))}
+                </div>
+              )}
             </div>
           </div>
         </div>
