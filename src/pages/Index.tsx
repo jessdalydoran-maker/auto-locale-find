@@ -63,7 +63,6 @@ const Index = () => {
   const [selectedTown, setSelectedTown] = useState<string | null>(null);
   const [townOpen, setTownOpen] = useState(false);
 
-  // Apply combined filters
   const applyFilters = (cat: string | null, town: string | null) => {
     if (!cat && !town) return;
     const params = new URLSearchParams();
@@ -85,7 +84,6 @@ const Index = () => {
     if (next || selectedCategory) applyFilters(selectedCategory, next);
   };
 
-const _IndexInner = () => {
   const { data: cities } = useQuery({
     queryKey: ["cities"],
     queryFn: async () => {
