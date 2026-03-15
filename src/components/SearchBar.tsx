@@ -28,96 +28,104 @@ export const SearchBar = ({ onClose, large = false, placeholder = "Search by cit
   const fetchSuggestions = useCallback(async (partial: string) => {
     if (partial.length < 2) {
       setSuggestions([]);
+      setShowSuggestions(false);
       return;
     }
 
     const results: Suggestion[] = [];
     const lower = partial.toLowerCase();
 
-    // Parallel DB queries for venues, events, cities, categories
-    const [venueRes, eventRes, cityRes, catRes] = await Promise.all([
+    // Search listings by name, city name, and category name simultaneously
+    const [byName, byCity, byCat, eventRes, cityRes, catRes] = await Promise.all([
       supabase
         .from("listings")
-        .select("name, cities(name)")
+        .select("name, slug, cities!inner(name, slug), categories!inner(name, slug)")
         .ilike("name", `%${partial}%`)
-        .limit(5),
+        .limit(8),
+      supabase
+        .from("listings")
+        .select("name, slug, cities!inner(name, slug), categories!inner(name, slug)")
+        .ilike("cities.name", `%${partial}%`)
+        .limit(10),
+      supabase
+        .from("listings")
+        .select("name, slug, cities!inner(name, slug), categories!inner(name, slug)")
+        .ilike("categories.name", `%${partial}%`)
+        .limit(8),
       supabase
         .from("events")
-        .select("title")
+        .select("title, slug")
         .eq("status", "active")
         .gte("date_start", new Date().toISOString().split("T")[0])
         .ilike("title", `%${partial}%`)
         .limit(3),
       supabase
         .from("cities")
-        .select("name")
+        .select("name, slug")
         .ilike("name", `%${partial}%`)
         .limit(3),
       supabase
         .from("categories")
-        .select("name")
+        .select("name, slug")
         .ilike("name", `%${partial}%`)
         .eq("is_active", true)
         .limit(3),
     ]);
 
-    // Venues (with city name appended)
-    if (venueRes.data) {
-      for (const v of venueRes.data) {
-        const cityName = (v.cities as any)?.name;
-        results.push({
-          label: cityName ? `${v.name} – ${cityName}` : v.name,
-          type: "venue",
-        });
-      }
-    }
+    const seenIds = new Set<string>();
+    const addListing = (l: any) => {
+      const key = l.slug;
+      if (seenIds.has(key)) return;
+      seenIds.add(key);
+      const cityName = (l.cities as any)?.name || "";
+      const citySlug = (l.cities as any)?.slug || "";
+      const catName = (l.categories as any)?.name || "";
+      results.push({
+        label: l.name,
+        type: "venue",
+        subtitle: `${catName} · ${cityName}`,
+        link: `/${citySlug}/${l.slug}`,
+      });
+    };
+
+    // Prioritise: city matches first (location-first), then name, then category
+    for (const l of (byCity.data || [])) addListing(l);
+    for (const l of (byName.data || [])) addListing(l);
+    for (const l of (byCat.data || [])) addListing(l);
 
     // Events
     if (eventRes.data) {
       for (const e of eventRes.data) {
-        results.push({ label: e.title, type: "event" });
+        results.push({ label: e.title, type: "event", link: `/event/${e.slug}` });
       }
     }
 
-    // Cities
+    // Cities as navigation options
     if (cityRes.data) {
       for (const c of cityRes.data) {
-        results.push({ label: c.name, type: "city" });
+        results.push({ label: c.name, type: "city", subtitle: "View all listings", link: `/${c.slug}` });
       }
     }
 
     // Categories
     if (catRes.data) {
       for (const c of catRes.data) {
-        results.push({ label: `${c.name} Belfast`, type: "category" });
+        results.push({ label: c.name, type: "category", subtitle: "Category", link: `/categories` });
       }
     }
 
-    // Static suggestions as fallback if DB returned few results
+    // Static fallback
     if (results.length < 4) {
       const staticSugs = getAutocompleteSuggestions(partial);
       for (const s of staticSugs) {
         if (!results.some(r => r.label.toLowerCase() === s.toLowerCase())) {
           results.push({ label: s, type: "static" });
         }
-        if (results.length >= 8) break;
+        if (results.length >= 10) break;
       }
     }
 
-    // Always include LGBT+ suggestion and pin it near the top
-    const lgbtTerms = ["lgbt", "lgbtq", "pride", "queer", "gay", "lesbian", "drag", "rainbow"];
-    const existingLgbtIndex = results.findIndex((r) =>
-      lgbtTerms.some((t) => r.label.toLowerCase().includes(t))
-    );
-
-    if (existingLgbtIndex === -1) {
-      results.unshift({ label: "LGBT+ Belfast", type: "category" });
-    } else if (existingLgbtIndex > 0) {
-      const [lgbtSuggestion] = results.splice(existingLgbtIndex, 1);
-      if (lgbtSuggestion) results.unshift(lgbtSuggestion);
-    }
-
-    setSuggestions(results.slice(0, 8));
+    setSuggestions(results.slice(0, 10));
     setSelectedIndex(-1);
     setShowSuggestions(results.length > 0);
   }, []);
