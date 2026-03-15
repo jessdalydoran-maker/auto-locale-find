@@ -148,9 +148,15 @@ export const SearchBar = ({ onClose, large = false, placeholder = "Search by cit
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  const doSearch = (q: string) => {
+  const doSearch = (suggestion?: Suggestion) => {
+    if (suggestion?.link) {
+      navigate(suggestion.link);
+      setShowSuggestions(false);
+      onClose?.();
+      return;
+    }
+    const q = suggestion?.label || query;
     if (q.trim()) {
-      // Strip " – CityName" suffix for venue suggestions
       const clean = q.replace(/\s–\s.+$/, "").trim();
       navigate(`/search?q=${encodeURIComponent(clean)}`);
       setShowSuggestions(false);
