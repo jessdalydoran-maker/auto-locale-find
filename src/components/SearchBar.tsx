@@ -13,6 +13,8 @@ interface SearchBarProps {
 interface Suggestion {
   label: string;
   type: "venue" | "event" | "city" | "category" | "static";
+  subtitle?: string;
+  link?: string;
 }
 
 export const SearchBar = ({ onClose, large = false, placeholder = "Search by city, category or keyword..." }: SearchBarProps) => {
