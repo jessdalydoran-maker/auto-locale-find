@@ -238,7 +238,7 @@ export const SearchBar = ({ onClose, large = false, placeholder = "Search by cit
                   : "text-muted-foreground hover:bg-secondary hover:text-foreground"
               }`}
               onMouseEnter={() => setSelectedIndex(i)}
-              onClick={() => doSearch(s.label)}
+              onClick={() => doSearch(s)}
             >
               {getIcon(s.type)}
               <span className="flex-1 truncate">{s.label}</span>
