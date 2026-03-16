@@ -83,7 +83,7 @@ export const SearchBar = ({ onClose, large = false, placeholder = "Search by cit
           .select("title, slug, date_start, venue_name, cities!inner(name)")
           .eq("status", "active")
           .lte("date_start", temporal.dateTo)
-          .gte("date_start", temporal.dateFrom)
+          .or(`date_end.gte.${temporal.dateFrom},date_end.is.null`)
           .order("date_start", { ascending: true })
           .limit(8)
           .then(r => r)
