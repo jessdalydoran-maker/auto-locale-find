@@ -26,6 +26,42 @@ export const SearchBar = ({ onClose, large = false, placeholder = "Search by cit
   const wrapperRef = useRef<HTMLDivElement>(null);
   const debounceRef = useRef<ReturnType<typeof setTimeout>>();
 
+  // Detect temporal intent from query
+  const detectTemporalIntent = (q: string): { label: string; dateFrom: string; dateTo: string } | null => {
+    const lower = q.toLowerCase();
+    const today = new Date();
+    const fmt = (d: Date) => d.toISOString().split("T")[0];
+
+    if (lower.includes("tonight") || lower.includes("today")) {
+      return { label: "Today", dateFrom: fmt(today), dateTo: fmt(today) };
+    }
+    if (lower.includes("tomorrow")) {
+      const tom = new Date(today);
+      tom.setDate(tom.getDate() + 1);
+      return { label: "Tomorrow", dateFrom: fmt(tom), dateTo: fmt(tom) };
+    }
+    if (lower.includes("this weekend")) {
+      const day = today.getDay(); // 0=Sun
+      const fri = new Date(today);
+      fri.setDate(today.getDate() + ((5 - day + 7) % 7));
+      const sun = new Date(fri);
+      sun.setDate(fri.getDate() + 2);
+      return { label: "This Weekend", dateFrom: fmt(fri), dateTo: fmt(sun) };
+    }
+    if (lower.includes("next week") || lower.includes("next 7 days")) {
+      const end = new Date(today);
+      end.setDate(today.getDate() + 7);
+      return { label: "Next 7 Days", dateFrom: fmt(today), dateTo: fmt(end) };
+    }
+    // Generic "what's on" / "events" without specific time → next 7 days
+    if (/what'?s\s+on|whats\s+on/.test(lower) && !lower.includes("tonight") && !lower.includes("tomorrow") && !lower.includes("weekend")) {
+      const end = new Date(today);
+      end.setDate(today.getDate() + 7);
+      return { label: "Next 7 Days", dateFrom: fmt(today), dateTo: fmt(end) };
+    }
+    return null;
+  };
+
   // Live autocomplete from DB + static suggestions
   const fetchSuggestions = useCallback(async (partial: string) => {
     if (partial.length < 2) {
@@ -37,8 +73,24 @@ export const SearchBar = ({ onClose, large = false, placeholder = "Search by cit
     const results: Suggestion[] = [];
     const lower = partial.toLowerCase();
 
-    // Search listings by name, city name, and category name simultaneously
-    const [byName, byCity, byCat, eventRes, cityRes, catRes] = await Promise.all([
+    // Check for temporal intent first
+    const temporal = detectTemporalIntent(partial);
+
+    // Build temporal events query if needed
+    const temporalQuery = temporal
+      ? supabase
+          .from("events")
+          .select("title, slug, date_start, venue_name, cities!inner(name)")
+          .eq("status", "active")
+          .lte("date_start", temporal.dateTo)
+          .or(`date_end.gte.${temporal.dateFrom},date_end.is.null`)
+          .order("date_start", { ascending: true })
+          .limit(8)
+          .then(r => r)
+      : Promise.resolve({ data: null });
+
+    // Run all queries in parallel
+    const [byName, byCity, byCat, eventRes, cityRes, catRes, temporalEventsRes] = await Promise.all([
       supabase
         .from("listings")
         .select("name, slug, cities!inner(name, slug), categories!inner(name, slug)")
@@ -72,47 +124,73 @@ export const SearchBar = ({ onClose, large = false, placeholder = "Search by cit
         .ilike("name", `%${partial}%`)
         .eq("is_active", true)
         .limit(3),
+      temporalQuery,
     ]);
+    const temporalEvents = temporalEventsRes as any;
 
-    const seenIds = new Set<string>();
-    const addListing = (l: any) => {
-      const key = l.slug;
-      if (seenIds.has(key)) return;
-      seenIds.add(key);
-      const cityName = (l.cities as any)?.name || "";
-      const citySlug = (l.cities as any)?.slug || "";
-      const catName = (l.categories as any)?.name || "";
+    // If temporal intent, show date-matched events FIRST
+    if (temporal && temporalEvents?.data?.length) {
+      // Add a header-style suggestion
       results.push({
-        label: l.name,
-        type: "venue",
-        subtitle: `${catName} · ${cityName}`,
-        link: `/${citySlug}/${l.slug}`,
+        label: `Events ${temporal.label}`,
+        type: "event",
+        subtitle: `${temporalEvents.data.length} event${temporalEvents.data.length !== 1 ? 's' : ''} found`,
+        link: `/search?q=events+${temporal.label.toLowerCase().replace(/\s+/g, "+")}`,
       });
-    };
-
-    // Prioritise: city matches first (location-first), then name, then category
-    for (const l of (byCity.data || [])) addListing(l);
-    for (const l of (byName.data || [])) addListing(l);
-    for (const l of (byCat.data || [])) addListing(l);
-
-    // Events
-    if (eventRes.data) {
-      for (const e of eventRes.data) {
-        results.push({ label: e.title, type: "event", link: `/event/${e.slug}` });
+      for (const e of temporalEvents.data) {
+        const venueName = (e as any).venue_name || "";
+        const cityName = ((e as any).cities as any)?.name || "";
+        results.push({
+          label: e.title,
+          type: "event",
+          subtitle: [venueName, cityName].filter(Boolean).join(" · "),
+          link: `/event/${e.slug}`,
+        });
       }
     }
 
-    // Cities as navigation options
-    if (cityRes.data) {
-      for (const c of cityRes.data) {
-        results.push({ label: c.name, type: "city", subtitle: "View all listings", link: `/${c.slug}` });
-      }
-    }
+    // If temporal intent found, skip listing results (user wants events)
+    if (!temporal) {
+      const seenIds = new Set<string>();
+      const addListing = (l: any) => {
+        const key = l.slug;
+        if (seenIds.has(key)) return;
+        seenIds.add(key);
+        const cityName = (l.cities as any)?.name || "";
+        const citySlug = (l.cities as any)?.slug || "";
+        const catName = (l.categories as any)?.name || "";
+        results.push({
+          label: l.name,
+          type: "venue",
+          subtitle: `${catName} · ${cityName}`,
+          link: `/${citySlug}/${l.slug}`,
+        });
+      };
 
-    // Categories
-    if (catRes.data) {
-      for (const c of catRes.data) {
-        results.push({ label: c.name, type: "category", subtitle: "Category", link: `/categories` });
+      // Prioritise: city matches first (location-first), then name, then category
+      for (const l of (byCity.data || [])) addListing(l);
+      for (const l of (byName.data || [])) addListing(l);
+      for (const l of (byCat.data || [])) addListing(l);
+
+      // Events by title match
+      if (eventRes.data) {
+        for (const e of eventRes.data) {
+          results.push({ label: e.title, type: "event", link: `/event/${e.slug}` });
+        }
+      }
+
+      // Cities as navigation options
+      if (cityRes.data) {
+        for (const c of cityRes.data) {
+          results.push({ label: c.name, type: "city", subtitle: "View all listings", link: `/${c.slug}` });
+        }
+      }
+
+      // Categories
+      if (catRes.data) {
+        for (const c of catRes.data) {
+          results.push({ label: c.name, type: "category", subtitle: "Category", link: `/categories` });
+        }
       }
     }
 
