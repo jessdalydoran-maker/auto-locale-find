@@ -76,8 +76,21 @@ export const SearchBar = ({ onClose, large = false, placeholder = "Search by cit
     // Check for temporal intent first
     const temporal = detectTemporalIntent(partial);
 
-    // Build parallel queries
-    const queries: Promise<any>[] = [
+    // Build temporal events query if needed
+    const temporalQuery = temporal
+      ? supabase
+          .from("events")
+          .select("title, slug, date_start, venue_name, cities!inner(name)")
+          .eq("status", "active")
+          .lte("date_start", temporal.dateTo)
+          .gte("date_start", temporal.dateFrom)
+          .order("date_start", { ascending: true })
+          .limit(8)
+          .then(r => r)
+      : Promise.resolve({ data: null });
+
+    // Run all queries in parallel
+    const [byName, byCity, byCat, eventRes, cityRes, catRes, temporalEventsRes] = await Promise.all([
       supabase
         .from("listings")
         .select("name, slug, cities!inner(name, slug), categories!inner(name, slug)")
@@ -111,25 +124,9 @@ export const SearchBar = ({ onClose, large = false, placeholder = "Search by cit
         .ilike("name", `%${partial}%`)
         .eq("is_active", true)
         .limit(3),
-    ];
-
-    // If temporal intent detected, also query events by date range
-    if (temporal) {
-      queries.push(
-        supabase
-          .from("events")
-          .select("title, slug, date_start, venue_name, cities!inner(name)")
-          .eq("status", "active")
-          .lte("date_start", temporal.dateTo)
-          .gte("date_start", temporal.dateFrom)
-          .order("date_start", { ascending: true })
-          .limit(8)
-      );
-    }
-
-    const allResults = await Promise.all(queries);
-    const [byName, byCity, byCat, eventRes, cityRes, catRes] = allResults;
-    const temporalEvents = temporal ? allResults[6] : null;
+      temporalQuery,
+    ]);
+    const temporalEvents = temporalEventsRes as any;
 
     // If temporal intent, show date-matched events FIRST
     if (temporal && temporalEvents?.data?.length) {
