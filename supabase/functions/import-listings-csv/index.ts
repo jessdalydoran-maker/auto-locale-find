@@ -53,7 +53,23 @@ Deno.serve(async (req) => {
   const supabase = createClient(supabaseUrl, supabaseKey);
 
   try {
-    const csvText = await req.text();
+    // Get CSV URL from request body or use default
+    const body = await req.json().catch(() => ({}));
+    const csvUrl = body.csv_url;
+    if (!csvUrl) {
+      return new Response(JSON.stringify({ error: "csv_url required" }), {
+        status: 400,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+    const csvRes = await fetch(csvUrl);
+    if (!csvRes.ok) {
+      return new Response(JSON.stringify({ error: `Failed to fetch CSV: ${csvRes.status}` }), {
+        status: 400,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+    const csvText = await csvRes.text();
     const lines = csvText.split("\n").filter((l) => l.trim());
     const header = parseCSVLine(lines[0]);
     const colIndex: Record<string, number> = {};
