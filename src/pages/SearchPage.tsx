@@ -397,17 +397,19 @@ const SearchPage = () => {
       async function fetchEventsForCities(cityIds: string[] | null, limit: number) {
         const results: any[] = [];
 
-        // Title match
-        let q1 = supabase
-          .from("events")
-          .select("*, cities!inner(slug, name)")
-          .eq("status", "active")
-          .gte("date_start", today)
-          .ilike("title", `%${query.trim()}%`)
-          .limit(limit);
-        if (cityIds) q1 = q1.in("city_id", cityIds);
-        const { data: d1 } = await q1;
-        if (d1) results.push(...d1);
+        // Title match (only when there's a text query)
+        if (query.trim()) {
+          let q1 = supabase
+            .from("events")
+            .select("*, cities!inner(slug, name)")
+            .eq("status", "active")
+            .gte("date_start", today)
+            .ilike("title", `%${query.trim()}%`)
+            .limit(limit);
+          if (cityIds) q1 = q1.in("city_id", cityIds);
+          const { data: d1 } = await q1;
+          if (d1) results.push(...d1);
+        }
 
         // Tag-based
         if (intent.categorySlugs.length > 0) {
