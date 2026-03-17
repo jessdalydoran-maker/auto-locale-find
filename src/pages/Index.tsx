@@ -369,7 +369,7 @@ const Index = () => {
             </p>
 
             <h1 className="font-display font-bold text-3xl md:text-[2.875rem] text-primary-foreground mb-4 leading-[1.12] tracking-tight">
-              Discover What's Happening<br className="hidden md:block" /> Across Northern Ireland
+              Northern Ireland's Complete City Guide<br className="hidden md:block" /> — Things To Do & Events
             </h1>
 
             <p className="text-primary-foreground/70 text-[15px] md:text-base max-w-xl mx-auto mb-8 leading-relaxed">
