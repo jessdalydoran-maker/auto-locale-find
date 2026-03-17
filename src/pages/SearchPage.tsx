@@ -617,6 +617,7 @@ const SearchPage = ({
   const locationName = resolvedCity?.name || intent.city;
   const hasAnyResults = hasExactResults || hasNearbyResults || hasNiWideResults || hasLocalEvents || hasNearbyEvents;
   const primaryCategorySlug = (categoryParam.split(",").find(Boolean) || intent.categorySlugs[0] || "things-to-do").toLowerCase();
+  const primaryCategoryLabel = slugToLabel(primaryCategorySlug);
   const locationHeading = locationName
     ? `${slugToLabel(primaryCategorySlug)} in ${locationName}`
     : slugToLabel(primaryCategorySlug);
