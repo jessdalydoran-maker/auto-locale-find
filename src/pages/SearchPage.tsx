@@ -338,7 +338,7 @@ const SearchPage = () => {
         niWide: dedup(niWideResults),
       };
     },
-    enabled: !!query && (intent.city ? resolvedCity !== undefined : true),
+    enabled: (!!query || hasStructuredParams) && (intent.city ? resolvedCity !== undefined : true),
   });
 
   // Score and rank listings across all 3 tiers
