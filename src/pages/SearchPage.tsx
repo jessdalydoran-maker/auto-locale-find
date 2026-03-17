@@ -170,6 +170,8 @@ const SearchPage = () => {
     queryKey: [
       "search",
       query,
+      townParam,
+      categoryParam,
       resolvedCity?.id,
       nearbyCities?.map((c) => c.id).join(","),
       intent.strictTownMode,
