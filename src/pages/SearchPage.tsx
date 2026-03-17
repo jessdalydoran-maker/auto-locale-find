@@ -176,8 +176,8 @@ const SearchPage = () => {
       intent.intentLabel,
     ],
     queryFn: async () => {
-      if (!query.trim()) return { exact: [] as any[], nearby: [] as any[], niWide: [] as any[] };
-      if (intent.hasExplicitLocation && !resolvedCity) {
+      if (!query.trim() && !hasStructuredParams) return { exact: [] as any[], nearby: [] as any[], niWide: [] as any[] };
+      if (intent.hasExplicitLocation && !resolvedCity && !hasStructuredParams) {
         return { exact: [] as any[], nearby: [] as any[], niWide: [] as any[] };
       }
 
