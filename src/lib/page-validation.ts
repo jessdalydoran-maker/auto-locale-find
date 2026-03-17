@@ -41,9 +41,9 @@ export interface PageThresholds {
 }
 
 export const PAGE_THRESHOLDS: Record<string, PageThresholds> = {
-  city: { minimum: 6, ideal: 10, nicheMinimum: 3 },
+  city: { minimum: 4, ideal: 10, nicheMinimum: 3 },
   neighbourhood: { minimum: 4, ideal: 8, nicheMinimum: 3 },
-  category: { minimum: 6, ideal: 10, nicheMinimum: 3 },
+  category: { minimum: 4, ideal: 10, nicheMinimum: 3 },
   niche: { minimum: 3, ideal: 6, nicheMinimum: 3 },
   events: { minimum: 1, ideal: 4, nicheMinimum: 1 },
   landmark: { minimum: 3, ideal: 6, nicheMinimum: 3 },

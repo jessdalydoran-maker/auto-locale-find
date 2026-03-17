@@ -4,7 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Layout } from "@/components/Layout";
 import { ListingCard } from "@/components/ListingCard";
 import { MapPin, ArrowRight } from "lucide-react";
-import { deduplicateListings, filterCompleteListings } from "@/lib/page-validation";
+import { deduplicateListings, filterCompleteListings, validatePage, detectPageType, getRobotsDirective } from "@/lib/page-validation";
 import { useEffect, useMemo } from "react";
 import { setPageCanonical } from "@/lib/canonical";
 
