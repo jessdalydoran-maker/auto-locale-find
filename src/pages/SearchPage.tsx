@@ -714,7 +714,7 @@ const SearchPage = () => {
         )}
 
         {/* Zero results */}
-        {!isLoading && !hasAnyResults && query && (
+        {!isLoading && !hasAnyResults && (query || hasStructuredParams) && (
           <div className="text-center py-12">
             <Search className="h-10 w-10 text-muted-foreground/30 mx-auto mb-4" />
             <p className="text-muted-foreground mb-6">
