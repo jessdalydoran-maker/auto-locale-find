@@ -39,6 +39,7 @@ const MOOD_CARDS = [
 ];
 
 const POPULAR_SEARCHES = [
+  { label: "Things to do this weekend", to: "/things-to-do-belfast-this-weekend" },
   { label: "What's on Belfast", to: "/whats-on-belfast" },
   { label: "What's on this weekend", to: "/events-this-weekend" },
   { label: "Free events", to: "/free-events" },

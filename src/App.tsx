@@ -16,6 +16,7 @@ import PlaceDetailPage from "./pages/PlaceDetailPage.tsx";
 import EventDetailPage from "./pages/EventDetailPage.tsx";
 import SubmitVenuePage from "./pages/SubmitVenuePage.tsx";
 import SuggestEventPage from "./pages/SuggestEventPage.tsx";
+import WeekendGuidePage from "./pages/WeekendGuidePage.tsx";
 import NotFound from "./pages/NotFound.tsx";
 
 const queryClient = new QueryClient();
@@ -32,6 +33,7 @@ const App = () => (
           <Route path="/categories" element={<CategoriesPage />} />
           <Route path="/search" element={<SearchPage />} />
           <Route path="/admin" element={<AdminPage />} />
+          <Route path="/things-to-do-belfast-this-weekend" element={<WeekendGuidePage />} />
           <Route path="/submit-venue" element={<SubmitVenuePage />} />
           <Route path="/suggest-event" element={<SuggestEventPage />} />
           <Route path="/place/:slug" element={<PlaceDetailPage />} />
