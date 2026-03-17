@@ -345,7 +345,11 @@ const Index = () => {
     },
   });
 
-  useEffect(() => { setPageCanonical("/"); }, []);
+  useEffect(() => {
+    setPageCanonical("/");
+    document.title = "City Scout Guide - Northern Ireland Events & Things To Do";
+    document.querySelector('meta[name="description"]')?.setAttribute("content", "Discover the best things to do, events, festivals and activities across Northern Ireland. Your local guide to Belfast, Antrim and beyond.");
+  }, []);
 
   return (
     <Layout>
