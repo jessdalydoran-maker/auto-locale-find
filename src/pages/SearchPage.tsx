@@ -98,36 +98,7 @@ const SearchPage = ({
 
   const hasStructuredParams = !!townParam || !!categoryParam;
 
-  // SEO: set canonical, meta title and description for preset pages
-  useEffect(() => {
-    if (presetTown || presetCategory) {
-      setPageCanonical(location.pathname);
-
-      // Dynamic meta title
-      if (resolvedCity) {
-        const catLabel = categoryParam ? slugToLabel(categoryParam.split(",")[0]) : "Things To Do";
-        const isDefaultThingsToDo = !categoryParam || categoryParam === "things-to-do";
-        const title = isDefaultThingsToDo
-          ? `Things to Do in ${resolvedCity.name} | City Scout Guide`
-          : `Best ${catLabel} in ${resolvedCity.name} | City Scout Guide`;
-        document.title = title;
-
-        // Meta description
-        const desc = isDefaultThingsToDo
-          ? `Discover the best things to do in ${resolvedCity.name}. Browse restaurants, pubs, events, live music, family activities and more.`
-          : `Find the best ${catLabel.toLowerCase()} in ${resolvedCity.name}. Curated listings with ratings, reviews, and directions.`;
-        let meta = document.querySelector('meta[name="description"]') as HTMLMetaElement | null;
-        if (!meta) {
-          meta = document.createElement("meta");
-          meta.name = "description";
-          document.head.appendChild(meta);
-        }
-        meta.content = desc;
-      }
-      return;
-    }
-    setPageCanonical(`/search${query ? `?q=${encodeURIComponent(query)}` : ""}`);
-  }, [location.pathname, presetTown, presetCategory, query, resolvedCity, categoryParam]);
+  // (SEO effect moved below resolvedCity declaration)
 
   const citySlugToResolve = intent.city;
   const { data: resolvedCity } = useQuery({
