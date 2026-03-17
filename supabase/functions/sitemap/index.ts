@@ -11,7 +11,7 @@ const corsHeaders = {
  * Content quality thresholds — mirrored from src/lib/content-quality.ts
  * Pages below these thresholds are excluded from the sitemap.
  */
-const LISTINGS_MIN = 5;
+const LISTINGS_MIN = 4;
 const EVENTS_MIN = 1;
 
 Deno.serve(async (req) => {

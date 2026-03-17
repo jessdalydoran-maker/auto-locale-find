@@ -4,7 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Layout } from "@/components/Layout";
 import { ListingCard } from "@/components/ListingCard";
 import { MapPin, ArrowRight } from "lucide-react";
-import { deduplicateListings, filterCompleteListings } from "@/lib/page-validation";
+import { deduplicateListings, filterCompleteListings, validatePage, detectPageType, getRobotsDirective } from "@/lib/page-validation";
 import { useEffect, useMemo } from "react";
 import { setPageCanonical } from "@/lib/canonical";
 
@@ -113,6 +113,32 @@ const CityCategoryPage = () => {
   useEffect(() => {
     setPageCanonical(`/${citySlug}/${categorySlug}`);
   }, [citySlug, categorySlug]);
+
+  // Noindex thin pages (0-3 listings)
+  const validation = useMemo(() => {
+    return validatePage({
+      listings: (cleanListings || []) as any,
+      pageType: detectPageType({ isNeighbourhood: false, isLandmark: false, isEvents: false, hasModifier: false, categorySlug }),
+      hasIntro: true,
+      hasSectionHeading: true,
+      hasFaq: false,
+    });
+  }, [cleanListings, categorySlug]);
+
+  useEffect(() => {
+    const robotsDirective = getRobotsDirective(validation);
+    let robotsEl = document.querySelector('meta[name="robots"]') as HTMLMetaElement;
+    if (robotsDirective) {
+      if (!robotsEl) {
+        robotsEl = document.createElement("meta");
+        robotsEl.name = "robots";
+        document.head.appendChild(robotsEl);
+      }
+      robotsEl.content = robotsDirective;
+    } else if (robotsEl) {
+      robotsEl.remove();
+    }
+  }, [validation]);
 
   if (!city || !category) {
     return (
