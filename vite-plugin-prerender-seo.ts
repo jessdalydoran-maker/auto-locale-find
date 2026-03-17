@@ -143,7 +143,7 @@ export default function prerenderSeoPlugin() {
           is_archived: "eq.false",
           order: "rating.desc.nullslast",
         })
-      );
+      )) as { name: string; slug: string; rating: number | null; cities: { slug: string }; categories: { slug: string } }[];
 
       // 3. Build maps
       const cityMap = new Map(cities.map((c) => [c.slug, c.name]));
