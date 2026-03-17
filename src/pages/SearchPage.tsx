@@ -605,7 +605,7 @@ const SearchPage = () => {
           {displayQuery ? `Results for "${displayQuery}"` : "Search"}
         </h1>
 
-        {query && (intent.categorySlugs.length > 0 || intent.hasExplicitLocation) && (
+        {(query || hasStructuredParams) && (intent.categorySlugs.length > 0 || intent.hasExplicitLocation) && (
           <div className="flex flex-wrap gap-1.5 mb-4">
             {intent.hasExplicitLocation && locationName && (
               <span className="text-xs bg-primary/10 text-primary px-2 py-0.5 rounded-full flex items-center gap-1">
