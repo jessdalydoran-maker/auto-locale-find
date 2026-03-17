@@ -98,13 +98,7 @@ const SearchPage = ({
 
   const hasStructuredParams = !!townParam || !!categoryParam;
 
-  useEffect(() => {
-    if (presetTown || presetCategory) {
-      setPageCanonical(location.pathname);
-      return;
-    }
-    setPageCanonical(`/search${query ? `?q=${encodeURIComponent(query)}` : ""}`);
-  }, [location.pathname, presetTown, presetCategory, query]);
+  // (SEO effect moved below resolvedCity declaration)
 
   const citySlugToResolve = intent.city;
   const { data: resolvedCity } = useQuery({
@@ -188,6 +182,28 @@ const SearchPage = ({
     enabled: !!resolvedCity?.id,
     staleTime: 1000 * 60 * 10,
   });
+
+  // SEO: set canonical, meta title and description for preset pages
+  useEffect(() => {
+    if (presetTown || presetCategory) {
+      setPageCanonical(location.pathname);
+      if (resolvedCity) {
+        const catLabel = categoryParam ? slugToLabel(categoryParam.split(",")[0]) : "Things To Do";
+        const isDefaultThingsToDo = !categoryParam || categoryParam === "things-to-do";
+        document.title = isDefaultThingsToDo
+          ? `Things to Do in ${resolvedCity.name} | City Scout Guide`
+          : `Best ${catLabel} in ${resolvedCity.name} | City Scout Guide`;
+        const desc = isDefaultThingsToDo
+          ? `Discover the best things to do in ${resolvedCity.name}. Browse restaurants, pubs, events, live music, family activities and more.`
+          : `Find the best ${catLabel.toLowerCase()} in ${resolvedCity.name}. Curated listings with ratings, reviews, and directions.`;
+        let meta = document.querySelector('meta[name="description"]') as HTMLMetaElement | null;
+        if (!meta) { meta = document.createElement("meta"); meta.name = "description"; document.head.appendChild(meta); }
+        meta.content = desc;
+      }
+      return;
+    }
+    setPageCanonical(`/search${query ? `?q=${encodeURIComponent(query)}` : ""}`);
+  }, [location.pathname, presetTown, presetCategory, query, resolvedCity, categoryParam]);
 
   // Main listings query — strict location-first hierarchy
   const { data: rawListings, isLoading } = useQuery({
@@ -640,6 +656,21 @@ const SearchPage = ({
         <h1 className="font-display font-bold text-2xl text-foreground mb-2">
           {pageHeading}
         </h1>
+
+        {/* SEO intro paragraph for town / town+category pages */}
+        {headingMode === "location" && locationName && (
+          <p className="text-muted-foreground text-sm mb-4 max-w-2xl leading-relaxed">
+            {(() => {
+              const catSlug = (categoryParam || "things-to-do").split(",")[0];
+              const isDefault = catSlug === "things-to-do";
+              if (isDefault) {
+                return `Discover the best things to do in ${locationName}. From top-rated restaurants and pubs to live music, family activities and local events — browse our curated guide to ${locationName}.`;
+              }
+              const catName = slugToLabel(catSlug);
+              return `Looking for ${catName.toLowerCase()} in ${locationName}? Browse our curated selection of the best ${catName.toLowerCase()}, all rated and reviewed by locals.`;
+            })()}
+          </p>
+        )}
 
         {(query || hasStructuredParams) && (intent.categorySlugs.length > 0 || intent.hasExplicitLocation) && (
           <div className="flex flex-wrap gap-1.5 mb-4">

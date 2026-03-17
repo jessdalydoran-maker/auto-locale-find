@@ -348,8 +348,8 @@ const Index = () => {
 
   useEffect(() => {
     setPageCanonical("/");
-    document.title = "City Scout Guide - Northern Ireland Events & Things To Do";
-    document.querySelector('meta[name="description"]')?.setAttribute("content", "Discover the best things to do, events, festivals and activities across Northern Ireland. Your local guide to Belfast, Antrim and beyond.");
+    document.title = "City Scout Guide - Things To Do & Events in Northern Ireland";
+    document.querySelector('meta[name="description"]')?.setAttribute("content", "Discover the best things to do, events, restaurants, live music, family activities and hidden gems across Northern Ireland. Your local guide to Belfast, Ballymena, Derry and beyond.");
   }, []);
 
   return (
@@ -375,7 +375,7 @@ const Index = () => {
             </h1>
 
             <p className="text-primary-foreground/70 text-[15px] md:text-base max-w-xl mx-auto mb-8 leading-relaxed">
-              Events, markets, restaurants, live music, family activities and hidden gems — all in one place.
+              Discover restaurants, pubs, cafes, live music, family activities, events and hidden gems across Belfast, Ballymena, Derry and beyond — all in one place.
             </p>
 
             <div className="max-w-lg mx-auto mb-8">
