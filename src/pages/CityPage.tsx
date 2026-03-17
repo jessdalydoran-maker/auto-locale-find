@@ -326,7 +326,7 @@ const CityPage = () => {
           {categories?.slice(0, 10).map((cat) => (
             <Link
               key={cat.id}
-              to={`/${resolvedCitySlug}?category=${cat.slug}`}
+              to={`/${resolvedCitySlug}/${cat.slug}`}
               className="px-3.5 py-2 rounded-full text-[13px] font-medium bg-secondary text-foreground hover:text-primary hover:bg-primary/10 transition-colors"
             >
               {cat.name}
@@ -490,10 +490,10 @@ const CityPage = () => {
             {categories?.map((cat) => (
               <Link
                 key={cat.id}
-                to={`/best-${cat.slug}-${resolvedCitySlug}`}
+                to={`/${resolvedCitySlug}/${cat.slug}`}
                 className="text-xs px-3 py-1.5 bg-muted text-muted-foreground rounded-full hover:bg-primary hover:text-primary-foreground transition-colors"
               >
-                Best {cat.name} {city.name}
+                {cat.name} in {city.name}
               </Link>
             ))}
             <Link
