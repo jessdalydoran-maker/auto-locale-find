@@ -43,34 +43,71 @@ const haversineDistanceKm = (lat1: number, lon1: number, lat2: number, lon2: num
 const SearchPage = () => {
   const [searchParams] = useSearchParams();
   const query = searchParams.get("q") || "";
-  const intent = parseSearchIntent(query);
+  const townParam = searchParams.get("town") || "";
+  const categoryParam = searchParams.get("category") || "";
+  const parsedIntent = parseSearchIntent(query);
+
+  // When structured params are provided, override the parsed intent
+  const intent = useMemo(() => {
+    if (!townParam && !categoryParam) return parsedIntent;
+
+    const overridden = { ...parsedIntent };
+
+    // Override city from structured town param (slug-based)
+    if (townParam) {
+      overridden.city = townParam;
+      overridden.hasExplicitLocation = true;
+      overridden.strictTownMode = true;
+    }
+
+    // Override categories from structured category param (comma-separated slugs)
+    if (categoryParam) {
+      const catSlugs = categoryParam.split(",").map(s => s.trim()).filter(Boolean);
+      if (catSlugs.length > 0) {
+        overridden.categorySlugs = catSlugs;
+      }
+    }
+
+    return overridden;
+  }, [parsedIntent, townParam, categoryParam]);
+
+  // Build a synthetic query for display when only structured params are used
+  const displayQuery = query || [
+    categoryParam ? categoryParam.split(",")[0].replace(/-/g, " ") : "",
+    townParam ? townParam.replace(/-/g, " ") : "",
+  ].filter(Boolean).join(" in ") || "";
+
+  const hasStructuredParams = !!townParam || !!categoryParam;
 
   useEffect(() => { setPageCanonical(`/search${query ? `?q=${encodeURIComponent(query)}` : ""}`); }, [query]);
 
-  // Resolve city ID from slug/name
+  // Resolve city ID from slug/name — use townParam directly when available
+  const citySlugToResolve = intent.city;
   const { data: resolvedCity } = useQuery({
-    queryKey: ["resolve-city", intent.city],
+    queryKey: ["resolve-city", citySlugToResolve],
     queryFn: async () => {
-      if (!intent.city) return null;
-      const townNameGuess = intent.city.replace(/-/g, " ");
+      if (!citySlugToResolve) return null;
 
+      // Try exact slug match first (most common for structured params)
       const { data: bySlug } = await supabase
         .from("cities")
         .select("id, slug, name, nearby_city_slugs, latitude, longitude")
-        .eq("slug", intent.city)
+        .eq("slug", citySlugToResolve)
         .maybeSingle();
       if (bySlug) return bySlug;
 
+      // Fallback: case-insensitive name match (handles partial matches like "Ballymena, Northern Ireland")
+      const townNameGuess = citySlugToResolve.replace(/-/g, " ");
       const { data: byName } = await supabase
         .from("cities")
         .select("id, slug, name, nearby_city_slugs, latitude, longitude")
-        .ilike("name", townNameGuess)
+        .ilike("name", `%${townNameGuess}%`)
         .limit(1)
         .maybeSingle();
 
       return byName;
     },
-    enabled: !!intent.city,
+    enabled: !!citySlugToResolve,
     staleTime: 1000 * 60 * 10,
   });
 
@@ -133,14 +170,16 @@ const SearchPage = () => {
     queryKey: [
       "search",
       query,
+      townParam,
+      categoryParam,
       resolvedCity?.id,
       nearbyCities?.map((c) => c.id).join(","),
       intent.strictTownMode,
       intent.intentLabel,
     ],
     queryFn: async () => {
-      if (!query.trim()) return { exact: [] as any[], nearby: [] as any[], niWide: [] as any[] };
-      if (intent.hasExplicitLocation && !resolvedCity) {
+      if (!query.trim() && !hasStructuredParams) return { exact: [] as any[], nearby: [] as any[], niWide: [] as any[] };
+      if (intent.hasExplicitLocation && !resolvedCity && !hasStructuredParams) {
         return { exact: [] as any[], nearby: [] as any[], niWide: [] as any[] };
       }
 
@@ -301,7 +340,7 @@ const SearchPage = () => {
         niWide: dedup(niWideResults),
       };
     },
-    enabled: !!query && (intent.city ? resolvedCity !== undefined : true),
+    enabled: (!!query || hasStructuredParams) && (intent.city ? resolvedCity !== undefined : true),
   });
 
   // Score and rank listings across all 3 tiers
@@ -347,9 +386,9 @@ const SearchPage = () => {
 
   // Search events — strict location-first (same 3-tier hierarchy)
   const { data: eventResults } = useQuery({
-    queryKey: ["search-events", query, resolvedCity?.id, nearbyCities?.map(c => c.id).join(","), intent.strictTownMode],
+    queryKey: ["search-events", query, townParam, categoryParam, resolvedCity?.id, nearbyCities?.map(c => c.id).join(","), intent.strictTownMode],
     queryFn: async () => {
-      if (!query.trim()) return { local: [] as any[], nearby: [] as any[] };
+      if (!query.trim() && !hasStructuredParams) return { local: [] as any[], nearby: [] as any[] };
       if (intent.hasExplicitLocation && !resolvedCity) {
         return { local: [] as any[], nearby: [] as any[] };
       }
@@ -358,17 +397,19 @@ const SearchPage = () => {
       async function fetchEventsForCities(cityIds: string[] | null, limit: number) {
         const results: any[] = [];
 
-        // Title match
-        let q1 = supabase
-          .from("events")
-          .select("*, cities!inner(slug, name)")
-          .eq("status", "active")
-          .gte("date_start", today)
-          .ilike("title", `%${query.trim()}%`)
-          .limit(limit);
-        if (cityIds) q1 = q1.in("city_id", cityIds);
-        const { data: d1 } = await q1;
-        if (d1) results.push(...d1);
+        // Title match (only when there's a text query)
+        if (query.trim()) {
+          let q1 = supabase
+            .from("events")
+            .select("*, cities!inner(slug, name)")
+            .eq("status", "active")
+            .gte("date_start", today)
+            .ilike("title", `%${query.trim()}%`)
+            .limit(limit);
+          if (cityIds) q1 = q1.in("city_id", cityIds);
+          const { data: d1 } = await q1;
+          if (d1) results.push(...d1);
+        }
 
         // Tag-based
         if (intent.categorySlugs.length > 0) {
@@ -474,7 +515,7 @@ const SearchPage = () => {
         nearby: rankAndFilter(scoredNearby, 10, false),
       };
     },
-    enabled: !!query && (intent.city ? resolvedCity !== undefined : true),
+    enabled: (!!query || hasStructuredParams) && (intent.city ? resolvedCity !== undefined : true),
   });
 
   // Related programmatic pages
@@ -565,10 +606,10 @@ const SearchPage = () => {
         </div>
 
         <h1 className="font-display font-bold text-2xl text-foreground mb-2">
-          {query ? `Results for "${query}"` : "Search"}
+          {displayQuery ? `Results for "${displayQuery}"` : "Search"}
         </h1>
 
-        {query && (intent.categorySlugs.length > 0 || intent.hasExplicitLocation) && (
+        {(query || hasStructuredParams) && (intent.categorySlugs.length > 0 || intent.hasExplicitLocation) && (
           <div className="flex flex-wrap gap-1.5 mb-4">
             {intent.hasExplicitLocation && locationName && (
               <span className="text-xs bg-primary/10 text-primary px-2 py-0.5 rounded-full flex items-center gap-1">
@@ -675,7 +716,7 @@ const SearchPage = () => {
         )}
 
         {/* Zero results */}
-        {!isLoading && !hasAnyResults && query && (
+        {!isLoading && !hasAnyResults && (query || hasStructuredParams) && (
           <div className="text-center py-12">
             <Search className="h-10 w-10 text-muted-foreground/30 mx-auto mb-4" />
             <p className="text-muted-foreground mb-6">
