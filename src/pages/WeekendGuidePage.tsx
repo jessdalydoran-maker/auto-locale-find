@@ -245,13 +245,14 @@ const WeekendGuidePage = () => {
                     slug={listing.slug}
                     citySlug={citySlug}
                     categorySlug={catSlug}
-                    shortDescription={listing.short_description}
+                    shortDescription={listing.short_description || ""}
                     imageUrl={getImageUrl(listing.image_url, listing.image_source, catSlug, citySlug, listing.image_status, listing.name, listing.audience_tags, listing.description)}
                     imageAlt={listing.image_alt || listing.name}
                     rating={listing.rating}
-                    reviewCount={listing.review_count}
+                    reviewCount={listing.review_count ?? 0}
                     priceLevel={listing.price_level}
                     address={listing.address}
+                    googleMapsLink={listing.google_maps_link}
                     isFeatured={listing.is_featured}
                     index={i}
                   />
