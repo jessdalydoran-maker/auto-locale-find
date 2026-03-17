@@ -8,6 +8,7 @@ import { EventCard } from "@/components/EventCard";
 import { SearchBar } from "@/components/SearchBar";
 import { parseSearchIntent } from "@/lib/search-intent";
 import { scoreListing, scoreEvent, rankAndFilter, filterByCity } from "@/lib/search-scoring";
+import { resolveIntentFilter, shouldExcludeListing } from "@/lib/category-filters";
 import { Search, Calendar, MapPin } from "lucide-react";
 import { deduplicateListings, filterCompleteListings } from "@/lib/page-validation";
 import { useMemo, useEffect } from "react";
