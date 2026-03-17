@@ -322,9 +322,9 @@ const WeekendGuidePage = () => {
           <div>
             <h3 className="font-display font-medium text-base text-foreground mb-3">Free Activities & Attractions</h3>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-              {freeActivities.listings.slice(0, 6).map((listing, i) => {
-                const catSlug = (listing.categories as any)?.slug || "";
-                const citySlug = (listing.cities as any)?.slug || "belfast";
+              {freeActivities.listings.slice(0, 6).map((listing: any, i: number) => {
+                const catSlug = listing.categories?.slug || "";
+                const citySlug = listing.cities?.slug || "belfast";
                 return (
                   <ListingCard
                     key={listing.id}
@@ -332,13 +332,14 @@ const WeekendGuidePage = () => {
                     slug={listing.slug}
                     citySlug={citySlug}
                     categorySlug={catSlug}
-                    shortDescription={listing.short_description}
+                    shortDescription={listing.short_description || ""}
                     imageUrl={getImageUrl(listing.image_url, listing.image_source, catSlug, citySlug, listing.image_status, listing.name, listing.audience_tags, listing.description)}
                     imageAlt={listing.image_alt || listing.name}
                     rating={listing.rating}
-                    reviewCount={listing.review_count}
+                    reviewCount={listing.review_count ?? 0}
                     priceLevel={listing.price_level}
                     address={listing.address}
+                    googleMapsLink={listing.google_maps_link}
                     isFeatured={listing.is_featured}
                     index={i}
                   />
