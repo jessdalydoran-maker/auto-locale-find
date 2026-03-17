@@ -294,9 +294,12 @@ const WeekendGuidePage = () => {
                   key={event.id}
                   title={event.title}
                   slug={event.slug}
+                  shortDescription={event.short_description}
                   dateStart={event.date_start}
-                  timeStart={undefined}
+                  dateEnd={null}
+                  timeStart={null}
                   venueName={event.venue_name}
+                  venueAddress={null}
                   imageUrl={event.image_url}
                   imageSource={event.image_source}
                   imageAlt={event.image_alt}
