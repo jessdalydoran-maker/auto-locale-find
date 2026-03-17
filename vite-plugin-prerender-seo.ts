@@ -265,20 +265,31 @@ export default function prerenderSeoPlugin() {
         written++;
       }
 
-      console.log(`[prerender-seo] ✅ Prerendered ${written} pages (${routes.length} routes).`);
+      console.log(`[prerender-seo] ✅ Prerendered ${written} landing pages.`);
 
-      // 7. Write manifest for verification
-      const manifest = routes.map((r) => ({
-        path: r.path,
-        title: r.title,
-        listings: r.listings.length,
-      }));
+      // 7. Generate venue detail pages (meta + JSON-LD only, no content shell)
+      let venueWritten = 0;
+      for (const v of venues) {
+        const html = buildVenueHtml(template, v);
+        const filePath = path.resolve(outDir, "place", v.slug, "index.html");
+        fs.mkdirSync(path.dirname(filePath), { recursive: true });
+        fs.writeFileSync(filePath, html, "utf-8");
+        venueWritten++;
+      }
+      console.log(`[prerender-seo] ✅ Injected SEO meta for ${venueWritten} venue pages.`);
+
+      // 8. Write manifest for verification
+      const manifest = {
+        landingPages: routes.map((r) => ({ path: r.path, title: r.title, listings: r.listings.length })),
+        venuePages: venueWritten,
+        total: written + venueWritten,
+      };
       fs.writeFileSync(
         path.resolve(outDir, "prerender-manifest.json"),
         JSON.stringify(manifest, null, 2),
         "utf-8"
       );
-      console.log(`[prerender-seo] Manifest written to ${outDir}/prerender-manifest.json`);
+      console.log(`[prerender-seo] Manifest written — ${manifest.total} total pages.`);
     },
   };
 }
