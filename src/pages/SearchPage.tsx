@@ -631,12 +631,14 @@ const SearchPage = ({
   return (
     <Layout>
       <div className="container mx-auto px-4 py-8">
-        <div className="max-w-xl mb-8">
-          <SearchBar large placeholder="Search venues, events, cities..." />
-        </div>
+        {showSearchInput && (
+          <div className="max-w-xl mb-8">
+            <SearchBar large placeholder="Search venues, events, cities..." />
+          </div>
+        )}
 
         <h1 className="font-display font-bold text-2xl text-foreground mb-2">
-          {displayQuery ? `Results for "${displayQuery}"` : "Search"}
+          {pageHeading}
         </h1>
 
         {(query || hasStructuredParams) && (intent.categorySlugs.length > 0 || intent.hasExplicitLocation) && (
