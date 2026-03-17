@@ -657,6 +657,21 @@ const SearchPage = ({
           {pageHeading}
         </h1>
 
+        {/* SEO intro paragraph for town / town+category pages */}
+        {headingMode === "location" && locationName && (
+          <p className="text-muted-foreground text-sm mb-4 max-w-2xl leading-relaxed">
+            {(() => {
+              const catSlug = (categoryParam || "things-to-do").split(",")[0];
+              const isDefault = catSlug === "things-to-do";
+              if (isDefault) {
+                return `Discover the best things to do in ${locationName}. From top-rated restaurants and pubs to live music, family activities and local events — browse our curated guide to ${locationName}.`;
+              }
+              const catName = slugToLabel(catSlug);
+              return `Looking for ${catName.toLowerCase()} in ${locationName}? Browse our curated selection of the best ${catName.toLowerCase()}, all rated and reviewed by locals.`;
+            })()}
+          </p>
+        )}
+
         {(query || hasStructuredParams) && (intent.categorySlugs.length > 0 || intent.hasExplicitLocation) && (
           <div className="flex flex-wrap gap-1.5 mb-4">
             {intent.hasExplicitLocation && locationName && (
