@@ -43,34 +43,71 @@ const haversineDistanceKm = (lat1: number, lon1: number, lat2: number, lon2: num
 const SearchPage = () => {
   const [searchParams] = useSearchParams();
   const query = searchParams.get("q") || "";
-  const intent = parseSearchIntent(query);
+  const townParam = searchParams.get("town") || "";
+  const categoryParam = searchParams.get("category") || "";
+  const parsedIntent = parseSearchIntent(query);
+
+  // When structured params are provided, override the parsed intent
+  const intent = useMemo(() => {
+    if (!townParam && !categoryParam) return parsedIntent;
+
+    const overridden = { ...parsedIntent };
+
+    // Override city from structured town param (slug-based)
+    if (townParam) {
+      overridden.city = townParam;
+      overridden.hasExplicitLocation = true;
+      overridden.strictTownMode = true;
+    }
+
+    // Override categories from structured category param (comma-separated slugs)
+    if (categoryParam) {
+      const catSlugs = categoryParam.split(",").map(s => s.trim()).filter(Boolean);
+      if (catSlugs.length > 0) {
+        overridden.categorySlugs = catSlugs;
+      }
+    }
+
+    return overridden;
+  }, [parsedIntent, townParam, categoryParam]);
+
+  // Build a synthetic query for display when only structured params are used
+  const displayQuery = query || [
+    categoryParam ? categoryParam.split(",")[0].replace(/-/g, " ") : "",
+    townParam ? townParam.replace(/-/g, " ") : "",
+  ].filter(Boolean).join(" in ") || "";
+
+  const hasStructuredParams = !!townParam || !!categoryParam;
 
   useEffect(() => { setPageCanonical(`/search${query ? `?q=${encodeURIComponent(query)}` : ""}`); }, [query]);
 
-  // Resolve city ID from slug/name
+  // Resolve city ID from slug/name — use townParam directly when available
+  const citySlugToResolve = intent.city;
   const { data: resolvedCity } = useQuery({
-    queryKey: ["resolve-city", intent.city],
+    queryKey: ["resolve-city", citySlugToResolve],
     queryFn: async () => {
-      if (!intent.city) return null;
-      const townNameGuess = intent.city.replace(/-/g, " ");
+      if (!citySlugToResolve) return null;
 
+      // Try exact slug match first (most common for structured params)
       const { data: bySlug } = await supabase
         .from("cities")
         .select("id, slug, name, nearby_city_slugs, latitude, longitude")
-        .eq("slug", intent.city)
+        .eq("slug", citySlugToResolve)
         .maybeSingle();
       if (bySlug) return bySlug;
 
+      // Fallback: case-insensitive name match (handles partial matches like "Ballymena, Northern Ireland")
+      const townNameGuess = citySlugToResolve.replace(/-/g, " ");
       const { data: byName } = await supabase
         .from("cities")
         .select("id, slug, name, nearby_city_slugs, latitude, longitude")
-        .ilike("name", townNameGuess)
+        .ilike("name", `%${townNameGuess}%`)
         .limit(1)
         .maybeSingle();
 
       return byName;
     },
-    enabled: !!intent.city,
+    enabled: !!citySlugToResolve,
     staleTime: 1000 * 60 * 10,
   });
 
