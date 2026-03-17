@@ -449,7 +449,7 @@ const Index = () => {
       </section>
 
       {/* ═══════ QUICK ACTIONS ═══════ */}
-      <section className="container mx-auto px-4 -mt-4 relative z-20">
+      <section className="container mx-auto px-4 -mt-4 relative z-10">
         <div className="flex items-center justify-center gap-3">
           <Link to="/submit-venue">
             <Button variant="outline" size="sm" className="text-[13px] gap-1.5 bg-card card-shadow">
