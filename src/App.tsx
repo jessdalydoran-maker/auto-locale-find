@@ -53,8 +53,25 @@ const App = () => (
  * Handles /:citySlug/:slug — check if it's a listing in that city
  */
 const CitySlugDetailPage = () => {
-  const { slug } = useParams();
-  // Just redirect to the PlaceDetailPage logic — slug is unique
+  const { citySlug, slug } = useParams();
+
+  // Check if the slug matches a category — if so, render the category page
+  const { data: isCategory, isLoading: catLoading } = useQuery({
+    queryKey: ["check-category-slug", slug],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("categories")
+        .select("slug")
+        .eq("slug", slug || "")
+        .eq("is_active", true)
+        .maybeSingle();
+      return !!data;
+    },
+    staleTime: 1000 * 60 * 30,
+  });
+
+  if (catLoading) return null;
+  if (isCategory) return <CityCategoryPage />;
   return <PlaceDetailPage />;
 };
 
