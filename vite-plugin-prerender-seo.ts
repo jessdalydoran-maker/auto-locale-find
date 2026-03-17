@@ -16,7 +16,7 @@ import fs from "fs";
 import path from "path";
 
 const SITE_DOMAIN = "https://cityscoutguide.com";
-const MIN_LISTINGS = 6;
+const MIN_LISTINGS = 4;
 
 interface CityRow {
   slug: string;
