@@ -490,10 +490,10 @@ const CityPage = () => {
             {categories?.map((cat) => (
               <Link
                 key={cat.id}
-                to={`/best-${cat.slug}-${resolvedCitySlug}`}
+                to={`/${resolvedCitySlug}/${cat.slug}`}
                 className="text-xs px-3 py-1.5 bg-muted text-muted-foreground rounded-full hover:bg-primary hover:text-primary-foreground transition-colors"
               >
-                Best {cat.name} {city.name}
+                {cat.name} in {city.name}
               </Link>
             ))}
             <Link
