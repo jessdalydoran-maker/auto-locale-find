@@ -17,18 +17,9 @@ const NEARBY_RADIUS_KM = 24; // ~15 miles
 const STRICT_LOCAL_MIN_RESULTS = 6;
 const DEFAULT_LOCAL_MIN_RESULTS = 5;
 const THINGS_TO_DO_PRIORITY_SLUGS = [
-  "things-to-do",
-  "attractions",
-  "cinemas",
-  "theatre",
-  "leisure-centres",
-  "parks",
-  "restaurants",
-  "bars",
-  "live-music",
-  "family-activities",
-  "shopping",
-  "leisure-entertainment",
+  "things-to-do", "attractions", "cinemas", "theatre", "leisure-centres",
+  "parks", "restaurants", "bars", "live-music", "family-activities",
+  "shopping", "leisure-entertainment",
 ];
 
 interface SearchPageProps {
