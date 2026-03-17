@@ -511,7 +511,7 @@ const SearchPage = () => {
         nearby: rankAndFilter(scoredNearby, 10, false),
       };
     },
-    enabled: !!query && (intent.city ? resolvedCity !== undefined : true),
+    enabled: (!!query || hasStructuredParams) && (intent.city ? resolvedCity !== undefined : true),
   });
 
   // Related programmatic pages
