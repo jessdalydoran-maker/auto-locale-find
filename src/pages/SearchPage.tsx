@@ -384,9 +384,9 @@ const SearchPage = () => {
 
   // Search events — strict location-first (same 3-tier hierarchy)
   const { data: eventResults } = useQuery({
-    queryKey: ["search-events", query, resolvedCity?.id, nearbyCities?.map(c => c.id).join(","), intent.strictTownMode],
+    queryKey: ["search-events", query, townParam, categoryParam, resolvedCity?.id, nearbyCities?.map(c => c.id).join(","), intent.strictTownMode],
     queryFn: async () => {
-      if (!query.trim()) return { local: [] as any[], nearby: [] as any[] };
+      if (!query.trim() && !hasStructuredParams) return { local: [] as any[], nearby: [] as any[] };
       if (intent.hasExplicitLocation && !resolvedCity) {
         return { local: [] as any[], nearby: [] as any[] };
       }
