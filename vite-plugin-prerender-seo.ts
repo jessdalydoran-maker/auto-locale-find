@@ -120,7 +120,7 @@ export default function prerenderSeoPlugin() {
       console.log("[prerender-seo] Fetching route data from database...");
 
       // 1. Fetch cities & categories
-      const [cities, categories]: [CityRow[], CategoryRow[]] = await Promise.all([
+      const [citiesRaw, categoriesRaw] = await Promise.all([
         supaFetch(supaUrl, supaKey, "cities", new URLSearchParams({ select: "slug,name" })),
         supaFetch(
           supaUrl,
@@ -129,15 +129,11 @@ export default function prerenderSeoPlugin() {
           new URLSearchParams({ select: "slug,name", is_active: "eq.true" })
         ),
       ]);
+      const cities = citiesRaw as CityRow[];
+      const categories = categoriesRaw as CategoryRow[];
 
       // 2. Fetch approved, non-archived listings with city & category info
-      const listings: {
-        name: string;
-        slug: string;
-        rating: number | null;
-        cities: { slug: string };
-        categories: { slug: string };
-      }[] = await supaFetch(
+      const listings = (await supaFetch(
         supaUrl,
         supaKey,
         "listings",
