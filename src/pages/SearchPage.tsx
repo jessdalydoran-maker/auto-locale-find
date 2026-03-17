@@ -489,27 +489,23 @@ const SearchPage = ({
       const nearbyEvents: any[] = [];
 
       if (resolvedCity) {
-        // Tier 1: exact city events
-        const tier1 = await fetchEventsForCities([resolvedCity.id], 15);
+        const tier1 = await fetchEventsForCities([resolvedCity.id], 30);
         localEvents.push(...tier1);
 
-        // Tier 2: nearby city events (only if local is below threshold)
         const minimumLocalThreshold = intent.strictTownMode
           ? STRICT_LOCAL_MIN_RESULTS
           : DEFAULT_LOCAL_MIN_RESULTS;
 
-        if (localEvents.length < minimumLocalThreshold && nearbyCities?.length) {
+        if (!forceExactTownOnly && localEvents.length < minimumLocalThreshold && nearbyCities?.length) {
           const nearbyIds = nearbyCities.map(c => c.id);
-          const tier2 = await fetchEventsForCities(nearbyIds, 10);
+          const tier2 = await fetchEventsForCities(nearbyIds, 14);
           nearbyEvents.push(...tier2);
         }
       } else {
-        // No location: broad search
-        const broad = await fetchEventsForCities(null, 15);
+        const broad = await fetchEventsForCities(null, 20);
         localEvents.push(...broad);
       }
 
-      // Deduplicate
       const seen = new Set<string>();
       const dedup = (arr: any[]) => arr.filter(e => {
         if (seen.has(e.id)) return false;
@@ -520,9 +516,11 @@ const SearchPage = ({
       const dedupLocal = dedup(localEvents);
       const { matched: cityMatchedLocal } = filterByCity(dedupLocal, intent.city);
       const localSource = intent.hasExplicitLocation ? cityMatchedLocal : dedupLocal;
-      const nearbySource = intent.city
-        ? dedup(nearbyEvents).filter((item: any) => (item.cities as any)?.slug !== intent.city)
-        : dedup(nearbyEvents);
+      const nearbySource = forceExactTownOnly
+        ? []
+        : intent.city
+          ? dedup(nearbyEvents).filter((item: any) => (item.cities as any)?.slug !== intent.city)
+          : dedup(nearbyEvents);
 
       const scoredLocal = localSource.map((item: any) => ({
         item,
