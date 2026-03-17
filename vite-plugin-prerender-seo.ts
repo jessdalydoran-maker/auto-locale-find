@@ -368,6 +368,91 @@ function buildHtml(template: string, route: RouteData): string {
   return html;
 }
 
+/* ── Venue detail page HTML builder (meta + JSON-LD only, no content shell) ── */
+function buildVenueHtml(template: string, v: VenueRow): string {
+  const cityName = v.cities?.name || "";
+  const catName = v.categories?.name || "";
+  const canonical = `${SITE_DOMAIN}/place/${v.slug}`;
+  const title = `${v.name} — ${catName} in ${cityName} | City Scout Guide`;
+  const desc =
+    v.short_description ||
+    (v.description ? v.description.slice(0, 155) : "") ||
+    `${v.name} is a top-rated ${catName.toLowerCase()} in ${cityName}. Find reviews, directions, and more.`;
+
+  // Build JSON-LD LocalBusiness schema
+  const jsonLd: Record<string, unknown> = {
+    "@context": "https://schema.org",
+    "@type": "LocalBusiness",
+    name: v.name,
+    url: canonical,
+  };
+  if (desc) jsonLd.description = desc;
+  if (v.address) jsonLd.address = { "@type": "PostalAddress", streetAddress: v.address, addressLocality: cityName };
+  if (v.latitude && v.longitude) jsonLd.geo = { "@type": "GeoCoordinates", latitude: v.latitude, longitude: v.longitude };
+  if (v.image_url) jsonLd.image = v.image_url;
+  if (v.phone) jsonLd.telephone = v.phone;
+  if (v.website) jsonLd.sameAs = v.website;
+  if (v.rating) {
+    jsonLd.aggregateRating = {
+      "@type": "AggregateRating",
+      ratingValue: v.rating,
+      bestRating: 5,
+      ...(v.review_count ? { reviewCount: v.review_count } : {}),
+    };
+  }
+  if (v.price_level) {
+    const priceMap: Record<string, string> = { "$": "$", "$$": "$$", "$$$": "$$$", "$$$$": "$$$$" };
+    if (priceMap[v.price_level]) jsonLd.priceRange = priceMap[v.price_level];
+  }
+
+  const jsonLdTag = `<script type="application/ld+json">${JSON.stringify(jsonLd)}</script>`;
+
+  let html = template;
+
+  // Replace <title>
+  html = html.replace(/<title>[^<]*<\/title>/, `<title>${escHtml(title)}</title>`);
+
+  // Meta description
+  if (html.includes('name="description"')) {
+    html = html.replace(
+      /<meta\s+name="description"\s+content="[^"]*"\s*\/?>/,
+      `<meta name="description" content="${escAttr(desc)}">`
+    );
+  } else {
+    html = html.replace("</head>", `<meta name="description" content="${escAttr(desc)}">\n</head>`);
+  }
+
+  // Canonical
+  html = html.replace(
+    /<link\s+rel="canonical"\s+href="[^"]*"\s*\/?>/,
+    `<link rel="canonical" href="${canonical}" />`
+  );
+
+  // OG + Twitter tags
+  html = html.replace(/<meta\s+property="og:title"\s+content="[^"]*"\s*\/?>/, `<meta property="og:title" content="${escAttr(title)}">`);
+  html = html.replace(/<meta\s+property="og:description"\s+content="[^"]*"\s*\/?>/, `<meta property="og:description" content="${escAttr(desc)}">`);
+  html = html.replace(/<meta\s+name="twitter:title"\s+content="[^"]*"\s*\/?>/, `<meta name="twitter:title" content="${escAttr(title)}">`);
+  html = html.replace(/<meta\s+name="twitter:description"\s+content="[^"]*"\s*\/?>/, `<meta name="twitter:description" content="${escAttr(desc)}">`);
+
+  // og:url
+  if (html.includes('property="og:url"')) {
+    html = html.replace(/<meta\s+property="og:url"\s+content="[^"]*"\s*\/?>/, `<meta property="og:url" content="${canonical}">`);
+  } else {
+    html = html.replace("</head>", `<meta property="og:url" content="${canonical}">\n</head>`);
+  }
+
+  // og:image / twitter:image — use venue image if available
+  if (v.image_url) {
+    html = html.replace(/<meta\s+property="og:image"\s+content="[^"]*"\s*\/?>/, `<meta property="og:image" content="${escAttr(v.image_url)}">`);
+    html = html.replace(/<meta\s+name="twitter:image"\s+content="[^"]*"\s*\/?>/, `<meta name="twitter:image" content="${escAttr(v.image_url)}">`);
+  }
+
+  // Inject JSON-LD before closing </head>
+  html = html.replace("</head>", `${jsonLdTag}\n</head>`);
+
+  return html;
+}
+
 function escHtml(s: string): string {
   return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
 }
