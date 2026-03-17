@@ -602,7 +602,7 @@ const SearchPage = () => {
         </div>
 
         <h1 className="font-display font-bold text-2xl text-foreground mb-2">
-          {query ? `Results for "${query}"` : "Search"}
+          {displayQuery ? `Results for "${displayQuery}"` : "Search"}
         </h1>
 
         {query && (intent.categorySlugs.length > 0 || intent.hasExplicitLocation) && (
