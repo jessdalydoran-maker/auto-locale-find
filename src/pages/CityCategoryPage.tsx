@@ -114,6 +114,32 @@ const CityCategoryPage = () => {
     setPageCanonical(`/${citySlug}/${categorySlug}`);
   }, [citySlug, categorySlug]);
 
+  // Noindex thin pages (0-3 listings)
+  const validation = useMemo(() => {
+    return validatePage({
+      listings: (cleanListings || []) as any,
+      pageType: detectPageType({ isNeighbourhood: false, isLandmark: false, isEvents: false, hasModifier: false, categorySlug }),
+      hasIntro: true,
+      hasSectionHeading: true,
+      hasFaq: false,
+    });
+  }, [cleanListings, categorySlug]);
+
+  useEffect(() => {
+    const robotsDirective = getRobotsDirective(validation);
+    let robotsEl = document.querySelector('meta[name="robots"]') as HTMLMetaElement;
+    if (robotsDirective) {
+      if (!robotsEl) {
+        robotsEl = document.createElement("meta");
+        robotsEl.name = "robots";
+        document.head.appendChild(robotsEl);
+      }
+      robotsEl.content = robotsDirective;
+    } else if (robotsEl) {
+      robotsEl.remove();
+    }
+  }, [validation]);
+
   if (!city || !category) {
     return (
       <Layout>
