@@ -1,4 +1,4 @@
-import { useSearchParams, Link } from "react-router-dom";
+import { useSearchParams, Link, useLocation } from "react-router-dom";
 import { setPageCanonical } from "@/lib/canonical";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -30,6 +30,15 @@ const THINGS_TO_DO_PRIORITY_SLUGS = [
   "leisure-entertainment",
 ];
 
+interface SearchPageProps {
+  presetTown?: string;
+  presetCategory?: string;
+  presetQuery?: string;
+  forceExactTownOnly?: boolean;
+  headingMode?: "default" | "location";
+  showSearchInput?: boolean;
+}
+
 const haversineDistanceKm = (lat1: number, lon1: number, lat2: number, lon2: number) => {
   const toRad = (deg: number) => (deg * Math.PI) / 180;
   const dLat = toRad(lat2 - lat1);
@@ -40,29 +49,40 @@ const haversineDistanceKm = (lat1: number, lon1: number, lat2: number, lon2: num
   return 2 * 6371 * Math.asin(Math.sqrt(a));
 };
 
-const SearchPage = () => {
+const slugToLabel = (value: string) =>
+  value
+    .split("-")
+    .map((word) => (word ? `${word[0].toUpperCase()}${word.slice(1)}` : word))
+    .join(" ");
+
+const SearchPage = ({
+  presetTown,
+  presetCategory,
+  presetQuery,
+  forceExactTownOnly = false,
+  headingMode = "default",
+  showSearchInput = true,
+}: SearchPageProps) => {
   const [searchParams] = useSearchParams();
-  const query = searchParams.get("q") || "";
-  const townParam = searchParams.get("town") || "";
-  const categoryParam = searchParams.get("category") || "";
+  const location = useLocation();
+  const query = presetQuery ?? searchParams.get("q") ?? "";
+  const townParam = presetTown ?? searchParams.get("town") ?? "";
+  const categoryParam = presetCategory ?? searchParams.get("category") ?? "";
   const parsedIntent = parseSearchIntent(query);
 
-  // When structured params are provided, override the parsed intent
   const intent = useMemo(() => {
     if (!townParam && !categoryParam) return parsedIntent;
 
     const overridden = { ...parsedIntent };
 
-    // Override city from structured town param (slug-based)
     if (townParam) {
       overridden.city = townParam;
       overridden.hasExplicitLocation = true;
       overridden.strictTownMode = true;
     }
 
-    // Override categories from structured category param (comma-separated slugs)
     if (categoryParam) {
-      const catSlugs = categoryParam.split(",").map(s => s.trim()).filter(Boolean);
+      const catSlugs = categoryParam.split(",").map((s) => s.trim()).filter(Boolean);
       if (catSlugs.length > 0) {
         overridden.categorySlugs = catSlugs;
       }
@@ -71,7 +91,6 @@ const SearchPage = () => {
     return overridden;
   }, [parsedIntent, townParam, categoryParam]);
 
-  // Build a synthetic query for display when only structured params are used
   const displayQuery = query || [
     categoryParam ? categoryParam.split(",")[0].replace(/-/g, " ") : "",
     townParam ? townParam.replace(/-/g, " ") : "",
@@ -79,9 +98,14 @@ const SearchPage = () => {
 
   const hasStructuredParams = !!townParam || !!categoryParam;
 
-  useEffect(() => { setPageCanonical(`/search${query ? `?q=${encodeURIComponent(query)}` : ""}`); }, [query]);
+  useEffect(() => {
+    if (presetTown || presetCategory) {
+      setPageCanonical(location.pathname);
+      return;
+    }
+    setPageCanonical(`/search${query ? `?q=${encodeURIComponent(query)}` : ""}`);
+  }, [location.pathname, presetTown, presetCategory, query]);
 
-  // Resolve city ID from slug/name — use townParam directly when available
   const citySlugToResolve = intent.city;
   const { data: resolvedCity } = useQuery({
     queryKey: ["resolve-city", citySlugToResolve],
