@@ -150,8 +150,8 @@ export default function prerenderSeoPlugin() {
       const cities = citiesRaw as CityRow[];
       const categories = categoriesRaw as CategoryRow[];
 
-      // 2. Fetch approved, non-archived listings with city & category info
-      const listings = (await supaFetch(
+      // 2. Fetch approved, non-archived listings — light fields for landing pages
+      const listingsLight = (await supaFetch(
         supaUrl,
         supaKey,
         "listings",
@@ -163,6 +163,18 @@ export default function prerenderSeoPlugin() {
         })
       )) as { name: string; slug: string; rating: number | null; cities: { slug: string }; categories: { slug: string } }[];
 
+      // 2b. Fetch full venue data for detail pages (all fields needed for meta + JSON-LD)
+      const venues = (await supaFetch(
+        supaUrl,
+        supaKey,
+        "listings",
+        new URLSearchParams({
+          select: "slug,name,short_description,description,address,rating,review_count,image_url,latitude,longitude,price_level,phone,website,cities!inner(slug,name),categories!inner(slug,name)",
+          is_approved: "eq.true",
+          is_archived: "eq.false",
+        })
+      )) as VenueRow[];
+
       // 3. Build maps
       const cityMap = new Map(cities.map((c) => [c.slug, c.name]));
       const catMap = new Map(categories.map((c) => [c.slug, c.name]));
@@ -171,7 +183,7 @@ export default function prerenderSeoPlugin() {
       const cityListings = new Map<string, { name: string; slug: string }[]>();
       const cityCatListings = new Map<string, { name: string; slug: string }[]>();
 
-      for (const l of listings) {
+      for (const l of listingsLight) {
         const cs = l.cities?.slug;
         const cats = l.categories?.slug;
         if (!cs) continue;
