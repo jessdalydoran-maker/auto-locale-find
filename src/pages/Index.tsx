@@ -355,7 +355,7 @@ const Index = () => {
   return (
     <Layout>
       {/* ═══════ HERO ═══════ */}
-      <section className="relative overflow-hidden" style={{
+      <section className="relative overflow-visible" style={{
         background: `linear-gradient(135deg, hsl(var(--hero-gradient-start)) 0%, hsl(var(--hero-gradient-mid)) 45%, hsl(var(--hero-gradient-end)) 100%)`,
       }}>
         {/* Decorative orbs */}
