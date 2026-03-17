@@ -72,11 +72,12 @@ const EventDetailPage = () => {
   useEffect(() => {
     if (!event) return;
     const cityName = city?.name || "";
-    document.title = `${event.title} | ${cityName} Events | CityScoutGuide`;
+    const year = event.date_start ? new Date(event.date_start).getFullYear() : new Date().getFullYear();
+    document.title = `${event.title} ${year} ${cityName} - Dates, Tickets & Lineup`;
 
     const metaDesc = event.short_description
-      ? `${event.short_description} Find details, dates and tickets for ${event.title} in ${cityName}.`
-      : `${event.title} in ${cityName} — dates, venue, tickets and more.`;
+      ? event.short_description
+      : `Get tickets for ${event.title} ${year} in ${cityName}. Full lineup, dates, venue details and ticket prices.`;
 
     let meta = document.querySelector('meta[name="description"]');
     if (!meta) { meta = document.createElement("meta"); meta.setAttribute("name", "description"); document.head.appendChild(meta); }
