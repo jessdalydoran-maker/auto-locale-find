@@ -326,7 +326,7 @@ const CityPage = () => {
           {categories?.slice(0, 10).map((cat) => (
             <Link
               key={cat.id}
-              to={`/${resolvedCitySlug}?category=${cat.slug}`}
+              to={`/${resolvedCitySlug}/${cat.slug}`}
               className="px-3.5 py-2 rounded-full text-[13px] font-medium bg-secondary text-foreground hover:text-primary hover:bg-primary/10 transition-colors"
             >
               {cat.name}
