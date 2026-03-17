@@ -28,6 +28,24 @@ interface CategoryRow {
   name: string;
 }
 
+interface VenueRow {
+  slug: string;
+  name: string;
+  short_description: string | null;
+  description: string | null;
+  address: string | null;
+  rating: number | null;
+  review_count: number | null;
+  image_url: string | null;
+  latitude: number | null;
+  longitude: number | null;
+  price_level: string | null;
+  phone: string | null;
+  website: string | null;
+  cities: { slug: string; name: string };
+  categories: { slug: string; name: string };
+}
+
 interface RouteData {
   path: string;
   title: string;
@@ -132,8 +150,8 @@ export default function prerenderSeoPlugin() {
       const cities = citiesRaw as CityRow[];
       const categories = categoriesRaw as CategoryRow[];
 
-      // 2. Fetch approved, non-archived listings with city & category info
-      const listings = (await supaFetch(
+      // 2. Fetch approved, non-archived listings — light fields for landing pages
+      const listingsLight = (await supaFetch(
         supaUrl,
         supaKey,
         "listings",
@@ -145,6 +163,18 @@ export default function prerenderSeoPlugin() {
         })
       )) as { name: string; slug: string; rating: number | null; cities: { slug: string }; categories: { slug: string } }[];
 
+      // 2b. Fetch full venue data for detail pages (all fields needed for meta + JSON-LD)
+      const venues = (await supaFetch(
+        supaUrl,
+        supaKey,
+        "listings",
+        new URLSearchParams({
+          select: "slug,name,short_description,description,address,rating,review_count,image_url,latitude,longitude,price_level,phone,website,cities!inner(slug,name),categories!inner(slug,name)",
+          is_approved: "eq.true",
+          is_archived: "eq.false",
+        })
+      )) as VenueRow[];
+
       // 3. Build maps
       const cityMap = new Map(cities.map((c) => [c.slug, c.name]));
       const catMap = new Map(categories.map((c) => [c.slug, c.name]));
@@ -153,7 +183,7 @@ export default function prerenderSeoPlugin() {
       const cityListings = new Map<string, { name: string; slug: string }[]>();
       const cityCatListings = new Map<string, { name: string; slug: string }[]>();
 
-      for (const l of listings) {
+      for (const l of listingsLight) {
         const cs = l.cities?.slug;
         const cats = l.categories?.slug;
         if (!cs) continue;
@@ -235,20 +265,31 @@ export default function prerenderSeoPlugin() {
         written++;
       }
 
-      console.log(`[prerender-seo] ✅ Prerendered ${written} pages (${routes.length} routes).`);
+      console.log(`[prerender-seo] ✅ Prerendered ${written} landing pages.`);
 
-      // 7. Write manifest for verification
-      const manifest = routes.map((r) => ({
-        path: r.path,
-        title: r.title,
-        listings: r.listings.length,
-      }));
+      // 7. Generate venue detail pages (meta + JSON-LD only, no content shell)
+      let venueWritten = 0;
+      for (const v of venues) {
+        const html = buildVenueHtml(template, v);
+        const filePath = path.resolve(outDir, "place", v.slug, "index.html");
+        fs.mkdirSync(path.dirname(filePath), { recursive: true });
+        fs.writeFileSync(filePath, html, "utf-8");
+        venueWritten++;
+      }
+      console.log(`[prerender-seo] ✅ Injected SEO meta for ${venueWritten} venue pages.`);
+
+      // 8. Write manifest for verification
+      const manifest = {
+        landingPages: routes.map((r) => ({ path: r.path, title: r.title, listings: r.listings.length })),
+        venuePages: venueWritten,
+        total: written + venueWritten,
+      };
       fs.writeFileSync(
         path.resolve(outDir, "prerender-manifest.json"),
         JSON.stringify(manifest, null, 2),
         "utf-8"
       );
-      console.log(`[prerender-seo] Manifest written to ${outDir}/prerender-manifest.json`);
+      console.log(`[prerender-seo] Manifest written — ${manifest.total} total pages.`);
     },
   };
 }
@@ -323,6 +364,91 @@ function buildHtml(template: string, route: RouteData): string {
     '<div id="root"></div>',
     `<div id="root">${seoShell}</div>`
   );
+
+  return html;
+}
+
+/* ── Venue detail page HTML builder (meta + JSON-LD only, no content shell) ── */
+function buildVenueHtml(template: string, v: VenueRow): string {
+  const cityName = v.cities?.name || "";
+  const catName = v.categories?.name || "";
+  const canonical = `${SITE_DOMAIN}/place/${v.slug}`;
+  const title = `${v.name} — ${catName} in ${cityName} | City Scout Guide`;
+  const desc =
+    v.short_description ||
+    (v.description ? v.description.slice(0, 155) : "") ||
+    `${v.name} is a top-rated ${catName.toLowerCase()} in ${cityName}. Find reviews, directions, and more.`;
+
+  // Build JSON-LD LocalBusiness schema
+  const jsonLd: Record<string, unknown> = {
+    "@context": "https://schema.org",
+    "@type": "LocalBusiness",
+    name: v.name,
+    url: canonical,
+  };
+  if (desc) jsonLd.description = desc;
+  if (v.address) jsonLd.address = { "@type": "PostalAddress", streetAddress: v.address, addressLocality: cityName };
+  if (v.latitude && v.longitude) jsonLd.geo = { "@type": "GeoCoordinates", latitude: v.latitude, longitude: v.longitude };
+  if (v.image_url) jsonLd.image = v.image_url;
+  if (v.phone) jsonLd.telephone = v.phone;
+  if (v.website) jsonLd.sameAs = v.website;
+  if (v.rating) {
+    jsonLd.aggregateRating = {
+      "@type": "AggregateRating",
+      ratingValue: v.rating,
+      bestRating: 5,
+      ...(v.review_count ? { reviewCount: v.review_count } : {}),
+    };
+  }
+  if (v.price_level) {
+    const priceMap: Record<string, string> = { "$": "$", "$$": "$$", "$$$": "$$$", "$$$$": "$$$$" };
+    if (priceMap[v.price_level]) jsonLd.priceRange = priceMap[v.price_level];
+  }
+
+  const jsonLdTag = `<script type="application/ld+json">${JSON.stringify(jsonLd)}</script>`;
+
+  let html = template;
+
+  // Replace <title>
+  html = html.replace(/<title>[^<]*<\/title>/, `<title>${escHtml(title)}</title>`);
+
+  // Meta description
+  if (html.includes('name="description"')) {
+    html = html.replace(
+      /<meta\s+name="description"\s+content="[^"]*"\s*\/?>/,
+      `<meta name="description" content="${escAttr(desc)}">`
+    );
+  } else {
+    html = html.replace("</head>", `<meta name="description" content="${escAttr(desc)}">\n</head>`);
+  }
+
+  // Canonical
+  html = html.replace(
+    /<link\s+rel="canonical"\s+href="[^"]*"\s*\/?>/,
+    `<link rel="canonical" href="${canonical}" />`
+  );
+
+  // OG + Twitter tags
+  html = html.replace(/<meta\s+property="og:title"\s+content="[^"]*"\s*\/?>/, `<meta property="og:title" content="${escAttr(title)}">`);
+  html = html.replace(/<meta\s+property="og:description"\s+content="[^"]*"\s*\/?>/, `<meta property="og:description" content="${escAttr(desc)}">`);
+  html = html.replace(/<meta\s+name="twitter:title"\s+content="[^"]*"\s*\/?>/, `<meta name="twitter:title" content="${escAttr(title)}">`);
+  html = html.replace(/<meta\s+name="twitter:description"\s+content="[^"]*"\s*\/?>/, `<meta name="twitter:description" content="${escAttr(desc)}">`);
+
+  // og:url
+  if (html.includes('property="og:url"')) {
+    html = html.replace(/<meta\s+property="og:url"\s+content="[^"]*"\s*\/?>/, `<meta property="og:url" content="${canonical}">`);
+  } else {
+    html = html.replace("</head>", `<meta property="og:url" content="${canonical}">\n</head>`);
+  }
+
+  // og:image / twitter:image — use venue image if available
+  if (v.image_url) {
+    html = html.replace(/<meta\s+property="og:image"\s+content="[^"]*"\s*\/?>/, `<meta property="og:image" content="${escAttr(v.image_url)}">`);
+    html = html.replace(/<meta\s+name="twitter:image"\s+content="[^"]*"\s*\/?>/, `<meta name="twitter:image" content="${escAttr(v.image_url)}">`);
+  }
+
+  // Inject JSON-LD before closing </head>
+  html = html.replace("</head>", `${jsonLdTag}\n</head>`);
 
   return html;
 }
