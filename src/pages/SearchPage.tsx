@@ -1,4 +1,4 @@
-import { useSearchParams, Link } from "react-router-dom";
+import { useSearchParams, Link, useLocation } from "react-router-dom";
 import { setPageCanonical } from "@/lib/canonical";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -30,6 +30,15 @@ const THINGS_TO_DO_PRIORITY_SLUGS = [
   "leisure-entertainment",
 ];
 
+interface SearchPageProps {
+  presetTown?: string;
+  presetCategory?: string;
+  presetQuery?: string;
+  forceExactTownOnly?: boolean;
+  headingMode?: "default" | "location";
+  showSearchInput?: boolean;
+}
+
 const haversineDistanceKm = (lat1: number, lon1: number, lat2: number, lon2: number) => {
   const toRad = (deg: number) => (deg * Math.PI) / 180;
   const dLat = toRad(lat2 - lat1);
@@ -40,29 +49,40 @@ const haversineDistanceKm = (lat1: number, lon1: number, lat2: number, lon2: num
   return 2 * 6371 * Math.asin(Math.sqrt(a));
 };
 
-const SearchPage = () => {
+const slugToLabel = (value: string) =>
+  value
+    .split("-")
+    .map((word) => (word ? `${word[0].toUpperCase()}${word.slice(1)}` : word))
+    .join(" ");
+
+const SearchPage = ({
+  presetTown,
+  presetCategory,
+  presetQuery,
+  forceExactTownOnly = false,
+  headingMode = "default",
+  showSearchInput = true,
+}: SearchPageProps) => {
   const [searchParams] = useSearchParams();
-  const query = searchParams.get("q") || "";
-  const townParam = searchParams.get("town") || "";
-  const categoryParam = searchParams.get("category") || "";
+  const location = useLocation();
+  const query = presetQuery ?? searchParams.get("q") ?? "";
+  const townParam = presetTown ?? searchParams.get("town") ?? "";
+  const categoryParam = presetCategory ?? searchParams.get("category") ?? "";
   const parsedIntent = parseSearchIntent(query);
 
-  // When structured params are provided, override the parsed intent
   const intent = useMemo(() => {
     if (!townParam && !categoryParam) return parsedIntent;
 
     const overridden = { ...parsedIntent };
 
-    // Override city from structured town param (slug-based)
     if (townParam) {
       overridden.city = townParam;
       overridden.hasExplicitLocation = true;
       overridden.strictTownMode = true;
     }
 
-    // Override categories from structured category param (comma-separated slugs)
     if (categoryParam) {
-      const catSlugs = categoryParam.split(",").map(s => s.trim()).filter(Boolean);
+      const catSlugs = categoryParam.split(",").map((s) => s.trim()).filter(Boolean);
       if (catSlugs.length > 0) {
         overridden.categorySlugs = catSlugs;
       }
@@ -71,7 +91,6 @@ const SearchPage = () => {
     return overridden;
   }, [parsedIntent, townParam, categoryParam]);
 
-  // Build a synthetic query for display when only structured params are used
   const displayQuery = query || [
     categoryParam ? categoryParam.split(",")[0].replace(/-/g, " ") : "",
     townParam ? townParam.replace(/-/g, " ") : "",
@@ -79,9 +98,14 @@ const SearchPage = () => {
 
   const hasStructuredParams = !!townParam || !!categoryParam;
 
-  useEffect(() => { setPageCanonical(`/search${query ? `?q=${encodeURIComponent(query)}` : ""}`); }, [query]);
+  useEffect(() => {
+    if (presetTown || presetCategory) {
+      setPageCanonical(location.pathname);
+      return;
+    }
+    setPageCanonical(`/search${query ? `?q=${encodeURIComponent(query)}` : ""}`);
+  }, [location.pathname, presetTown, presetCategory, query]);
 
-  // Resolve city ID from slug/name — use townParam directly when available
   const citySlugToResolve = intent.city;
   const { data: resolvedCity } = useQuery({
     queryKey: ["resolve-city", citySlugToResolve],
@@ -283,24 +307,25 @@ const SearchPage = () => {
         return results;
       }
 
+      const largeResultMode = intent.hasExplicitLocation && (intent.categorySlugs.length > 0 || hasStructuredParams);
+      const exactFetchLimit = largeResultMode ? 180 : 40;
+      const nearbyFetchLimit = largeResultMode ? 40 : 15;
+
       if (resolvedCity) {
-        // Tier 1: exact town results only
-        const tier1 = await fetchForCities([resolvedCity.id], 40);
+        const tier1 = await fetchForCities([resolvedCity.id], exactFetchLimit);
         exactResults.push(...tier1);
 
-        // Tier 2: nearby towns only when local threshold is low
         const minimumLocalThreshold = intent.strictTownMode
           ? STRICT_LOCAL_MIN_RESULTS
           : DEFAULT_LOCAL_MIN_RESULTS;
 
-        if (exactResults.length < minimumLocalThreshold && nearbyCities?.length) {
+        if (!forceExactTownOnly && exactResults.length < minimumLocalThreshold && nearbyCities?.length) {
           const nearbyIds = nearbyCities.map((c) => c.id);
-          const tier2 = await fetchForCities(nearbyIds, 15);
+          const tier2 = await fetchForCities(nearbyIds, nearbyFetchLimit);
           nearbyResults.push(...tier2);
         }
 
-        // Tier 3: NI-wide only for non-strict queries
-        if (!intent.strictTownMode && exactResults.length + nearbyResults.length < 3) {
+        if (!forceExactTownOnly && !intent.strictTownMode && exactResults.length + nearbyResults.length < 3) {
           const excludeIds = [resolvedCity.id, ...(nearbyCities?.map((c) => c.id) || [])];
           const textTerms = intent.keywords.filter((w) => w.length > 2);
 
@@ -310,19 +335,18 @@ const SearchPage = () => {
               .select(selectFields)
               .in("category_id", categoryIds)
               .order("rating", { ascending: false })
-              .limit(10);
+              .limit(24);
             if (data) niWideResults.push(...data.filter((d) => !excludeIds.includes(d.city_id)));
           } else if (textTerms.length > 0) {
             const orClauses = textTerms
               .map((t) => `name.ilike.%${t}%,short_description.ilike.%${t}%,description.ilike.%${t}%`)
               .join(",");
-            const { data } = await supabase.from("listings").select(selectFields).or(orClauses).limit(10);
+            const { data } = await supabase.from("listings").select(selectFields).or(orClauses).limit(24);
             if (data) niWideResults.push(...data.filter((d) => !excludeIds.includes(d.city_id)));
           }
         }
       } else {
-        // No explicit location: broad search
-        const broadResults = await fetchForCities(null, 30);
+        const broadResults = await fetchForCities(null, 60);
         exactResults.push(...broadResults);
       }
 
@@ -349,12 +373,13 @@ const SearchPage = () => {
 
     const { matched: cityMatchedExact } = filterByCity(rawListings.exact, intent.city);
     const exactSource = intent.hasExplicitLocation ? cityMatchedExact : rawListings.exact;
-    const nearbySource = intent.city
-      ? rawListings.nearby.filter((item: any) => (item.cities as any)?.slug !== intent.city)
-      : rawListings.nearby;
-    const niWideSource = intent.strictTownMode ? [] : rawListings.niWide;
+    const nearbySource = forceExactTownOnly
+      ? []
+      : intent.city
+        ? rawListings.nearby.filter((item: any) => (item.cities as any)?.slug !== intent.city)
+        : rawListings.nearby;
+    const niWideSource = forceExactTownOnly || intent.strictTownMode ? [] : rawListings.niWide;
 
-    // Tier 1: exact city — score with full location weight
     const scoredExact = exactSource.map((item: any) => ({
       item,
       score: scoreListing(item, query, intent),
@@ -363,7 +388,6 @@ const SearchPage = () => {
     const { unique: uniqueExact } = deduplicateListings(exact as any);
     const filteredExact = filterCompleteListings(uniqueExact);
 
-    // Tier 2: nearby — score without location penalty
     const scoredNearby = nearbySource.map((item: any) => ({
       item,
       score: scoreListing(item, query, { ...intent, city: null, hasExplicitLocation: false }),
@@ -372,7 +396,6 @@ const SearchPage = () => {
     const { unique: uniqueNearby } = deduplicateListings(nearby as any);
     const filteredNearby = filterCompleteListings(uniqueNearby);
 
-    // Tier 3: NI-wide — only shown when exact + nearby are thin
     const scoredNiWide = niWideSource.map((item: any) => ({
       item,
       score: scoreListing(item, query, { ...intent, city: null, hasExplicitLocation: false }),
@@ -382,7 +405,7 @@ const SearchPage = () => {
     const filteredNiWide = filterCompleteListings(uniqueNiWide);
 
     return { rankedExact: filteredExact, rankedNearby: filteredNearby, rankedNiWide: filteredNiWide };
-  }, [rawListings, query]);
+  }, [rawListings, query, intent, forceExactTownOnly]);
 
   // Search events — strict location-first (same 3-tier hierarchy)
   const { data: eventResults } = useQuery({
@@ -466,27 +489,23 @@ const SearchPage = () => {
       const nearbyEvents: any[] = [];
 
       if (resolvedCity) {
-        // Tier 1: exact city events
-        const tier1 = await fetchEventsForCities([resolvedCity.id], 15);
+        const tier1 = await fetchEventsForCities([resolvedCity.id], 30);
         localEvents.push(...tier1);
 
-        // Tier 2: nearby city events (only if local is below threshold)
         const minimumLocalThreshold = intent.strictTownMode
           ? STRICT_LOCAL_MIN_RESULTS
           : DEFAULT_LOCAL_MIN_RESULTS;
 
-        if (localEvents.length < minimumLocalThreshold && nearbyCities?.length) {
+        if (!forceExactTownOnly && localEvents.length < minimumLocalThreshold && nearbyCities?.length) {
           const nearbyIds = nearbyCities.map(c => c.id);
-          const tier2 = await fetchEventsForCities(nearbyIds, 10);
+          const tier2 = await fetchEventsForCities(nearbyIds, 14);
           nearbyEvents.push(...tier2);
         }
       } else {
-        // No location: broad search
-        const broad = await fetchEventsForCities(null, 15);
+        const broad = await fetchEventsForCities(null, 20);
         localEvents.push(...broad);
       }
 
-      // Deduplicate
       const seen = new Set<string>();
       const dedup = (arr: any[]) => arr.filter(e => {
         if (seen.has(e.id)) return false;
@@ -497,9 +516,11 @@ const SearchPage = () => {
       const dedupLocal = dedup(localEvents);
       const { matched: cityMatchedLocal } = filterByCity(dedupLocal, intent.city);
       const localSource = intent.hasExplicitLocation ? cityMatchedLocal : dedupLocal;
-      const nearbySource = intent.city
-        ? dedup(nearbyEvents).filter((item: any) => (item.cities as any)?.slug !== intent.city)
-        : dedup(nearbyEvents);
+      const nearbySource = forceExactTownOnly
+        ? []
+        : intent.city
+          ? dedup(nearbyEvents).filter((item: any) => (item.cities as any)?.slug !== intent.city)
+          : dedup(nearbyEvents);
 
       const scoredLocal = localSource.map((item: any) => ({
         item,
@@ -546,6 +567,15 @@ const SearchPage = () => {
   const hasRelatedPages = relatedPages && relatedPages.length > 0;
   const locationName = resolvedCity?.name || intent.city;
   const hasAnyResults = hasExactResults || hasNearbyResults || hasNiWideResults || hasLocalEvents || hasNearbyEvents;
+  const primaryCategorySlug = (categoryParam.split(",").find(Boolean) || intent.categorySlugs[0] || "things-to-do").toLowerCase();
+  const locationHeading = locationName
+    ? `${slugToLabel(primaryCategorySlug)} in ${locationName}`
+    : slugToLabel(primaryCategorySlug);
+  const pageHeading = headingMode === "location" && hasStructuredParams
+    ? locationHeading
+    : displayQuery
+      ? `Results for "${displayQuery}"`
+      : "Search";
 
   // Helper to render a listing card
   const renderListingCard = (listing: any, i: number) => (
@@ -601,12 +631,14 @@ const SearchPage = () => {
   return (
     <Layout>
       <div className="container mx-auto px-4 py-8">
-        <div className="max-w-xl mb-8">
-          <SearchBar large placeholder="Search venues, events, cities..." />
-        </div>
+        {showSearchInput && (
+          <div className="max-w-xl mb-8">
+            <SearchBar large placeholder="Search venues, events, cities..." />
+          </div>
+        )}
 
         <h1 className="font-display font-bold text-2xl text-foreground mb-2">
-          {displayQuery ? `Results for "${displayQuery}"` : "Search"}
+          {pageHeading}
         </h1>
 
         {(query || hasStructuredParams) && (intent.categorySlugs.length > 0 || intent.hasExplicitLocation) && (
