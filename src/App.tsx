@@ -13,6 +13,7 @@ import ProgrammaticPage from "./pages/ProgrammaticPage.tsx";
 import SearchPage from "./pages/SearchPage.tsx";
 import AdminPage from "./pages/AdminPage.tsx";
 import PlaceDetailPage from "./pages/PlaceDetailPage.tsx";
+import CityCategoryPage from "./pages/CityCategoryPage.tsx";
 import EventDetailPage from "./pages/EventDetailPage.tsx";
 import SubmitVenuePage from "./pages/SubmitVenuePage.tsx";
 import SuggestEventPage from "./pages/SuggestEventPage.tsx";
