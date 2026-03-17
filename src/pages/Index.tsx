@@ -400,7 +400,7 @@ const Index = () => {
             </div>
 
             {/* Town dropdown */}
-            <div className="relative inline-block">
+            <div className="relative inline-block z-[60] mb-4">
               <button
                 onClick={() => setTownOpen(!townOpen)}
                 className="flex items-center gap-1.5 px-4 py-2 rounded-full text-[13px] font-medium backdrop-blur-sm transition-all duration-200 border bg-primary-foreground/10 text-primary-foreground/90 border-primary-foreground/10 hover:bg-primary-foreground/20"
@@ -410,7 +410,7 @@ const Index = () => {
                 <ChevronDown className={`h-3 w-3 transition-transform ${townOpen ? "rotate-180" : ""}`} />
               </button>
               {townOpen && cities && (
-                <div className="absolute top-full mt-1 left-1/2 -translate-x-1/2 bg-card border border-border rounded-lg shadow-lg z-50 max-h-48 overflow-y-auto min-w-[180px]">
+                <div className="absolute top-full mt-1 left-1/2 -translate-x-1/2 bg-card border border-border rounded-lg shadow-lg z-[60] max-h-48 overflow-y-auto min-w-[180px]">
                   {selectedTown && (
                     <button
                       onClick={() => { setSelectedTown(null); setTownOpen(false); }}
