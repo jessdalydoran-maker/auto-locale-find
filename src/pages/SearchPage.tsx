@@ -567,6 +567,15 @@ const SearchPage = ({
   const hasRelatedPages = relatedPages && relatedPages.length > 0;
   const locationName = resolvedCity?.name || intent.city;
   const hasAnyResults = hasExactResults || hasNearbyResults || hasNiWideResults || hasLocalEvents || hasNearbyEvents;
+  const primaryCategorySlug = (categoryParam.split(",").find(Boolean) || intent.categorySlugs[0] || "things-to-do").toLowerCase();
+  const locationHeading = locationName
+    ? `${slugToLabel(primaryCategorySlug)} in ${locationName}`
+    : slugToLabel(primaryCategorySlug);
+  const pageHeading = headingMode === "location" && hasStructuredParams
+    ? locationHeading
+    : displayQuery
+      ? `Results for "${displayQuery}"`
+      : "Search";
 
   // Helper to render a listing card
   const renderListingCard = (listing: any, i: number) => (
