@@ -307,24 +307,25 @@ const SearchPage = ({
         return results;
       }
 
+      const largeResultMode = intent.hasExplicitLocation && (intent.categorySlugs.length > 0 || hasStructuredParams);
+      const exactFetchLimit = largeResultMode ? 180 : 40;
+      const nearbyFetchLimit = largeResultMode ? 40 : 15;
+
       if (resolvedCity) {
-        // Tier 1: exact town results only
-        const tier1 = await fetchForCities([resolvedCity.id], 40);
+        const tier1 = await fetchForCities([resolvedCity.id], exactFetchLimit);
         exactResults.push(...tier1);
 
-        // Tier 2: nearby towns only when local threshold is low
         const minimumLocalThreshold = intent.strictTownMode
           ? STRICT_LOCAL_MIN_RESULTS
           : DEFAULT_LOCAL_MIN_RESULTS;
 
-        if (exactResults.length < minimumLocalThreshold && nearbyCities?.length) {
+        if (!forceExactTownOnly && exactResults.length < minimumLocalThreshold && nearbyCities?.length) {
           const nearbyIds = nearbyCities.map((c) => c.id);
-          const tier2 = await fetchForCities(nearbyIds, 15);
+          const tier2 = await fetchForCities(nearbyIds, nearbyFetchLimit);
           nearbyResults.push(...tier2);
         }
 
-        // Tier 3: NI-wide only for non-strict queries
-        if (!intent.strictTownMode && exactResults.length + nearbyResults.length < 3) {
+        if (!forceExactTownOnly && !intent.strictTownMode && exactResults.length + nearbyResults.length < 3) {
           const excludeIds = [resolvedCity.id, ...(nearbyCities?.map((c) => c.id) || [])];
           const textTerms = intent.keywords.filter((w) => w.length > 2);
 
@@ -334,19 +335,18 @@ const SearchPage = ({
               .select(selectFields)
               .in("category_id", categoryIds)
               .order("rating", { ascending: false })
-              .limit(10);
+              .limit(24);
             if (data) niWideResults.push(...data.filter((d) => !excludeIds.includes(d.city_id)));
           } else if (textTerms.length > 0) {
             const orClauses = textTerms
               .map((t) => `name.ilike.%${t}%,short_description.ilike.%${t}%,description.ilike.%${t}%`)
               .join(",");
-            const { data } = await supabase.from("listings").select(selectFields).or(orClauses).limit(10);
+            const { data } = await supabase.from("listings").select(selectFields).or(orClauses).limit(24);
             if (data) niWideResults.push(...data.filter((d) => !excludeIds.includes(d.city_id)));
           }
         }
       } else {
-        // No explicit location: broad search
-        const broadResults = await fetchForCities(null, 30);
+        const broadResults = await fetchForCities(null, 60);
         exactResults.push(...broadResults);
       }
 
