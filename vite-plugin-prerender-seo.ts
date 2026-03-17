@@ -28,6 +28,24 @@ interface CategoryRow {
   name: string;
 }
 
+interface VenueRow {
+  slug: string;
+  name: string;
+  short_description: string | null;
+  description: string | null;
+  address: string | null;
+  rating: number | null;
+  review_count: number | null;
+  image_url: string | null;
+  latitude: number | null;
+  longitude: number | null;
+  price_level: string | null;
+  phone: string | null;
+  website: string | null;
+  cities: { slug: string; name: string };
+  categories: { slug: string; name: string };
+}
+
 interface RouteData {
   path: string;
   title: string;
