@@ -831,6 +831,21 @@ const SearchPage = ({
           </section>
         )}
 
+        {/* Other popular places — separate from filtered results */}
+        {hasOtherPopular && (
+          <section className="mt-10 pt-8 border-t border-border">
+            <div className="flex items-center gap-2 mb-4">
+              <MapPin className="h-5 w-5 text-muted-foreground" />
+              <h2 className="font-display font-semibold text-lg text-foreground">
+                Other popular places in {locationName}
+              </h2>
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+              {otherPopular.map(renderListingCard)}
+            </div>
+          </section>
+        )}
+
         {/* Zero results */}
         {!isLoading && !hasAnyResults && (query || hasStructuredParams) && (
           <div className="text-center py-12">
