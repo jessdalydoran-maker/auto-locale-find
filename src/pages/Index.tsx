@@ -348,8 +348,8 @@ const Index = () => {
 
   useEffect(() => {
     setPageCanonical("/");
-    document.title = "City Scout Guide - Northern Ireland Events & Things To Do";
-    document.querySelector('meta[name="description"]')?.setAttribute("content", "Discover the best things to do, events, festivals and activities across Northern Ireland. Your local guide to Belfast, Antrim and beyond.");
+    document.title = "City Scout Guide - Things To Do & Events in Northern Ireland";
+    document.querySelector('meta[name="description"]')?.setAttribute("content", "Discover the best things to do, events, restaurants, live music, family activities and hidden gems across Northern Ireland. Your local guide to Belfast, Ballymena, Derry and beyond.");
   }, []);
 
   return (
