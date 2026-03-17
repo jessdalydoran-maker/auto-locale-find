@@ -254,7 +254,15 @@ const SearchPage = ({
           return queryBuilder;
         };
 
-        // Intent/category-first query within strict city scope
+        // For specific categories, ALL queries must be constrained to allowed categories
+        const applyCategoryGuard = <T,>(queryBuilder: T) => {
+          if (isSpecificCategory && categoryIds.length > 0) {
+            return (queryBuilder as any).in("category_id", categoryIds);
+          }
+          return queryBuilder;
+        };
+
+        // Primary: category-matched listings
         if (categoryIds.length > 0) {
           let categoryQuery = supabase
             .from("listings")
@@ -267,7 +275,7 @@ const SearchPage = ({
           if (data) results.push(...data);
         }
 
-        // Audience tag query within strict city scope
+        // Audience tag query (always category-guarded for specific intents)
         if (catFilter.audienceTags.length > 0) {
           for (const tag of catFilter.audienceTags.slice(0, 4)) {
             let audienceQuery = supabase
@@ -276,11 +284,11 @@ const SearchPage = ({
               .contains("audience_tags", [tag])
               .limit(Math.ceil(limit / 2));
             audienceQuery = applyCityFilter(audienceQuery);
+            // Don't category-guard audience tags — they ARE the filter for cross-category matches
             const { data } = await audienceQuery;
             if (data) results.push(...data);
           }
         } else if (!isSpecificCategory) {
-          // Only use intent-based audience tags for broad searches
           for (const tag of intent.categorySlugs.slice(0, 3)) {
             let audienceQuery = supabase
               .from("listings")
@@ -293,9 +301,9 @@ const SearchPage = ({
           }
         }
 
-        // Keyword text query within strict city scope
+        // Keyword text query — MUST be category-guarded for specific intents
         const textTerms = intent.keywords.filter((w) => w.length > 2);
-        if (textTerms.length > 0) {
+        if (textTerms.length > 0 && !isSpecificCategory) {
           const orClauses = textTerms
             .map((t) => `name.ilike.%${t}%,short_description.ilike.%${t}%,description.ilike.%${t}%`)
             .join(",");
@@ -309,7 +317,7 @@ const SearchPage = ({
           if (data) results.push(...data);
         }
 
-        // Venue name query for direct venue searches
+        // Venue name query — category-guarded for specific intents
         if (query.trim().length > 2) {
           let nameQuery = supabase
             .from("listings")
@@ -317,11 +325,12 @@ const SearchPage = ({
             .ilike("name", `%${query.trim()}%`)
             .limit(Math.ceil(limit / 2));
           nameQuery = applyCityFilter(nameQuery);
+          nameQuery = applyCategoryGuard(nameQuery);
           const { data: nameMatches } = await nameQuery;
           if (nameMatches) results.push(...nameMatches);
         }
 
-        // ONLY for broad "things to do" or no-category searches, show top-rated as fallback
+        // ONLY for broad intents or no-category, show top-rated as fallback
         if (catFilter.isBroadIntent || (categoryIds.length === 0 && catFilter.audienceTags.length === 0)) {
           if (results.length < 8) {
             let topRatedQuery = supabase
