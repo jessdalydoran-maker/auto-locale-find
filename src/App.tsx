@@ -6,19 +6,16 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import Index from "./pages/Index.tsx";
-import CityPage from "./pages/CityPage.tsx";
 import CitiesPage from "./pages/CitiesPage.tsx";
 import CategoriesPage from "./pages/CategoriesPage.tsx";
 import ProgrammaticPage from "./pages/ProgrammaticPage.tsx";
 import SearchPage from "./pages/SearchPage.tsx";
 import AdminPage from "./pages/AdminPage.tsx";
 import PlaceDetailPage from "./pages/PlaceDetailPage.tsx";
-import CityCategoryPage from "./pages/CityCategoryPage.tsx";
 import EventDetailPage from "./pages/EventDetailPage.tsx";
 import SubmitVenuePage from "./pages/SubmitVenuePage.tsx";
 import SuggestEventPage from "./pages/SuggestEventPage.tsx";
 import WeekendGuidePage from "./pages/WeekendGuidePage.tsx";
-import NotFound from "./pages/NotFound.tsx";
 
 const queryClient = new QueryClient();
 
@@ -39,9 +36,7 @@ const App = () => (
           <Route path="/suggest-event" element={<SuggestEventPage />} />
           <Route path="/place/:slug" element={<PlaceDetailPage />} />
           <Route path="/event/:slug" element={<EventDetailPage />} />
-          {/* City/slug detail pages: /:citySlug/:listingSlug */}
           <Route path="/:citySlug/:slug" element={<CitySlugDetailPage />} />
-          {/* Catch-all: programmatic SEO pages, city pages, or 404 */}
           <Route path="/*" element={<ProgrammaticPageOrCity />} />
         </Routes>
       </BrowserRouter>
@@ -49,13 +44,10 @@ const App = () => (
   </QueryClientProvider>
 );
 
-/**
- * Handles /:citySlug/:slug — check if it's a listing in that city
- */
 const CitySlugDetailPage = () => {
   const { citySlug, slug } = useParams();
+  const isEventsRoute = slug === "events";
 
-  // Check if the slug matches a category — if so, render the category page
   const { data: isCategory, isLoading: catLoading } = useQuery({
     queryKey: ["check-category-slug", slug],
     queryFn: async () => {
@@ -67,18 +59,26 @@ const CitySlugDetailPage = () => {
         .maybeSingle();
       return !!data;
     },
+    enabled: !!slug && !isEventsRoute,
     staleTime: 1000 * 60 * 30,
   });
 
   if (catLoading) return null;
-  if (isCategory) return <CityCategoryPage />;
+
+  if (isEventsRoute || isCategory) {
+    return (
+      <SearchPage
+        presetTown={citySlug || ""}
+        presetCategory={slug || "things-to-do"}
+        forceExactTownOnly
+        headingMode="location"
+      />
+    );
+  }
+
   return <PlaceDetailPage />;
 };
 
-/**
- * Smart router: tries to match programmatic SEO slug first,
- * falls back to city page, then 404.
- */
 const ProgrammaticPageOrCity = () => {
   const { "*": path } = useParams();
   const slug = path || "";
@@ -98,10 +98,17 @@ const ProgrammaticPageOrCity = () => {
 
   if (isLoading) return null;
 
-  // Exact city match → CityPage
-  if (city) return <CityPage />;
+  if (city) {
+    return (
+      <SearchPage
+        presetTown={slug}
+        presetCategory="things-to-do"
+        forceExactTownOnly
+        headingMode="location"
+      />
+    );
+  }
 
-  // Everything else → programmatic page (handles its own 404 for unmatched slugs)
   return <ProgrammaticPage />;
 };
 
