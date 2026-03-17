@@ -363,7 +363,7 @@ const Index = () => {
           <div className="absolute -top-32 -right-32 w-96 h-96 rounded-full opacity-10" style={{ background: 'radial-gradient(circle, hsl(var(--accent)) 0%, transparent 70%)' }} />
           <div className="absolute -bottom-24 -left-24 w-72 h-72 rounded-full opacity-8" style={{ background: 'radial-gradient(circle, hsl(var(--teal)) 0%, transparent 70%)' }} />
         </div>
-        <div className="container mx-auto px-4 pt-12 pb-14 md:pt-16 md:pb-20 relative z-10">
+        <div className="container mx-auto px-4 pt-12 pb-14 md:pt-16 md:pb-20 relative z-30">
           <div className="text-center max-w-2xl mx-auto">
             <p className="inline-flex items-center gap-1.5 px-3 py-1 bg-primary-foreground/10 backdrop-blur-sm text-primary-foreground/80 rounded-full text-xs font-medium mb-6 border border-primary-foreground/10">
               <MapPin className="h-3 w-3" />
