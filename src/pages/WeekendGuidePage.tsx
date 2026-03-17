@@ -187,6 +187,7 @@ const WeekendGuidePage = () => {
                 key={event.id}
                 title={event.title}
                 slug={event.slug}
+                shortDescription={event.short_description}
                 dateStart={event.date_start}
                 dateEnd={event.date_end}
                 timeStart={event.time_start}
