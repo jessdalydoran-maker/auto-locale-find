@@ -8,6 +8,7 @@ import { EventCard } from "@/components/EventCard";
 import { SearchBar } from "@/components/SearchBar";
 import { parseSearchIntent } from "@/lib/search-intent";
 import { scoreListing, scoreEvent, rankAndFilter, filterByCity } from "@/lib/search-scoring";
+import { resolveIntentFilter, shouldExcludeListing } from "@/lib/category-filters";
 import { Search, Calendar, MapPin } from "lucide-react";
 import { deduplicateListings, filterCompleteListings } from "@/lib/page-validation";
 import { useMemo, useEffect } from "react";
@@ -16,18 +17,9 @@ const NEARBY_RADIUS_KM = 24; // ~15 miles
 const STRICT_LOCAL_MIN_RESULTS = 6;
 const DEFAULT_LOCAL_MIN_RESULTS = 5;
 const THINGS_TO_DO_PRIORITY_SLUGS = [
-  "things-to-do",
-  "attractions",
-  "cinemas",
-  "theatre",
-  "leisure-centres",
-  "parks",
-  "restaurants",
-  "bars",
-  "live-music",
-  "family-activities",
-  "shopping",
-  "leisure-entertainment",
+  "things-to-do", "attractions", "cinemas", "theatre", "leisure-centres",
+  "parks", "restaurants", "bars", "live-music", "family-activities",
+  "shopping", "leisure-entertainment",
 ];
 
 interface SearchPageProps {
@@ -228,9 +220,9 @@ const SearchPage = ({
       const nearbyResults: any[] = [];
       const niWideResults: any[] = [];
 
-      const effectiveCategorySlugs = intent.categorySlugs.includes("things-to-do")
-        ? Array.from(new Set([...intent.categorySlugs, ...THINGS_TO_DO_PRIORITY_SLUGS]))
-        : intent.categorySlugs;
+      // Use the shared category filter system
+      const catFilter = resolveIntentFilter(intent.categorySlugs);
+      const effectiveCategorySlugs = catFilter.includeSlugs;
 
       const { data: categoryRows } = effectiveCategorySlugs.length
         ? await supabase
@@ -239,6 +231,18 @@ const SearchPage = ({
             .in("slug", effectiveCategorySlugs)
         : { data: [] as Array<{ id: string; slug: string }> };
       const categoryIds = (categoryRows || []).map((c) => c.id);
+
+      // Resolve exclude category IDs for strict filtering
+      let excludeCategoryIds: string[] = [];
+      if (catFilter.excludeSlugs.length > 0) {
+        const { data: excludeRows } = await supabase
+          .from("categories")
+          .select("id, slug")
+          .in("slug", catFilter.excludeSlugs);
+        excludeCategoryIds = (excludeRows || []).map((c) => c.id);
+      }
+
+      const isSpecificCategory = !catFilter.isBroadIntent;
 
       async function fetchForCities(cityIds: string[] | null, limit: number) {
         const results: any[] = [];
@@ -264,15 +268,29 @@ const SearchPage = ({
         }
 
         // Audience tag query within strict city scope
-        for (const tag of effectiveCategorySlugs.slice(0, 3)) {
-          let audienceQuery = supabase
-            .from("listings")
-            .select(selectFields)
-            .contains("audience_tags", [tag])
-            .limit(Math.ceil(limit / 2));
-          audienceQuery = applyCityFilter(audienceQuery);
-          const { data } = await audienceQuery;
-          if (data) results.push(...data);
+        if (catFilter.audienceTags.length > 0) {
+          for (const tag of catFilter.audienceTags.slice(0, 4)) {
+            let audienceQuery = supabase
+              .from("listings")
+              .select(selectFields)
+              .contains("audience_tags", [tag])
+              .limit(Math.ceil(limit / 2));
+            audienceQuery = applyCityFilter(audienceQuery);
+            const { data } = await audienceQuery;
+            if (data) results.push(...data);
+          }
+        } else if (!isSpecificCategory) {
+          // Only use intent-based audience tags for broad searches
+          for (const tag of intent.categorySlugs.slice(0, 3)) {
+            let audienceQuery = supabase
+              .from("listings")
+              .select(selectFields)
+              .contains("audience_tags", [tag])
+              .limit(Math.ceil(limit / 2));
+            audienceQuery = applyCityFilter(audienceQuery);
+            const { data } = await audienceQuery;
+            if (data) results.push(...data);
+          }
         }
 
         // Keyword text query within strict city scope
@@ -303,21 +321,23 @@ const SearchPage = ({
           if (nameMatches) results.push(...nameMatches);
         }
 
-        // "Things to do" should always include real local venues in town
-        const isThingsToDoSearch =
-          effectiveCategorySlugs.includes("things-to-do") ||
-          intent.intentLabel === "things to do" ||
-          effectiveCategorySlugs.length === 0;
+        // ONLY for broad "things to do" or no-category searches, show top-rated as fallback
+        if (catFilter.isBroadIntent || (categoryIds.length === 0 && catFilter.audienceTags.length === 0)) {
+          if (results.length < 8) {
+            let topRatedQuery = supabase
+              .from("listings")
+              .select(selectFields)
+              .order("rating", { ascending: false })
+              .limit(limit);
+            topRatedQuery = applyCityFilter(topRatedQuery);
+            const { data } = await topRatedQuery;
+            if (data) results.push(...data);
+          }
+        }
 
-        if (isThingsToDoSearch || results.length < 8) {
-          let topRatedQuery = supabase
-            .from("listings")
-            .select(selectFields)
-            .order("rating", { ascending: false })
-            .limit(limit);
-          topRatedQuery = applyCityFilter(topRatedQuery);
-          const { data } = await topRatedQuery;
-          if (data) results.push(...data);
+        // Post-fetch: exclude listings from excluded categories
+        if (excludeCategoryIds.length > 0) {
+          return results.filter((item) => !excludeCategoryIds.includes(item.category_id));
         }
 
         return results;
@@ -331,11 +351,15 @@ const SearchPage = ({
         const tier1 = await fetchForCities([resolvedCity.id], exactFetchLimit);
         exactResults.push(...tier1);
 
-        const minimumLocalThreshold = intent.strictTownMode
+        const minimumLocalThreshold = isSpecificCategory
           ? STRICT_LOCAL_MIN_RESULTS
-          : DEFAULT_LOCAL_MIN_RESULTS;
+          : intent.strictTownMode
+            ? STRICT_LOCAL_MIN_RESULTS
+            : DEFAULT_LOCAL_MIN_RESULTS;
 
-        if (!forceExactTownOnly && exactResults.length < minimumLocalThreshold && nearbyCities?.length) {
+        // For specific categories with few local results, show nearby even on preset pages
+        const shouldShowNearby = !forceExactTownOnly || (isSpecificCategory && exactResults.length < minimumLocalThreshold);
+        if (shouldShowNearby && exactResults.length < minimumLocalThreshold && nearbyCities?.length) {
           const nearbyIds = nearbyCities.map((c) => c.id);
           const tier2 = await fetchForCities(nearbyIds, nearbyFetchLimit);
           nearbyResults.push(...tier2);
@@ -584,6 +608,7 @@ const SearchPage = ({
   const locationName = resolvedCity?.name || intent.city;
   const hasAnyResults = hasExactResults || hasNearbyResults || hasNiWideResults || hasLocalEvents || hasNearbyEvents;
   const primaryCategorySlug = (categoryParam.split(",").find(Boolean) || intent.categorySlugs[0] || "things-to-do").toLowerCase();
+  const primaryCategoryLabel = slugToLabel(primaryCategorySlug);
   const locationHeading = locationName
     ? `${slugToLabel(primaryCategorySlug)} in ${locationName}`
     : slugToLabel(primaryCategorySlug);
@@ -754,7 +779,7 @@ const SearchPage = ({
             <div className="flex items-center gap-2 mb-4">
               <MapPin className="h-5 w-5 text-muted-foreground" />
               <h2 className="font-display font-semibold text-lg text-foreground">
-                Nearby to {locationName}
+                More {primaryCategoryLabel} near {locationName}
               </h2>
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
