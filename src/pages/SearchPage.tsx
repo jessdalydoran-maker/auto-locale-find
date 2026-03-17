@@ -229,9 +229,9 @@ const SearchPage = ({
       const nearbyResults: any[] = [];
       const niWideResults: any[] = [];
 
-      const effectiveCategorySlugs = intent.categorySlugs.includes("things-to-do")
-        ? Array.from(new Set([...intent.categorySlugs, ...THINGS_TO_DO_PRIORITY_SLUGS]))
-        : intent.categorySlugs;
+      // Use the shared category filter system
+      const catFilter = resolveIntentFilter(intent.categorySlugs);
+      const effectiveCategorySlugs = catFilter.includeSlugs;
 
       const { data: categoryRows } = effectiveCategorySlugs.length
         ? await supabase
@@ -240,6 +240,18 @@ const SearchPage = ({
             .in("slug", effectiveCategorySlugs)
         : { data: [] as Array<{ id: string; slug: string }> };
       const categoryIds = (categoryRows || []).map((c) => c.id);
+
+      // Resolve exclude category IDs for strict filtering
+      let excludeCategoryIds: string[] = [];
+      if (catFilter.excludeSlugs.length > 0) {
+        const { data: excludeRows } = await supabase
+          .from("categories")
+          .select("id, slug")
+          .in("slug", catFilter.excludeSlugs);
+        excludeCategoryIds = (excludeRows || []).map((c) => c.id);
+      }
+
+      const isSpecificCategory = !catFilter.isBroadIntent;
 
       async function fetchForCities(cityIds: string[] | null, limit: number) {
         const results: any[] = [];
@@ -265,15 +277,29 @@ const SearchPage = ({
         }
 
         // Audience tag query within strict city scope
-        for (const tag of effectiveCategorySlugs.slice(0, 3)) {
-          let audienceQuery = supabase
-            .from("listings")
-            .select(selectFields)
-            .contains("audience_tags", [tag])
-            .limit(Math.ceil(limit / 2));
-          audienceQuery = applyCityFilter(audienceQuery);
-          const { data } = await audienceQuery;
-          if (data) results.push(...data);
+        if (catFilter.audienceTags.length > 0) {
+          for (const tag of catFilter.audienceTags.slice(0, 4)) {
+            let audienceQuery = supabase
+              .from("listings")
+              .select(selectFields)
+              .contains("audience_tags", [tag])
+              .limit(Math.ceil(limit / 2));
+            audienceQuery = applyCityFilter(audienceQuery);
+            const { data } = await audienceQuery;
+            if (data) results.push(...data);
+          }
+        } else if (!isSpecificCategory) {
+          // Only use intent-based audience tags for broad searches
+          for (const tag of intent.categorySlugs.slice(0, 3)) {
+            let audienceQuery = supabase
+              .from("listings")
+              .select(selectFields)
+              .contains("audience_tags", [tag])
+              .limit(Math.ceil(limit / 2));
+            audienceQuery = applyCityFilter(audienceQuery);
+            const { data } = await audienceQuery;
+            if (data) results.push(...data);
+          }
         }
 
         // Keyword text query within strict city scope
@@ -304,21 +330,23 @@ const SearchPage = ({
           if (nameMatches) results.push(...nameMatches);
         }
 
-        // "Things to do" should always include real local venues in town
-        const isThingsToDoSearch =
-          effectiveCategorySlugs.includes("things-to-do") ||
-          intent.intentLabel === "things to do" ||
-          effectiveCategorySlugs.length === 0;
+        // ONLY for broad "things to do" or no-category searches, show top-rated as fallback
+        if (catFilter.isBroadIntent || (categoryIds.length === 0 && catFilter.audienceTags.length === 0)) {
+          if (results.length < 8) {
+            let topRatedQuery = supabase
+              .from("listings")
+              .select(selectFields)
+              .order("rating", { ascending: false })
+              .limit(limit);
+            topRatedQuery = applyCityFilter(topRatedQuery);
+            const { data } = await topRatedQuery;
+            if (data) results.push(...data);
+          }
+        }
 
-        if (isThingsToDoSearch || results.length < 8) {
-          let topRatedQuery = supabase
-            .from("listings")
-            .select(selectFields)
-            .order("rating", { ascending: false })
-            .limit(limit);
-          topRatedQuery = applyCityFilter(topRatedQuery);
-          const { data } = await topRatedQuery;
-          if (data) results.push(...data);
+        // Post-fetch: exclude listings from excluded categories
+        if (excludeCategoryIds.length > 0) {
+          return results.filter((item) => !excludeCategoryIds.includes(item.category_id));
         }
 
         return results;
