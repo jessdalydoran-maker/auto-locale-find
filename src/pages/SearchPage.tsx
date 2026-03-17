@@ -360,11 +360,15 @@ const SearchPage = ({
         const tier1 = await fetchForCities([resolvedCity.id], exactFetchLimit);
         exactResults.push(...tier1);
 
-        const minimumLocalThreshold = intent.strictTownMode
+        const minimumLocalThreshold = isSpecificCategory
           ? STRICT_LOCAL_MIN_RESULTS
-          : DEFAULT_LOCAL_MIN_RESULTS;
+          : intent.strictTownMode
+            ? STRICT_LOCAL_MIN_RESULTS
+            : DEFAULT_LOCAL_MIN_RESULTS;
 
-        if (!forceExactTownOnly && exactResults.length < minimumLocalThreshold && nearbyCities?.length) {
+        // For specific categories with few local results, show nearby even on preset pages
+        const shouldShowNearby = !forceExactTownOnly || (isSpecificCategory && exactResults.length < minimumLocalThreshold);
+        if (shouldShowNearby && exactResults.length < minimumLocalThreshold && nearbyCities?.length) {
           const nearbyIds = nearbyCities.map((c) => c.id);
           const tier2 = await fetchForCities(nearbyIds, nearbyFetchLimit);
           nearbyResults.push(...tier2);
