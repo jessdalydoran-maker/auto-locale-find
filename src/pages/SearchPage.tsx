@@ -399,6 +399,22 @@ const SearchPage = ({
         exactResults.push(...broadResults);
       }
 
+      // "Other popular places" fallback — unfiltered top-rated for the town
+      // Only when a specific category yields few results
+      let otherPopular: any[] = [];
+      if (isSpecificCategory && resolvedCity && exactResults.length < 10) {
+        const { data: topLocal } = await supabase
+          .from("listings")
+          .select(selectFields)
+          .eq("city_id", resolvedCity.id)
+          .order("rating", { ascending: false })
+          .limit(12);
+        if (topLocal) {
+          const exactIds = new Set(exactResults.map((r) => r.id));
+          otherPopular = topLocal.filter((item) => !exactIds.has(item.id));
+        }
+      }
+
       const seenIds = new Set<string>();
       const dedup = (arr: any[]) =>
         arr.filter((item) => {
@@ -411,6 +427,7 @@ const SearchPage = ({
         exact: dedup(exactResults),
         nearby: dedup(nearbyResults),
         niWide: dedup(niWideResults),
+        otherPopular: dedup(otherPopular),
       };
     },
     enabled: (!!query || hasStructuredParams) && (intent.city ? resolvedCity !== undefined : true),
