@@ -355,14 +355,15 @@ const Index = () => {
   return (
     <Layout>
       {/* ═══════ HERO ═══════ */}
-      <section className="relative overflow-hidden" style={{
+      <section className="relative overflow-visible" style={{
         background: `linear-gradient(135deg, hsl(var(--hero-gradient-start)) 0%, hsl(var(--hero-gradient-mid)) 45%, hsl(var(--hero-gradient-end)) 100%)`,
       }}>
-        {/* Decorative orbs */}
-        <div className="absolute -top-32 -right-32 w-96 h-96 rounded-full opacity-10" style={{ background: 'radial-gradient(circle, hsl(var(--accent)) 0%, transparent 70%)' }} />
-        <div className="absolute -bottom-24 -left-24 w-72 h-72 rounded-full opacity-8" style={{ background: 'radial-gradient(circle, hsl(var(--teal)) 0%, transparent 70%)' }} />
-
-        <div className="container mx-auto px-4 pt-12 pb-14 md:pt-16 md:pb-20 relative z-10">
+        {/* Decorative orbs — contained in their own clipped layer */}
+        <div className="absolute inset-0 overflow-hidden pointer-events-none">
+          <div className="absolute -top-32 -right-32 w-96 h-96 rounded-full opacity-10" style={{ background: 'radial-gradient(circle, hsl(var(--accent)) 0%, transparent 70%)' }} />
+          <div className="absolute -bottom-24 -left-24 w-72 h-72 rounded-full opacity-8" style={{ background: 'radial-gradient(circle, hsl(var(--teal)) 0%, transparent 70%)' }} />
+        </div>
+        <div className="container mx-auto px-4 pt-12 pb-14 md:pt-16 md:pb-20 relative z-30">
           <div className="text-center max-w-2xl mx-auto">
             <p className="inline-flex items-center gap-1.5 px-3 py-1 bg-primary-foreground/10 backdrop-blur-sm text-primary-foreground/80 rounded-full text-xs font-medium mb-6 border border-primary-foreground/10">
               <MapPin className="h-3 w-3" />
@@ -400,7 +401,7 @@ const Index = () => {
             </div>
 
             {/* Town dropdown */}
-            <div className="relative inline-block">
+            <div className="relative inline-block z-[60] mb-4">
               <button
                 onClick={() => setTownOpen(!townOpen)}
                 className="flex items-center gap-1.5 px-4 py-2 rounded-full text-[13px] font-medium backdrop-blur-sm transition-all duration-200 border bg-primary-foreground/10 text-primary-foreground/90 border-primary-foreground/10 hover:bg-primary-foreground/20"
@@ -410,7 +411,7 @@ const Index = () => {
                 <ChevronDown className={`h-3 w-3 transition-transform ${townOpen ? "rotate-180" : ""}`} />
               </button>
               {townOpen && cities && (
-                <div className="absolute top-full mt-1 left-1/2 -translate-x-1/2 bg-card border border-border rounded-lg shadow-lg z-50 max-h-48 overflow-y-auto min-w-[180px]">
+                <div className="absolute top-full mt-1 left-1/2 -translate-x-1/2 bg-card border border-border rounded-lg shadow-lg z-[60] max-h-48 overflow-y-auto min-w-[180px]">
                   {selectedTown && (
                     <button
                       onClick={() => { setSelectedTown(null); setTownOpen(false); }}
@@ -448,7 +449,7 @@ const Index = () => {
       </section>
 
       {/* ═══════ QUICK ACTIONS ═══════ */}
-      <section className="container mx-auto px-4 -mt-4 relative z-20">
+      <section className="container mx-auto px-4 -mt-4 relative z-10">
         <div className="flex items-center justify-center gap-3">
           <Link to="/submit-venue">
             <Button variant="outline" size="sm" className="text-[13px] gap-1.5 bg-card card-shadow">
