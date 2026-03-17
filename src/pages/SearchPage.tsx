@@ -625,9 +625,11 @@ const SearchPage = ({
 
   const localEvents = eventResults?.local || [];
   const nearbyEvents = eventResults?.nearby || [];
+  const otherPopular = rawListings?.otherPopular || [];
   const hasExactResults = rankedExact.length > 0;
   const hasNearbyResults = rankedNearby.length > 0;
   const hasNiWideResults = rankedNiWide.length > 0;
+  const hasOtherPopular = otherPopular.length > 0;
   const hasLocalEvents = localEvents.length > 0;
   const hasNearbyEvents = nearbyEvents.length > 0;
   const hasRelatedPages = relatedPages && relatedPages.length > 0;
