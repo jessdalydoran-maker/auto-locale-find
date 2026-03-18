@@ -12,8 +12,10 @@ import { useEffect, useMemo } from "react";
 import { setPageCanonical } from "@/lib/canonical";
 
 /** Category slugs grouped by section */
-const FOOD_DRINK_SLUGS = ["restaurants", "cafes", "brunch", "bars", "cocktail-bars", "halal-food", "alcohol-free"];
-const THINGS_TO_DO_SLUGS = ["things-to-do", "attractions", "parks", "museums", "tours", "escape-rooms", "indoor-activities", "leisure-centres", "cinema", "gyms"];
+const FOOD_DRINK_SLUGS = ["restaurants", "cafes", "brunch", "bars", "cocktail-bars", "halal-food", "alcohol-free", "italian"];
+const FOOD_DRINK_TAGS = ["food", "dining", "date-night", "halal", "brunch"];
+const THINGS_TO_DO_SLUGS = ["things-to-do", "attractions", "parks", "museums", "tours", "escape-rooms", "indoor-activities", "leisure-centres", "cinema", "cinemas", "gyms", "family-activities", "leisure-entertainment", "theatre", "comedy", "markets"];
+const THINGS_TO_DO_TAGS = ["family", "outdoor", "indoor", "adventure", "culture", "nature", "fitness", "family_friendly"];
 
 const CityPage = () => {
   const { citySlug, "*": wildcard } = useParams();
@@ -108,21 +110,29 @@ const CityPage = () => {
   }, [listings]);
 
   const foodDrink = useMemo(() => 
-    localListings.filter((l: any) => FOOD_DRINK_SLUGS.includes((l.categories as any)?.slug || "")),
+    localListings.filter((l: any) => {
+      const catSlug = (l.categories as any)?.slug || "";
+      const tags: string[] = (l as any).audience_tags || [];
+      return FOOD_DRINK_SLUGS.includes(catSlug) || tags.some(t => FOOD_DRINK_TAGS.includes(t));
+    }),
     [localListings]
   );
 
   const thingsToDo = useMemo(() =>
-    localListings.filter((l: any) => THINGS_TO_DO_SLUGS.includes((l.categories as any)?.slug || "")),
+    localListings.filter((l: any) => {
+      const catSlug = (l.categories as any)?.slug || "";
+      const tags: string[] = (l as any).audience_tags || [];
+      return THINGS_TO_DO_SLUGS.includes(catSlug) || tags.some(t => THINGS_TO_DO_TAGS.includes(t));
+    }),
     [localListings]
   );
 
+  const foodDrinkIds = new Set(foodDrink.map((l: any) => l.id));
+  const thingsToDoIds = new Set(thingsToDo.map((l: any) => l.id));
+
   const otherListings = useMemo(() =>
-    localListings.filter((l: any) => {
-      const catSlug = (l.categories as any)?.slug || "";
-      return !FOOD_DRINK_SLUGS.includes(catSlug) && !THINGS_TO_DO_SLUGS.includes(catSlug);
-    }),
-    [localListings]
+    localListings.filter((l: any) => !foodDrinkIds.has(l.id) && !thingsToDoIds.has(l.id)),
+    [localListings, foodDrinkIds, thingsToDoIds]
   );
 
   // Nearby (deduplicated against local)
@@ -159,7 +169,11 @@ const CityPage = () => {
   // Filtered view (when category param is set)
   const filteredListings = useMemo(() => {
     if (!categoryFilter) return null;
-    return localListings.filter((l: any) => (l.categories as any)?.slug === categoryFilter);
+    return localListings.filter((l: any) => {
+      const catSlug = (l.categories as any)?.slug || "";
+      const tags: string[] = (l as any).audience_tags || [];
+      return catSlug === categoryFilter || tags.includes(categoryFilter);
+    });
   }, [localListings, categoryFilter]);
 
   const validation = useMemo(() => {

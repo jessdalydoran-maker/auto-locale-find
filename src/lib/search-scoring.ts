@@ -101,6 +101,12 @@ export function scoreListing(
     score += Math.min(listing.rating * 5, 25);
   }
 
+  // ── 8. Quality signals (has website, description, images) ──
+  if ((listing as any).website) score += 40;
+  if (listing.description && listing.description.length > 50) score += 30;
+  if ((listing as any).image_url && (listing as any).image_status === "verified") score += 25;
+  if (listing.short_description && listing.short_description.length > 20) score += 15;
+
   return score;
 }
 
