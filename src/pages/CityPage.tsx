@@ -110,12 +110,20 @@ const CityPage = () => {
   }, [listings]);
 
   const foodDrink = useMemo(() => 
-    localListings.filter((l: any) => FOOD_DRINK_SLUGS.includes((l.categories as any)?.slug || "")),
+    localListings.filter((l: any) => {
+      const catSlug = (l.categories as any)?.slug || "";
+      const tags: string[] = (l as any).audience_tags || [];
+      return FOOD_DRINK_SLUGS.includes(catSlug) || tags.some(t => FOOD_DRINK_TAGS.includes(t));
+    }),
     [localListings]
   );
 
   const thingsToDo = useMemo(() =>
-    localListings.filter((l: any) => THINGS_TO_DO_SLUGS.includes((l.categories as any)?.slug || "")),
+    localListings.filter((l: any) => {
+      const catSlug = (l.categories as any)?.slug || "";
+      const tags: string[] = (l as any).audience_tags || [];
+      return THINGS_TO_DO_SLUGS.includes(catSlug) || tags.some(t => THINGS_TO_DO_TAGS.includes(t));
+    }),
     [localListings]
   );
 
