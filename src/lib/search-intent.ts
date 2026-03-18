@@ -78,7 +78,6 @@ const INTENT_TO_CATEGORIES: Record<string, string[]> = {
   "date ideas": ["restaurants", "bars", "cocktail-bars", "date-night", "cinemas", "theatre"],
   "date": ["restaurants", "bars", "cocktail-bars", "date-night"],
   "romantic": ["restaurants", "bars", "cocktail-bars", "date-night"],
-  "places to eat": ["restaurants", "cafes", "brunch"],
   "gyms": ["gyms"],
   "gym": ["gyms"],
   "fitness": ["gyms"],
