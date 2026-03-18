@@ -12,8 +12,10 @@ import { useEffect, useMemo } from "react";
 import { setPageCanonical } from "@/lib/canonical";
 
 /** Category slugs grouped by section */
-const FOOD_DRINK_SLUGS = ["restaurants", "cafes", "brunch", "bars", "cocktail-bars", "halal-food", "alcohol-free"];
-const THINGS_TO_DO_SLUGS = ["things-to-do", "attractions", "parks", "museums", "tours", "escape-rooms", "indoor-activities", "leisure-centres", "cinema", "gyms"];
+const FOOD_DRINK_SLUGS = ["restaurants", "cafes", "brunch", "bars", "cocktail-bars", "halal-food", "alcohol-free", "italian"];
+const FOOD_DRINK_TAGS = ["food", "dining", "date-night", "halal", "brunch"];
+const THINGS_TO_DO_SLUGS = ["things-to-do", "attractions", "parks", "museums", "tours", "escape-rooms", "indoor-activities", "leisure-centres", "cinema", "cinemas", "gyms", "family-activities", "leisure-entertainment", "theatre", "comedy", "markets"];
+const THINGS_TO_DO_TAGS = ["family", "outdoor", "indoor", "adventure", "culture", "nature", "fitness", "family_friendly"];
 
 const CityPage = () => {
   const { citySlug, "*": wildcard } = useParams();
