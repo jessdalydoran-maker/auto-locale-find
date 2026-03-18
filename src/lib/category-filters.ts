@@ -73,7 +73,7 @@ const CATEGORY_FILTERS: Record<string, CategoryFilter> = {
   },
   "date-night": {
     includeSlugs: ["date-night", "restaurants", "cocktail-bars", "bars", "cinemas", "theatre", "escape-rooms"],
-    audienceTags: ["romantic", "date-night", "couples"],
+    audienceTags: ["romantic", "date-night", "couples", "dining"],
     excludeSlugs: ["family-activities", "gyms", "sports"],
     isBroadIntent: false,
   },
