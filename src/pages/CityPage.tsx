@@ -127,12 +127,12 @@ const CityPage = () => {
     [localListings]
   );
 
+  const foodDrinkIds = new Set(foodDrink.map((l: any) => l.id));
+  const thingsToDoIds = new Set(thingsToDo.map((l: any) => l.id));
+
   const otherListings = useMemo(() =>
-    localListings.filter((l: any) => {
-      const catSlug = (l.categories as any)?.slug || "";
-      return !FOOD_DRINK_SLUGS.includes(catSlug) && !THINGS_TO_DO_SLUGS.includes(catSlug);
-    }),
-    [localListings]
+    localListings.filter((l: any) => !foodDrinkIds.has(l.id) && !thingsToDoIds.has(l.id)),
+    [localListings, foodDrinkIds, thingsToDoIds]
   );
 
   // Nearby (deduplicated against local)
