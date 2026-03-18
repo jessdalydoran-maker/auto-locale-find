@@ -169,7 +169,11 @@ const CityPage = () => {
   // Filtered view (when category param is set)
   const filteredListings = useMemo(() => {
     if (!categoryFilter) return null;
-    return localListings.filter((l: any) => (l.categories as any)?.slug === categoryFilter);
+    return localListings.filter((l: any) => {
+      const catSlug = (l.categories as any)?.slug || "";
+      const tags: string[] = (l as any).audience_tags || [];
+      return catSlug === categoryFilter || tags.includes(categoryFilter);
+    });
   }, [localListings, categoryFilter]);
 
   const validation = useMemo(() => {
