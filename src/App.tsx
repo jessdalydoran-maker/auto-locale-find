@@ -16,6 +16,8 @@ import EventDetailPage from "./pages/EventDetailPage.tsx";
 import SubmitVenuePage from "./pages/SubmitVenuePage.tsx";
 import SuggestEventPage from "./pages/SuggestEventPage.tsx";
 import WeekendGuidePage from "./pages/WeekendGuidePage.tsx";
+import BlogPage from "./pages/BlogPage.tsx";
+import BlogPostPage from "./pages/BlogPostPage.tsx";
 
 const queryClient = new QueryClient();
 
