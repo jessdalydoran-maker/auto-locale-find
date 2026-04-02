@@ -6,6 +6,7 @@ import { Layout } from "@/components/Layout";
 import { setPageCanonical, getCanonicalUrl } from "@/lib/canonical";
 import { format } from "date-fns";
 import { Skeleton } from "@/components/ui/skeleton";
+import { BLOG_PLACEHOLDER_IMAGE, replaceWithBlogPlaceholder } from "@/lib/blog-image-fallback";
 
 const BlogPage = () => {
   useEffect(() => {
@@ -68,18 +69,13 @@ const BlogPage = () => {
                 to={`/blog/${post.slug}`}
                 className="group flex flex-col sm:flex-row gap-4 p-4 rounded-xl border border-border hover:border-primary/30 hover:bg-secondary/30 transition-all"
               >
-                {post.featured_image_url && (
-                  <img
-                    src={post.featured_image_url}
-                    alt={post.featured_image_alt || post.title}
-                    className="w-full sm:w-48 h-32 object-cover rounded-lg shrink-0"
-                    loading="lazy"
-                    onError={(e) => {
-                      const img = e.currentTarget;
-                      img.style.display = "none";
-                    }}
-                  />
-                )}
+                <img
+                  src={post.featured_image_url || BLOG_PLACEHOLDER_IMAGE}
+                  alt={post.featured_image_alt || `${post.title} featured image`}
+                  className="w-full sm:w-48 h-32 object-cover rounded-lg shrink-0"
+                  loading="lazy"
+                  onError={(e) => replaceWithBlogPlaceholder(e.currentTarget)}
+                />
                 <div className="flex-1 min-w-0">
                   <h2 className="text-lg font-semibold text-foreground group-hover:text-primary transition-colors line-clamp-2">
                     {post.title}

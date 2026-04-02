@@ -7,6 +7,7 @@ import { setPageCanonical, getCanonicalUrl } from "@/lib/canonical";
 import { format } from "date-fns";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ArrowLeft } from "lucide-react";
+import { BLOG_PLACEHOLDER_IMAGE, replaceWithBlogPlaceholder } from "@/lib/blog-image-fallback";
 
 function setMetaTag(attr: string, key: string, content: string) {
   let el = document.querySelector(`meta[${attr}="${key}"]`) as HTMLMetaElement | null;
@@ -143,17 +144,13 @@ const BlogPostPage = () => {
           {post.author ? ` · ${post.author}` : ""}
         </p>
 
-        {post.featured_image_url && (
-          <img
-            src={post.featured_image_url}
-            alt={post.featured_image_alt || post.title}
-            className="w-full rounded-xl mb-8 object-cover max-h-[400px]"
-            onError={(e) => {
-              const img = e.currentTarget;
-              img.style.display = "none";
-            }}
-          />
-        )}
+        <img
+          src={post.featured_image_url || BLOG_PLACEHOLDER_IMAGE}
+          alt={post.featured_image_alt || `${post.title} featured image`}
+          className="w-full rounded-xl mb-8 object-cover max-h-[400px]"
+          loading="lazy"
+          onError={(e) => replaceWithBlogPlaceholder(e.currentTarget)}
+        />
 
         {post.content && (
           <div
