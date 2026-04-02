@@ -121,7 +121,7 @@ export const Header = () => {
         )}
 
         {mobileMenuOpen && (
-          <div className="lg:hidden pb-4 animate-fade-in border-t border-border pt-3">
+          <div className="lg:hidden pb-4 animate-fade-in border-t border-border pt-3 max-h-[calc(100vh-7rem)] overflow-y-auto">
             <nav className="flex flex-col gap-0.5">
               {NAV_ITEMS.map((item) => (
                 <div key={item.label}>
