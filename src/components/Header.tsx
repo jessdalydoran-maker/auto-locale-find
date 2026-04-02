@@ -89,6 +89,9 @@ export const Header = () => {
             <Link to="/categories" className="px-3 py-2 text-[13px] text-muted-foreground hover:text-foreground transition-colors rounded-md">
               Categories
             </Link>
+            <Link to="/blog" className="px-3 py-2 text-[13px] text-muted-foreground hover:text-foreground transition-colors rounded-md">
+              Blog
+            </Link>
           </nav>
 
           <div className="flex items-center gap-0.5">
