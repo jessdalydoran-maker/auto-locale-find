@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { useParams, Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -7,7 +7,11 @@ import { setPageCanonical, getCanonicalUrl } from "@/lib/canonical";
 import { format } from "date-fns";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ArrowLeft } from "lucide-react";
-import { BLOG_PLACEHOLDER_IMAGE, replaceWithBlogPlaceholder } from "@/lib/blog-image-fallback";
+import {
+  BLOG_PLACEHOLDER_IMAGE,
+  enhanceBlogContentImages,
+  replaceWithBlogPlaceholder,
+} from "@/lib/blog-image-fallback";
 
 function setMetaTag(attr: string, key: string, content: string) {
   let el = document.querySelector(`meta[${attr}="${key}"]`) as HTMLMetaElement | null;
@@ -33,6 +37,7 @@ function injectJsonLd(data: Record<string, unknown>) {
 
 const BlogPostPage = () => {
   const { slug } = useParams<{ slug: string }>();
+  const contentRef = useRef<HTMLDivElement | null>(null);
 
   const { data: post, isLoading } = useQuery({
     queryKey: ["blog-post", slug],
@@ -94,6 +99,10 @@ const BlogPostPage = () => {
     };
   }, [post]);
 
+  useEffect(() => {
+    enhanceBlogContentImages(contentRef.current);
+  }, [post?.content]);
+
   if (isLoading) {
     return (
       <Layout>
@@ -154,6 +163,7 @@ const BlogPostPage = () => {
 
         {post.content && (
           <div
+            ref={contentRef}
             className="prose prose-neutral dark:prose-invert max-w-none"
             dangerouslySetInnerHTML={{ __html: post.content }}
           />
