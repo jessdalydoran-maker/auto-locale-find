@@ -148,6 +148,10 @@ const BlogPostPage = () => {
             src={post.featured_image_url}
             alt={post.featured_image_alt || post.title}
             className="w-full rounded-xl mb-8 object-cover max-h-[400px]"
+            onError={(e) => {
+              const img = e.currentTarget;
+              img.style.display = "none";
+            }}
           />
         )}
 
