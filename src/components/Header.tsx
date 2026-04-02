@@ -154,6 +154,13 @@ export const Header = () => {
               >
                 Categories
               </Link>
+              <Link
+                to="/blog"
+                className="px-2 py-2 text-[13px] text-muted-foreground hover:text-foreground transition-colors"
+                onClick={() => setMobileMenuOpen(false)}
+              >
+                Blog
+              </Link>
             </nav>
           </div>
         )}
