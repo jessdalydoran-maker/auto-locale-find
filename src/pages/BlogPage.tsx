@@ -74,6 +74,10 @@ const BlogPage = () => {
                     alt={post.featured_image_alt || post.title}
                     className="w-full sm:w-48 h-32 object-cover rounded-lg shrink-0"
                     loading="lazy"
+                    onError={(e) => {
+                      const img = e.currentTarget;
+                      img.style.display = "none";
+                    }}
                   />
                 )}
                 <div className="flex-1 min-w-0">
