@@ -6,7 +6,7 @@ import { Layout } from "@/components/Layout";
 import { setPageCanonical, getCanonicalUrl } from "@/lib/canonical";
 import { format } from "date-fns";
 import { Skeleton } from "@/components/ui/skeleton";
-import { BLOG_PLACEHOLDER_IMAGE, replaceWithBlogPlaceholder } from "@/lib/blog-image-fallback";
+import { BLOG_PLACEHOLDER_IMAGE, getBlogFallbackImage, replaceWithBlogPlaceholder } from "@/lib/blog-image-fallback";
 
 const BlogPage = () => {
   useEffect(() => {
@@ -63,37 +63,46 @@ const BlogPage = () => {
           </p>
         ) : (
           <div className="space-y-8">
-            {posts.map((post) => (
-              <Link
-                key={post.id}
-                to={`/blog/${post.slug}`}
-                className="group flex flex-col sm:flex-row gap-4 p-4 rounded-xl border border-border hover:border-primary/30 hover:bg-secondary/30 transition-all"
-              >
-                <img
-                  src={post.featured_image_url || BLOG_PLACEHOLDER_IMAGE}
-                  alt={post.featured_image_alt || `${post.title} featured image`}
-                  className="w-full sm:w-48 h-32 object-cover rounded-lg shrink-0"
-                  loading="lazy"
-                  onError={(e) => replaceWithBlogPlaceholder(e.currentTarget)}
-                />
-                <div className="flex-1 min-w-0">
-                  <h2 className="text-lg font-semibold text-foreground group-hover:text-primary transition-colors line-clamp-2">
-                    {post.title}
-                  </h2>
-                  <p className="text-xs text-muted-foreground mt-1">
-                    {post.published_at
-                      ? format(new Date(post.published_at), "d MMMM yyyy")
-                      : ""}
-                    {post.author ? ` · ${post.author}` : ""}
-                  </p>
-                  {post.excerpt && (
-                    <p className="text-sm text-muted-foreground mt-2 line-clamp-3">
-                      {post.excerpt}
+            {posts.map((post) => {
+              const blogImageContext = {
+                title: post.title,
+                excerpt: post.excerpt,
+              };
+
+              const fallbackImage = getBlogFallbackImage(blogImageContext, post.featured_image_url);
+
+              return (
+                <Link
+                  key={post.id}
+                  to={`/blog/${post.slug}`}
+                  className="group flex flex-col sm:flex-row gap-4 p-4 rounded-xl border border-border hover:border-primary/30 hover:bg-secondary/30 transition-all"
+                >
+                  <img
+                    src={post.featured_image_url || fallbackImage || BLOG_PLACEHOLDER_IMAGE}
+                    alt={post.featured_image_alt || `${post.title} featured image`}
+                    className="w-full sm:w-48 h-32 object-cover rounded-lg shrink-0"
+                    loading="lazy"
+                    onError={(e) => replaceWithBlogPlaceholder(e.currentTarget, blogImageContext)}
+                  />
+                  <div className="flex-1 min-w-0">
+                    <h2 className="text-lg font-semibold text-foreground group-hover:text-primary transition-colors line-clamp-2">
+                      {post.title}
+                    </h2>
+                    <p className="text-xs text-muted-foreground mt-1">
+                      {post.published_at
+                        ? format(new Date(post.published_at), "d MMMM yyyy")
+                        : ""}
+                      {post.author ? ` · ${post.author}` : ""}
                     </p>
-                  )}
-                </div>
-              </Link>
-            ))}
+                    {post.excerpt && (
+                      <p className="text-sm text-muted-foreground mt-2 line-clamp-3">
+                        {post.excerpt}
+                      </p>
+                    )}
+                  </div>
+                </Link>
+              );
+            })}
           </div>
         )}
       </div>
