@@ -235,31 +235,31 @@ export function generateTitle(
 
   // Food & Drink cluster
   if (["restaurants", "brunch", "cafes", "bars", "cocktail bars"].includes(categoryName.toLowerCase())) {
-    if (modifier === "best") return `Best ${categoryName} in ${location} | Top-Rated ${categoryName}`;
-    if (modifier === "cheap") return `Cheap ${categoryName} in ${location} | Budget-Friendly Dining`;
-    if (modifier === "romantic") return `Romantic ${categoryName} in ${location} | Date Night Dining`;
-    if (modifier === "vegan") return `Vegan ${categoryName} in ${location} | Plant-Based Dining`;
+    if (modifier === "best") return `Best ${categoryName} in ${location}`;
+    if (modifier === "cheap") return `Cheap ${categoryName} in ${location}`;
+    if (modifier === "romantic") return `Romantic ${categoryName} in ${location}`;
+    if (modifier === "vegan") return `Vegan ${categoryName} in ${location}`;
     if (modifier) {
       const cap = modifier.charAt(0).toUpperCase() + modifier.slice(1);
-      return `${cap} ${categoryName} in ${location} | Top ${categoryName}`;
+      return `${cap} ${categoryName} in ${location}`;
     }
-    return `${categoryName} in ${location} | Find the Best ${categoryName}`;
+    return `Best ${categoryName} in ${location}`;
   }
 
   // Live Music cluster
   if (["live music", "live-music"].includes(categoryName.toLowerCase())) {
-    if (timeLabel) return `Live Music in ${location} ${timeLabel} | Pub Sessions, Gigs, Acoustic & Trad`;
-    if (modifier === "best") return `Best Live Music Venues in ${location} | Pubs, Bars & Gig Venues`;
-    return `Live Music in ${location} | Pub Sessions, Gigs, Acoustic & Trad Nights`;
+    if (timeLabel) return `Live Music in ${location} ${timeLabel}`;
+    if (modifier === "best") return `Best Live Music Venues in ${location}`;
+    return `Live Music in ${location} | Gigs & Sessions`;
   }
 
   // Generic fallback
   const timeSuffix = timeLabel ? ` ${timeLabel}` : "";
   if (modifier) {
     const cap = modifier.charAt(0).toUpperCase() + modifier.slice(1);
-    return `${cap} ${categoryName} in ${location}${timeSuffix} | Top ${categoryName} Spots`;
+    return `${cap} ${categoryName} in ${location}`;
   }
-  return `${categoryName} in ${location}${timeSuffix} | Find the Best ${categoryName}`;
+  return `${categoryName} in ${location}${timeSuffix}`;
 }
 
 /**
