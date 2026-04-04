@@ -1,4 +1,4 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useMemo, useRef } from "react";
 import { useParams, Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -10,6 +10,8 @@ import { ArrowLeft } from "lucide-react";
 import {
   BLOG_PLACEHOLDER_IMAGE,
   enhanceBlogContentImages,
+  getBlogFallbackImage,
+  replaceDeprecatedBlogImageUrls,
   replaceWithBlogPlaceholder,
 } from "@/lib/blog-image-fallback";
 
@@ -99,9 +101,28 @@ const BlogPostPage = () => {
     };
   }, [post]);
 
+  const blogImageContext = useMemo(
+    () => ({
+      title: post?.title,
+      excerpt: post?.excerpt,
+      content: post?.content,
+    }),
+    [post?.content, post?.excerpt, post?.title],
+  );
+
+  const fallbackFeaturedImage = useMemo(
+    () => getBlogFallbackImage(blogImageContext, post?.featured_image_url),
+    [blogImageContext, post?.featured_image_url],
+  );
+
+  const renderedContent = useMemo(
+    () => replaceDeprecatedBlogImageUrls(post?.content, blogImageContext),
+    [blogImageContext, post?.content],
+  );
+
   useEffect(() => {
-    enhanceBlogContentImages(contentRef.current);
-  }, [post?.content]);
+    enhanceBlogContentImages(contentRef.current, blogImageContext);
+  }, [blogImageContext, renderedContent]);
 
   if (isLoading) {
     return (
@@ -154,18 +175,18 @@ const BlogPostPage = () => {
         </p>
 
         <img
-          src={post.featured_image_url || BLOG_PLACEHOLDER_IMAGE}
+          src={post.featured_image_url || fallbackFeaturedImage || BLOG_PLACEHOLDER_IMAGE}
           alt={post.featured_image_alt || `${post.title} featured image`}
           className="w-full rounded-xl mb-8 object-cover max-h-[400px]"
           loading="lazy"
-          onError={(e) => replaceWithBlogPlaceholder(e.currentTarget)}
+          onError={(e) => replaceWithBlogPlaceholder(e.currentTarget, blogImageContext)}
         />
 
         {post.content && (
           <div
             ref={contentRef}
             className="prose prose-neutral dark:prose-invert max-w-none"
-            dangerouslySetInnerHTML={{ __html: post.content }}
+            dangerouslySetInnerHTML={{ __html: renderedContent }}
           />
         )}
       </article>
