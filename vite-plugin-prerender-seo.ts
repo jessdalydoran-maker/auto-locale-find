@@ -276,9 +276,11 @@ export default function prerenderSeoPlugin() {
         const [citySlug, catSlug] = key.split("/");
         const cityName = cityMap.get(citySlug) || citySlug;
         const catName = catMap.get(catSlug) || catSlug;
+        const rawTitle = `Best ${catName} in ${cityName}`;
+        const title = rawTitle.length > 58 ? `${catName} in ${cityName}` : rawTitle;
         routes.push({
           path: `/${citySlug}/${catSlug}`,
-          title: `Best ${catName} in ${cityName} | City Scout Guide`,
+          title,
           description: introText(catSlug, catName, cityName),
           h1: `Best ${catName} in ${cityName}`,
           cityName,
