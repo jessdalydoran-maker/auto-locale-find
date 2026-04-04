@@ -212,6 +212,50 @@ export default function prerenderSeoPlugin() {
         listings: (cityListings.get("belfast") || []).slice(0, 12),
       });
 
+      // NI-wide modifier/category pages
+      const niWidePages: { path: string; title: string; description: string; h1: string }[] = [
+        {
+          path: "/date-night",
+          title: "Date Night Ideas in Northern Ireland",
+          description: "Romantic restaurants, cocktail bars and date night activities across Northern Ireland.",
+          h1: "Date Night Ideas in Northern Ireland",
+        },
+        {
+          path: "/rainy-day-activities",
+          title: "Rainy Day Activities in Northern Ireland",
+          description: "Indoor activities and things to do on a rainy day across Northern Ireland.",
+          h1: "Rainy Day Activities in Northern Ireland",
+        },
+        {
+          path: "/free-things-to-do",
+          title: "Free Things To Do in Northern Ireland",
+          description: "Free activities, parks, museums and things to do across Northern Ireland.",
+          h1: "Free Things To Do in Northern Ireland",
+        },
+        {
+          path: "/nightlife",
+          title: "Nightlife in Northern Ireland",
+          description: "Clubs, late bars, DJ nights and nightlife across Northern Ireland.",
+          h1: "Nightlife in Northern Ireland",
+        },
+        {
+          path: "/things-to-do",
+          title: "Things To Do in Northern Ireland",
+          description: "Discover the best things to do across Northern Ireland. Activities, attractions and more.",
+          h1: "Things To Do in Northern Ireland",
+        },
+      ];
+
+      // Gather some Belfast listings for NI-wide pages
+      const belfastListings = (cityListings.get("belfast") || []).slice(0, 12);
+      for (const nip of niWidePages) {
+        routes.push({
+          ...nip,
+          cityName: "Northern Ireland",
+          listings: belfastListings,
+        });
+      }
+
       // Town pages
       for (const [slug, items] of cityListings) {
         if (items.length < MIN_LISTINGS) continue;
