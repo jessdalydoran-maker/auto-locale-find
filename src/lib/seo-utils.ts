@@ -219,47 +219,47 @@ export function generateTitle(
 
   // Event / What's On cluster
   if (categoryName.toLowerCase() === "events") {
-    if (timeLabel) return `What's On in ${location} ${timeLabel} | Events, Activities & More`;
-    return `What's On in ${location} | Events, Food & Things To Do`;
+    if (timeLabel) return `What's On in ${location} ${timeLabel}`;
+    return `What's On in ${location} | Events & Activities`;
   }
 
   // Things to do cluster
   if (categoryName.toLowerCase() === "things to do") {
-    if (modifier === "free" || modifier === "cheap") return `Cheap & Free Things To Do in ${location}${timeLabel ? ` ${timeLabel}` : ""} | Budget-Friendly Activities`;
-    if (modifier === "family") return `Family Day Out in ${location}${timeLabel ? ` ${timeLabel}` : ""} | Kids & Family Fun`;
-    if (modifier === "date-night" || modifier === "romantic") return `Date Night Ideas in ${location} | Romantic Restaurants & Activities`;
-    if (modifier === "rainy-day" || modifier === "indoor" || timeIntent === "rainy-day") return `Rainy Day Ideas in ${location} | Indoor Activities & Things To Do`;
-    if (timeLabel) return `Things To Do in ${location} ${timeLabel} | Activities & Events`;
-    return `Things To Do in ${location} | Best Activities & Attractions`;
+    if (modifier === "free" || modifier === "cheap") return `Free Things To Do in ${location}${timeLabel ? ` ${timeLabel}` : ""}`;
+    if (modifier === "family") return `Family Day Out in ${location}${timeLabel ? ` ${timeLabel}` : ""}`;
+    if (modifier === "date-night" || modifier === "romantic") return `Date Night Ideas in ${location}`;
+    if (modifier === "rainy-day" || modifier === "indoor" || timeIntent === "rainy-day") return `Rainy Day Activities in ${location}`;
+    if (timeLabel) return `Things To Do in ${location} ${timeLabel}`;
+    return `Things To Do in ${location} | Top Activities`;
   }
 
   // Food & Drink cluster
   if (["restaurants", "brunch", "cafes", "bars", "cocktail bars"].includes(categoryName.toLowerCase())) {
-    if (modifier === "best") return `Best ${categoryName} in ${location} | Top-Rated ${categoryName}`;
-    if (modifier === "cheap") return `Cheap ${categoryName} in ${location} | Budget-Friendly Dining`;
-    if (modifier === "romantic") return `Romantic ${categoryName} in ${location} | Date Night Dining`;
-    if (modifier === "vegan") return `Vegan ${categoryName} in ${location} | Plant-Based Dining`;
+    if (modifier === "best") return `Best ${categoryName} in ${location}`;
+    if (modifier === "cheap") return `Cheap ${categoryName} in ${location}`;
+    if (modifier === "romantic") return `Romantic ${categoryName} in ${location}`;
+    if (modifier === "vegan") return `Vegan ${categoryName} in ${location}`;
     if (modifier) {
       const cap = modifier.charAt(0).toUpperCase() + modifier.slice(1);
-      return `${cap} ${categoryName} in ${location} | Top ${categoryName}`;
+      return `${cap} ${categoryName} in ${location}`;
     }
-    return `${categoryName} in ${location} | Find the Best ${categoryName}`;
+    return `Best ${categoryName} in ${location}`;
   }
 
   // Live Music cluster
   if (["live music", "live-music"].includes(categoryName.toLowerCase())) {
-    if (timeLabel) return `Live Music in ${location} ${timeLabel} | Pub Sessions, Gigs, Acoustic & Trad`;
-    if (modifier === "best") return `Best Live Music Venues in ${location} | Pubs, Bars & Gig Venues`;
-    return `Live Music in ${location} | Pub Sessions, Gigs, Acoustic & Trad Nights`;
+    if (timeLabel) return `Live Music in ${location} ${timeLabel}`;
+    if (modifier === "best") return `Best Live Music Venues in ${location}`;
+    return `Live Music in ${location} | Gigs & Sessions`;
   }
 
   // Generic fallback
   const timeSuffix = timeLabel ? ` ${timeLabel}` : "";
   if (modifier) {
     const cap = modifier.charAt(0).toUpperCase() + modifier.slice(1);
-    return `${cap} ${categoryName} in ${location}${timeSuffix} | Top ${categoryName} Spots`;
+    return `${cap} ${categoryName} in ${location}`;
   }
-  return `${categoryName} in ${location}${timeSuffix} | Find the Best ${categoryName}`;
+  return `${categoryName} in ${location}${timeSuffix}`;
 }
 
 /**
