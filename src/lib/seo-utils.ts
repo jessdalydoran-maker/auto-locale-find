@@ -219,8 +219,8 @@ export function generateTitle(
 
   // Event / What's On cluster
   if (categoryName.toLowerCase() === "events") {
-    if (timeLabel) return `What's On in ${location} ${timeLabel} | Events, Activities & More`;
-    return `What's On in ${location} | Events, Food & Things To Do`;
+    if (timeLabel) return `What's On in ${location} ${timeLabel}`;
+    return `What's On in ${location} | Events & Activities`;
   }
 
   // Things to do cluster
