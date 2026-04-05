@@ -1,4 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { DataQualityDashboard } from "@/components/DataQualityDashboard";
 import { supabase } from "@/integrations/supabase/client";
 import { Layout } from "@/components/Layout";
 import { QUALITY_THRESHOLDS } from "@/lib/listing-quality";
