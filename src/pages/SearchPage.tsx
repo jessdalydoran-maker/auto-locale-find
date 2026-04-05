@@ -11,6 +11,7 @@ import { scoreListing, scoreEvent, rankAndFilter, filterByCity } from "@/lib/sea
 import { resolveIntentFilter, shouldExcludeListing } from "@/lib/category-filters";
 import { Search, Calendar, MapPin } from "lucide-react";
 import { deduplicateListings, filterCompleteListings } from "@/lib/page-validation";
+import { filterAndRankListings } from "@/lib/listing-quality";
 import { useMemo, useEffect } from "react";
 
 const NEARBY_RADIUS_KM = 24; // ~15 miles
