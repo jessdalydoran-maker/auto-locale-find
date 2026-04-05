@@ -1,5 +1,6 @@
 import { useParams, Link } from "react-router-dom";
 import { cn } from "@/lib/utils";
+import { filterAndRankListings } from "@/lib/listing-quality";
 import { isLiveMusicEvent, isLiveMusicVenue, liveMusicVenueScore } from "@/lib/live-music-utils";
 import { SITE_DOMAIN } from "@/lib/canonical";
 import { useQuery } from "@tanstack/react-query";
@@ -769,7 +770,8 @@ const ProgrammaticPage = () => {
   const dedupedListings = useMemo(() => {
     if (!listings) return [];
     const { unique } = deduplicateListings(listings as any);
-    return filterCompleteListings(unique);
+    const complete = filterCompleteListings(unique);
+    return filterAndRankListings(complete as any);
   }, [listings]);
 
   const dedupedEvents = useMemo(() => {

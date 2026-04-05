@@ -11,6 +11,7 @@ import { scoreListing, scoreEvent, rankAndFilter, filterByCity } from "@/lib/sea
 import { resolveIntentFilter, shouldExcludeListing } from "@/lib/category-filters";
 import { Search, Calendar, MapPin } from "lucide-react";
 import { deduplicateListings, filterCompleteListings } from "@/lib/page-validation";
+import { filterAndRankListings } from "@/lib/listing-quality";
 import { useMemo, useEffect } from "react";
 
 const NEARBY_RADIUS_KM = 24; // ~15 miles
@@ -452,7 +453,7 @@ const SearchPage = ({
     }));
     const exact = rankAndFilter(scoredExact, 20, intent.hasExplicitLocation);
     const { unique: uniqueExact } = deduplicateListings(exact as any);
-    const filteredExact = filterCompleteListings(uniqueExact);
+    const filteredExact = filterAndRankListings(filterCompleteListings(uniqueExact) as any);
 
     const scoredNearby = nearbySource.map((item: any) => ({
       item,
@@ -460,7 +461,7 @@ const SearchPage = ({
     }));
     const nearby = rankAndFilter(scoredNearby, 20, false);
     const { unique: uniqueNearby } = deduplicateListings(nearby as any);
-    const filteredNearby = filterCompleteListings(uniqueNearby);
+    const filteredNearby = filterAndRankListings(filterCompleteListings(uniqueNearby) as any);
 
     const scoredNiWide = niWideSource.map((item: any) => ({
       item,
@@ -468,7 +469,7 @@ const SearchPage = ({
     }));
     const niWide = rankAndFilter(scoredNiWide, 20, false);
     const { unique: uniqueNiWide } = deduplicateListings(niWide as any);
-    const filteredNiWide = filterCompleteListings(uniqueNiWide);
+    const filteredNiWide = filterAndRankListings(filterCompleteListings(uniqueNiWide) as any);
 
     return { rankedExact: filteredExact, rankedNearby: filteredNearby, rankedNiWide: filteredNiWide };
   }, [rawListings, query, intent, forceExactTownOnly]);

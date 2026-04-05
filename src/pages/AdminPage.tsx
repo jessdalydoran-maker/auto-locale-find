@@ -1,6 +1,8 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { DataQualityDashboard } from "@/components/DataQualityDashboard";
 import { supabase } from "@/integrations/supabase/client";
 import { Layout } from "@/components/Layout";
+import { QUALITY_THRESHOLDS } from "@/lib/listing-quality";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -224,6 +226,7 @@ const AdminPage = () => {
         <Tabs defaultValue="automation">
           <TabsList className="mb-6 flex-wrap">
             <TabsTrigger value="automation">Automation</TabsTrigger>
+            <TabsTrigger value="data-quality">Data Quality</TabsTrigger>
             <TabsTrigger value="trends">Search Trends</TabsTrigger>
             <TabsTrigger value="listings">Listings</TabsTrigger>
             <TabsTrigger value="pages">Page Quality</TabsTrigger>
@@ -788,6 +791,11 @@ const AdminPage = () => {
                 <p className="text-sm text-muted-foreground">No page views recorded yet.</p>
               )}
             </div>
+          </TabsContent>
+
+          {/* ─── DATA QUALITY TAB ─── */}
+          <TabsContent value="data-quality">
+            <DataQualityDashboard listings={listings || []} queryClient={queryClient} />
           </TabsContent>
         </Tabs>
       </div>
