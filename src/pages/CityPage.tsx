@@ -4,6 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Layout } from "@/components/Layout";
 import { ListingCard } from "@/components/ListingCard";
+import { ListingGrid } from "@/components/ListingGrid";
 import { EventCard } from "@/components/EventCard";
 import { CategoryPill } from "@/components/CategoryPill";
 import { AdPlaceholder } from "@/components/AdPlaceholder";
