@@ -5,6 +5,7 @@ import { Layout } from "@/components/Layout";
 import { ListingCard } from "@/components/ListingCard";
 import { MapPin, ArrowRight } from "lucide-react";
 import { deduplicateListings, filterCompleteListings, validatePage, detectPageType, getRobotsDirective } from "@/lib/page-validation";
+import { filterAndRankListings } from "@/lib/listing-quality";
 import { useEffect, useMemo } from "react";
 import { setPageCanonical } from "@/lib/canonical";
 
