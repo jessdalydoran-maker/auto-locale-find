@@ -1,4 +1,5 @@
 import { useParams, useSearchParams, Link } from "react-router-dom";
+import { filterAndRankListings } from "@/lib/listing-quality";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Layout } from "@/components/Layout";
