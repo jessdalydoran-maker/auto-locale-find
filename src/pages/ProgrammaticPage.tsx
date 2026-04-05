@@ -770,7 +770,8 @@ const ProgrammaticPage = () => {
   const dedupedListings = useMemo(() => {
     if (!listings) return [];
     const { unique } = deduplicateListings(listings as any);
-    return filterCompleteListings(unique);
+    const complete = filterCompleteListings(unique);
+    return filterAndRankListings(complete as any);
   }, [listings]);
 
   const dedupedEvents = useMemo(() => {
