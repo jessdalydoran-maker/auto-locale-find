@@ -336,13 +336,13 @@ const CityPage = () => {
       </section>
 
       <div className="container mx-auto px-4 py-8">
-        {/* Quick category links */}
-        <div className="flex flex-wrap gap-2 mb-8">
+        {/* Quick category links — scrollable on mobile */}
+        <div className="flex gap-2 mb-8 overflow-x-auto pb-2 -mx-4 px-4 scrollbar-hide">
           {categories?.slice(0, 10).map((cat) => (
             <Link
               key={cat.id}
               to={`/${resolvedCitySlug}/${cat.slug}`}
-              className="px-3.5 py-2 rounded-full text-[13px] font-medium bg-secondary text-foreground hover:text-primary hover:bg-primary/10 transition-colors"
+              className="shrink-0 px-3.5 py-2 rounded-full text-[13px] font-medium border border-border bg-card text-foreground hover:bg-foreground hover:text-card transition-colors"
             >
               {cat.name}
             </Link>
