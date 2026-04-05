@@ -98,6 +98,30 @@
   .card-shadow-hover {
     box-shadow: var(--card-shadow-hover);
   }
+
+  .card-shadow-lifted {
+    box-shadow: 0 8px 30px -8px hsl(220 20% 14% / 0.12), 0 4px 12px -4px hsl(220 20% 14% / 0.06);
+  }
+
+  /* Category gradient placeholders */
+  .gradient-restaurants { background: linear-gradient(135deg, hsl(15 80% 55%), hsl(35 85% 50%)); }
+  .gradient-cafes { background: linear-gradient(135deg, hsl(25 70% 52%), hsl(40 75% 55%)); }
+  .gradient-brunch { background: linear-gradient(135deg, hsl(30 80% 55%), hsl(45 85% 60%)); }
+  .gradient-bars { background: linear-gradient(135deg, hsl(262 50% 42%), hsl(290 45% 52%)); }
+  .gradient-cocktail-bars { background: linear-gradient(135deg, hsl(280 55% 45%), hsl(310 50% 55%)); }
+  .gradient-nightlife { background: linear-gradient(135deg, hsl(270 60% 35%), hsl(300 55% 45%)); }
+  .gradient-pubs { background: linear-gradient(135deg, hsl(25 55% 40%), hsl(35 50% 45%)); }
+  .gradient-things-to-do { background: linear-gradient(135deg, hsl(200 60% 45%), hsl(220 55% 55%)); }
+  .gradient-attractions { background: linear-gradient(135deg, hsl(210 55% 48%), hsl(230 50% 55%)); }
+  .gradient-family-activities { background: linear-gradient(135deg, hsl(145 50% 42%), hsl(165 55% 50%)); }
+  .gradient-parks { background: linear-gradient(135deg, hsl(130 45% 40%), hsl(155 50% 48%)); }
+  .gradient-museums { background: linear-gradient(135deg, hsl(220 45% 42%), hsl(245 40% 50%)); }
+  .gradient-live-music { background: linear-gradient(135deg, hsl(350 60% 50%), hsl(15 55% 55%)); }
+  .gradient-hotels { background: linear-gradient(135deg, hsl(210 40% 45%), hsl(225 45% 55%)); }
+  .gradient-shopping { background: linear-gradient(135deg, hsl(330 50% 50%), hsl(350 55% 55%)); }
+  .gradient-gyms { background: linear-gradient(135deg, hsl(175 50% 40%), hsl(195 55% 48%)); }
+  .gradient-theatre { background: linear-gradient(135deg, hsl(340 55% 45%), hsl(360 50% 55%)); }
+  .gradient-default { background: linear-gradient(135deg, hsl(var(--primary)), hsl(var(--teal))); }
 }
 
 /* Safety net: hide broken image icons */
