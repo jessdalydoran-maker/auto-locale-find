@@ -4,6 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Layout } from "@/components/Layout";
 import { ListingCard } from "@/components/ListingCard";
+import { ListingGrid } from "@/components/ListingGrid";
 import { EventCard } from "@/components/EventCard";
 import { CategoryPill } from "@/components/CategoryPill";
 import { AdPlaceholder } from "@/components/AdPlaceholder";
@@ -296,9 +297,7 @@ const CityPage = () => {
             </Link>
           </div>
           {filteredListings.length > 0 ? (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-              {filteredListings.map((l: any, i: number) => renderListingCard(l, i))}
-            </div>
+            <ListingGrid listings={filteredListings} citySlug={resolvedCitySlug} />
           ) : (
             <div className="text-center py-12 text-muted-foreground">
               <p className="text-sm">No {activeCategory?.name || categoryFilter} listings in {city.name} yet.</p>
@@ -337,13 +336,13 @@ const CityPage = () => {
       </section>
 
       <div className="container mx-auto px-4 py-8">
-        {/* Quick category links */}
-        <div className="flex flex-wrap gap-2 mb-8">
+        {/* Quick category links — scrollable on mobile */}
+        <div className="flex gap-2 mb-8 overflow-x-auto pb-2 -mx-4 px-4 scrollbar-hide">
           {categories?.slice(0, 10).map((cat) => (
             <Link
               key={cat.id}
               to={`/${resolvedCitySlug}/${cat.slug}`}
-              className="px-3.5 py-2 rounded-full text-[13px] font-medium bg-secondary text-foreground hover:text-primary hover:bg-primary/10 transition-colors"
+              className="shrink-0 px-3.5 py-2 rounded-full text-[13px] font-medium border border-border bg-card text-foreground hover:bg-foreground hover:text-card transition-colors"
             >
               {cat.name}
             </Link>
@@ -424,9 +423,7 @@ const CityPage = () => {
                 View all <ArrowRight className="h-3.5 w-3.5" />
               </Link>
             </div>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-              {thingsToDo.slice(0, 6).map((l: any, i: number) => renderListingCard(l, i))}
-            </div>
+            <ListingGrid listings={thingsToDo.slice(0, 6)} citySlug={resolvedCitySlug} />
           </section>
         )}
 
@@ -442,9 +439,7 @@ const CityPage = () => {
                 View all <ArrowRight className="h-3.5 w-3.5" />
               </Link>
             </div>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-              {foodDrink.slice(0, 6).map((l: any, i: number) => renderListingCard(l, i))}
-            </div>
+            <ListingGrid listings={foodDrink.slice(0, 6)} citySlug={resolvedCitySlug} />
           </section>
         )}
 
@@ -454,9 +449,7 @@ const CityPage = () => {
             <h2 className="font-display font-semibold text-foreground mb-4">
               More Places in {city.name}
             </h2>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-              {otherListings.slice(0, 6).map((l: any, i: number) => renderListingCard(l, i))}
-            </div>
+            <ListingGrid listings={otherListings.slice(0, 6)} citySlug={resolvedCitySlug} />
           </section>
         )}
 
@@ -471,9 +464,7 @@ const CityPage = () => {
             <p className="text-sm text-muted-foreground mb-4">
               Discover attractions, restaurants and activities in nearby towns.
             </p>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-              {nearbyItems.slice(0, 9).map((l: any, i: number) => renderListingCard(l, i))}
-            </div>
+            <ListingGrid listings={nearbyItems.slice(0, 9)} citySlug={resolvedCitySlug} />
           </section>
         )}
 

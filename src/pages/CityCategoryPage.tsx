@@ -3,6 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Layout } from "@/components/Layout";
 import { ListingCard } from "@/components/ListingCard";
+import { ListingGrid } from "@/components/ListingGrid";
 import { MapPin, ArrowRight } from "lucide-react";
 import { deduplicateListings, filterCompleteListings, validatePage, detectPageType, getRobotsDirective } from "@/lib/page-validation";
 import { filterAndRankListings } from "@/lib/listing-quality";
@@ -174,10 +175,11 @@ const CityCategoryPage = () => {
 
       <div className="container mx-auto px-4 py-8">
         {/* Category navigation pills */}
-        <div className="flex flex-wrap gap-2 mb-8">
+        {/* Category navigation pills — scrollable on mobile */}
+        <div className="flex gap-2 mb-8 overflow-x-auto pb-2 -mx-4 px-4 scrollbar-hide">
           <Link
             to={`/${citySlug}`}
-            className="px-3.5 py-2 rounded-full text-[13px] font-medium bg-muted text-muted-foreground hover:text-foreground transition-colors"
+            className="shrink-0 px-3.5 py-2 rounded-full text-[13px] font-medium border border-border bg-card text-muted-foreground hover:text-foreground transition-colors"
           >
             ← All
           </Link>
@@ -185,7 +187,7 @@ const CityCategoryPage = () => {
             <Link
               key={cat.id}
               to={`/${citySlug}/${cat.slug}`}
-              className="px-3.5 py-2 rounded-full text-[13px] font-medium bg-secondary text-foreground hover:text-primary hover:bg-primary/10 transition-colors"
+              className="shrink-0 px-3.5 py-2 rounded-full text-[13px] font-medium border border-border bg-card text-foreground hover:bg-foreground hover:text-card transition-colors"
             >
               {cat.name}
             </Link>
@@ -194,33 +196,7 @@ const CityCategoryPage = () => {
 
         {/* Listings grid */}
         {cleanListings.length > 0 ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-            {cleanListings.map((listing: any, i: number) => (
-              <ListingCard
-                key={listing.id}
-                name={listing.name}
-                slug={listing.slug}
-                citySlug={(listing.cities as any)?.slug || citySlug}
-                shortDescription={listing.short_description || ""}
-                rating={listing.rating}
-                reviewCount={listing.review_count || 0}
-                imageUrl={listing.image_url}
-                imageSource={listing.image_source}
-                imageAlt={listing.image_alt}
-                imageStatus={listing.image_status}
-                categorySlug={(listing.categories as any)?.slug}
-                categoryName={(listing.categories as any)?.name}
-                cityName={(listing.cities as any)?.name}
-                address={listing.address}
-                priceLevel={listing.price_level}
-                googleMapsLink={listing.google_maps_link}
-                isFeatured={listing.is_featured}
-                audienceTags={listing.audience_tags}
-                description={listing.description}
-                index={i}
-              />
-            ))}
-          </div>
+          <ListingGrid listings={cleanListings} citySlug={citySlug} />
         ) : (
           <div className="text-center py-12 text-muted-foreground">
             <p className="text-sm">No {category.name} listings in {city.name} yet.</p>
