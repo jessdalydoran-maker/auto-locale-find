@@ -297,9 +297,7 @@ const CityPage = () => {
             </Link>
           </div>
           {filteredListings.length > 0 ? (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-              {filteredListings.map((l: any, i: number) => renderListingCard(l, i))}
-            </div>
+            <ListingGrid listings={filteredListings} citySlug={resolvedCitySlug} />
           ) : (
             <div className="text-center py-12 text-muted-foreground">
               <p className="text-sm">No {activeCategory?.name || categoryFilter} listings in {city.name} yet.</p>
