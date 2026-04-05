@@ -449,9 +449,7 @@ const CityPage = () => {
             <h2 className="font-display font-semibold text-foreground mb-4">
               More Places in {city.name}
             </h2>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-              {otherListings.slice(0, 6).map((l: any, i: number) => renderListingCard(l, i))}
-            </div>
+            <ListingGrid listings={otherListings.slice(0, 6)} citySlug={resolvedCitySlug} />
           </section>
         )}
 
