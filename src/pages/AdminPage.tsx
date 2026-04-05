@@ -225,6 +225,7 @@ const AdminPage = () => {
         <Tabs defaultValue="automation">
           <TabsList className="mb-6 flex-wrap">
             <TabsTrigger value="automation">Automation</TabsTrigger>
+            <TabsTrigger value="data-quality">Data Quality</TabsTrigger>
             <TabsTrigger value="trends">Search Trends</TabsTrigger>
             <TabsTrigger value="listings">Listings</TabsTrigger>
             <TabsTrigger value="pages">Page Quality</TabsTrigger>
