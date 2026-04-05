@@ -791,6 +791,11 @@ const AdminPage = () => {
               )}
             </div>
           </TabsContent>
+
+          {/* ─── DATA QUALITY TAB ─── */}
+          <TabsContent value="data-quality">
+            <DataQualityDashboard listings={listings || []} queryClient={queryClient} />
+          </TabsContent>
         </Tabs>
       </div>
     </Layout>
