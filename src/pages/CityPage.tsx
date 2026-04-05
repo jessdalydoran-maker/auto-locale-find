@@ -464,9 +464,7 @@ const CityPage = () => {
             <p className="text-sm text-muted-foreground mb-4">
               Discover attractions, restaurants and activities in nearby towns.
             </p>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-              {nearbyItems.slice(0, 9).map((l: any, i: number) => renderListingCard(l, i))}
-            </div>
+            <ListingGrid listings={nearbyItems.slice(0, 9)} citySlug={resolvedCitySlug} />
           </section>
         )}
 
