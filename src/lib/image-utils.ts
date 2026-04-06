@@ -103,12 +103,12 @@ const FALLBACK_POOLS: Record<string, string[]> = {
   // Attractions / Landmarks / Castles
   "attractions": [
     "https://images.unsplash.com/photo-1590073844006-33379778ae09?w=800&h=500&fit=crop&fm=webp&q=80", // Giant's Causeway
-    "https://images.unsplash.com/photo-1533154683836-84ea7a0bc310?w=800&h=500&fit=crop&fm=webp&q=80", // Belfast skyline
-    "https://images.unsplash.com/photo-1564959130747-897a8e5c33c6?w=800&h=500&fit=crop&fm=webp&q=80", // NI coast
+    "https://images.unsplash.com/photo-1513635269975-59663e0ac1ad?w=800&h=500&fit=crop&fm=webp&q=80", // City landmark
+    "https://images.unsplash.com/photo-1555881400-74d7acaacd8b?w=800&h=500&fit=crop&fm=webp&q=80", // Harbour / waterfront
   ],
   "things-to-do": [
-    "https://images.unsplash.com/photo-1533154683836-84ea7a0bc310?w=800&h=500&fit=crop&fm=webp&q=80",
-    "https://images.unsplash.com/photo-1590073844006-33379778ae09?w=800&h=500&fit=crop&fm=webp&q=80",
+    "https://images.unsplash.com/photo-1528605248644-14dd04022da1?w=800&h=500&fit=crop&fm=webp&q=80", // Group activity
+    "https://images.unsplash.com/photo-1517457373958-b7bdd4587205?w=800&h=500&fit=crop&fm=webp&q=80", // People exploring
   ],
 
   // Events (generic)
@@ -178,7 +178,8 @@ const FALLBACK_POOLS: Record<string, string[]> = {
   ],
   "sports": [
     "https://images.unsplash.com/photo-1461896836934-bd45ba1a603c?w=800&h=500&fit=crop&fm=webp&q=80",
-    "https://images.unsplash.com/photo-1571019614242-c5c5dee9f50b?w=800&h=500&fit=crop&fm=webp&q=80",
+    "https://images.unsplash.com/photo-1574629810360-7efbbe195018?w=800&h=500&fit=crop&fm=webp&q=80",
+    "https://images.unsplash.com/photo-1517649763962-0c623066013b?w=800&h=500&fit=crop&fm=webp&q=80",
   ],
   "indoor-activities": [
     "https://images.unsplash.com/photo-1545558014-8692077e9b5c?w=800&h=500&fit=crop&fm=webp&q=80",
@@ -229,9 +230,14 @@ const KEYWORD_CATEGORY_MAP: Array<{ keywords: string[]; category: string }> = [
     keywords: ["choir", "choral", "vocal ensemble", "rehearsal"],
     category: "choir-music",
   },
+  // Classical Music / Orchestra
+  {
+    keywords: ["orchestra", "symphony", "classical", "philharmonic", "recital", "violin", "pianist", "soprano", "tenor", "cello", "chamber music", "concerto", "andré rieu", "andre rieu", "strauss", "beethoven", "mozart", "chopin", "vivaldi", "operatic"],
+    category: "live-music",
+  },
   // Live Music / Gigs
   {
-    keywords: ["gig", "concert", "band", "rock", "indie", "punk", "metal", "live music", "singer", "acoustic", "open mic", "open-mic", "songwriter"],
+    keywords: ["gig", "concert", "band", "rock", "indie", "punk", "metal", "live music", "singer", "acoustic", "open mic", "open-mic", "songwriter", "musician", "performer", "vocalist", "soloist", "tribute"],
     category: "live-music",
   },
   // Trad / Folk
