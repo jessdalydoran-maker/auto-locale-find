@@ -2,7 +2,6 @@ import { useParams, Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Layout } from "@/components/Layout";
-import { ListingCard } from "@/components/ListingCard";
 import { ListingGrid } from "@/components/ListingGrid";
 import { MapPin, ArrowRight } from "lucide-react";
 import { deduplicateListings, filterCompleteListings, validatePage, detectPageType, getRobotsDirective } from "@/lib/page-validation";
@@ -10,29 +9,27 @@ import { filterAndRankListings } from "@/lib/listing-quality";
 import { useEffect, useMemo } from "react";
 import { setPageCanonical } from "@/lib/canonical";
 
-/** Human-friendly intro templates by category slug */
 const CATEGORY_INTROS: Record<string, (city: string) => string> = {
-  "things-to-do": (c) => `Discover the best things to do in ${c}. From top attractions to hidden gems, here's our curated guide to activities and experiences in ${c}.`,
-  restaurants: (c) => `Looking for great places to eat in ${c}? Browse the best restaurants, from casual dining to fine cuisine, all rated and reviewed by locals.`,
-  pubs: (c) => `Find the best pubs in ${c}. Whether you're after a cosy local, live music or craft beer, we've rounded up the top spots.`,
-  cafes: (c) => `The best cafes and coffee shops in ${c}. Find your perfect spot for brunch, a flat white, or a quiet afternoon.`,
+  "things-to-do": (c) => `Discover the best things to do in ${c}. From top attractions to hidden gems, here's our curated guide.`,
+  restaurants: (c) => `Looking for great places to eat in ${c}? Browse the best restaurants, from casual dining to fine cuisine.`,
+  pubs: (c) => `Find the best pubs in ${c}. Whether you're after a cosy local, live music or craft beer.`,
+  cafes: (c) => `The best cafes and coffee shops in ${c}. Find your perfect spot for brunch or a flat white.`,
   bars: (c) => `Explore the best bars in ${c}. Cocktail lounges, wine bars, and everything in between.`,
   nightlife: (c) => `Your guide to nightlife in ${c}. Clubs, late bars, DJ nights and more.`,
   "live-music": (c) => `Find live music venues and gigs in ${c}. From intimate sessions to headline shows.`,
   attractions: (c) => `Top attractions and sightseeing spots in ${c}. Plan your visit with our curated list.`,
   parks: (c) => `The best parks and green spaces in ${c} for walks, picnics, and outdoor activities.`,
   museums: (c) => `Discover museums, galleries and cultural venues in ${c}.`,
-  shopping: (c) => `The best shopping destinations in ${c}. High street, independent boutiques, and retail parks.`,
-  "family-activities": (c) => `Fun things to do with kids in ${c}. Family-friendly activities, soft play, and days out.`,
-  hotels: (c) => `Find the best hotels and places to stay in ${c}. From budget-friendly to luxury.`,
+  shopping: (c) => `The best shopping destinations in ${c}.`,
+  "family-activities": (c) => `Fun things to do with kids in ${c}. Family-friendly activities and days out.`,
+  hotels: (c) => `Find the best hotels and places to stay in ${c}.`,
   brunch: (c) => `The best brunch spots in ${c}. Weekend brunch, all-day breakfast, and more.`,
-  gyms: (c) => `Gyms and fitness centres in ${c}. Find the right workout spot for you.`,
-  theatre: (c) => `Theatre and performing arts in ${c}. Shows, plays, and live performances.`,
-  markets: (c) => `Markets and food halls in ${c}. Local produce, street food, and weekend markets.`,
+  gyms: (c) => `Gyms and fitness centres in ${c}.`,
+  theatre: (c) => `Theatre and performing arts in ${c}.`,
+  markets: (c) => `Markets and food halls in ${c}.`,
 };
 
-const DEFAULT_INTRO = (cat: string, city: string) =>
-  `Explore the best ${cat.toLowerCase()} in ${city}. Our curated guide features top-rated venues, all reviewed and recommended.`;
+const DEFAULT_INTRO = (cat: string, city: string) => `Explore the best ${cat.toLowerCase()} in ${city}. Our curated guide features top-rated venues.`;
 
 const CityCategoryPage = () => {
   const { citySlug = "", slug: categorySlug = "" } = useParams();
@@ -40,13 +37,8 @@ const CityCategoryPage = () => {
   const { data: city } = useQuery({
     queryKey: ["city", citySlug],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("cities")
-        .select("*")
-        .eq("slug", citySlug)
-        .single();
-      if (error) throw error;
-      return data;
+      const { data, error } = await supabase.from("cities").select("*").eq("slug", citySlug).single();
+      if (error) throw error; return data;
     },
     enabled: !!citySlug,
   });
@@ -54,14 +46,8 @@ const CityCategoryPage = () => {
   const { data: category } = useQuery({
     queryKey: ["category", categorySlug],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("categories")
-        .select("*")
-        .eq("slug", categorySlug)
-        .eq("is_active", true)
-        .single();
-      if (error) throw error;
-      return data;
+      const { data, error } = await supabase.from("categories").select("*").eq("slug", categorySlug).eq("is_active", true).single();
+      if (error) throw error; return data;
     },
     enabled: !!categorySlug,
   });
@@ -70,8 +56,7 @@ const CityCategoryPage = () => {
     queryKey: ["categories"],
     queryFn: async () => {
       const { data, error } = await supabase.from("categories").select("*").eq("is_active", true);
-      if (error) throw error;
-      return data;
+      if (error) throw error; return data;
     },
   });
 
@@ -79,14 +64,10 @@ const CityCategoryPage = () => {
     queryKey: ["city-category-listings", citySlug, categorySlug],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from("listings")
-        .select("*, cities!inner(slug, name), categories!inner(slug, name)")
-        .eq("cities.slug", citySlug)
-        .eq("categories.slug", categorySlug)
-        .order("rating", { ascending: false })
-        .limit(60);
-      if (error) throw error;
-      return data || [];
+        .from("listings").select("*, cities!inner(slug, name), categories!inner(slug, name)")
+        .eq("cities.slug", citySlug).eq("categories.slug", categorySlug)
+        .order("rating", { ascending: false }).limit(60);
+      if (error) throw error; return data || [];
     },
     enabled: !!citySlug && !!categorySlug && !!city && !!category,
   });
@@ -94,130 +75,81 @@ const CityCategoryPage = () => {
   const cleanListings = useMemo(() => {
     if (!listings) return [];
     const { unique } = deduplicateListings(listings as any);
-    const complete = filterCompleteListings(unique);
-    return filterAndRankListings(complete as any);
+    return filterAndRankListings(filterCompleteListings(unique) as any);
   }, [listings]);
 
-  // SEO
   useEffect(() => {
     if (city && category) {
       document.title = `Best ${category.name} in ${city.name} | City Scout Guide`;
       const desc = CATEGORY_INTROS[categorySlug]?.(city.name) || DEFAULT_INTRO(category.name, city.name);
       let meta = document.querySelector('meta[name="description"]') as HTMLMetaElement | null;
-      if (!meta) {
-        meta = document.createElement("meta");
-        meta.name = "description";
-        document.head.appendChild(meta);
-      }
+      if (!meta) { meta = document.createElement("meta"); meta.name = "description"; document.head.appendChild(meta); }
       meta.content = desc;
     }
   }, [city, category, categorySlug]);
 
-  useEffect(() => {
-    setPageCanonical(`/${citySlug}/${categorySlug}`);
-  }, [citySlug, categorySlug]);
+  useEffect(() => { setPageCanonical(`/${citySlug}/${categorySlug}`); }, [citySlug, categorySlug]);
 
-  // Noindex thin pages (0-3 listings)
-  const validation = useMemo(() => {
-    return validatePage({
-      listings: (cleanListings || []) as any,
-      pageType: detectPageType({ isNeighbourhood: false, isLandmark: false, isEvents: false, hasModifier: false, categorySlug }),
-      hasIntro: true,
-      hasSectionHeading: true,
-      hasFaq: false,
-    });
-  }, [cleanListings, categorySlug]);
+  const validation = useMemo(() => validatePage({
+    listings: (cleanListings || []) as any,
+    pageType: detectPageType({ isNeighbourhood: false, isLandmark: false, isEvents: false, hasModifier: false, categorySlug }),
+    hasIntro: true, hasSectionHeading: true, hasFaq: false,
+  }), [cleanListings, categorySlug]);
 
   useEffect(() => {
-    const robotsDirective = getRobotsDirective(validation);
-    let robotsEl = document.querySelector('meta[name="robots"]') as HTMLMetaElement;
-    if (robotsDirective) {
-      if (!robotsEl) {
-        robotsEl = document.createElement("meta");
-        robotsEl.name = "robots";
-        document.head.appendChild(robotsEl);
-      }
-      robotsEl.content = robotsDirective;
-    } else if (robotsEl) {
-      robotsEl.remove();
-    }
+    const d = getRobotsDirective(validation);
+    let el = document.querySelector('meta[name="robots"]') as HTMLMetaElement;
+    if (d) { if (!el) { el = document.createElement("meta"); el.name = "robots"; document.head.appendChild(el); } el.content = d; }
+    else if (el) el.remove();
   }, [validation]);
 
-  if (!city || !category) {
-    return (
-      <Layout>
-        <div className="container mx-auto px-4 py-20 text-center text-muted-foreground">Loading...</div>
-      </Layout>
-    );
-  }
+  if (!city || !category) return <Layout><div className="container mx-auto px-4 py-20 text-center text-muted-foreground">Loading...</div></Layout>;
 
   const introText = CATEGORY_INTROS[categorySlug]?.(city.name) || DEFAULT_INTRO(category.name, city.name);
 
   return (
     <Layout>
-      {/* Hero */}
-      <section className="bg-card border-b border-border">
-        <div className="container mx-auto px-4 py-6">
-          <nav className="flex items-center gap-2 text-muted-foreground text-sm mb-2">
+      {/* Hero banner */}
+      <section className="bg-primary text-primary-foreground py-10">
+        <div className="container mx-auto px-4">
+          <nav className="flex items-center gap-2 text-primary-foreground/50 text-sm mb-2">
             <MapPin className="h-4 w-4" />
-            <Link to={`/${citySlug}`} className="hover:text-primary transition-colors">{city.name}</Link>
+            <Link to={`/${citySlug}`} className="hover:text-primary-foreground transition-colors">{city.name}</Link>
             <span>/</span>
-            <span className="text-foreground">{category.name}</span>
+            <span className="text-primary-foreground/80">{category.name}</span>
           </nav>
-          <h1 className="font-display font-bold text-xl md:text-3xl text-foreground">
-            Best {category.name} in {city.name}
-          </h1>
-          <p className="text-muted-foreground text-sm mt-2 max-w-2xl leading-relaxed">
-            {introText}
-          </p>
+          <h1 className="font-display font-bold text-primary-foreground">Best {category.name} in {city.name}</h1>
+          <p className="text-primary-foreground/60 text-sm mt-2 max-w-2xl leading-relaxed">{introText}</p>
         </div>
       </section>
 
       <div className="container mx-auto px-4 py-8">
-        {/* Category navigation pills */}
-        {/* Category navigation pills — scrollable on mobile */}
+        {/* Category pills */}
         <div className="flex gap-2 mb-8 overflow-x-auto pb-2 -mx-4 px-4 scrollbar-hide">
-          <Link
-            to={`/${citySlug}`}
-            className="shrink-0 px-3.5 py-2 rounded-full text-[13px] font-medium border border-border bg-card text-muted-foreground hover:text-foreground transition-colors"
-          >
-            ← All
-          </Link>
+          <Link to={`/${citySlug}`} className="shrink-0 px-4 py-2 rounded-full text-sm font-medium border border-border bg-card text-muted-foreground hover:text-foreground transition-colors">← All</Link>
           {allCategories?.filter(c => c.slug !== categorySlug).slice(0, 8).map((cat) => (
-            <Link
-              key={cat.id}
-              to={`/${citySlug}/${cat.slug}`}
-              className="shrink-0 px-3.5 py-2 rounded-full text-[13px] font-medium border border-border bg-card text-foreground hover:bg-foreground hover:text-card transition-colors"
-            >
+            <Link key={cat.id} to={`/${citySlug}/${cat.slug}`}
+              className="shrink-0 px-4 py-2 rounded-full text-sm font-medium border border-border bg-card text-foreground hover:bg-primary hover:text-primary-foreground transition-colors">
               {cat.name}
             </Link>
           ))}
         </div>
 
-        {/* Listings grid */}
         {cleanListings.length > 0 ? (
           <ListingGrid listings={cleanListings} citySlug={citySlug} />
         ) : (
           <div className="text-center py-12 text-muted-foreground">
             <p className="text-sm">No {category.name} listings in {city.name} yet.</p>
-            <Link to={`/${citySlug}`} className="text-primary text-sm mt-2 inline-block hover:underline">
-              Browse all places in {city.name} →
-            </Link>
+            <Link to={`/${citySlug}`} className="text-accent text-sm mt-2 inline-block hover:underline">Browse all places in {city.name} →</Link>
           </div>
         )}
 
-        {/* Internal links footer */}
         <section className="py-10 border-t border-border mt-10">
-          <h2 className="font-display font-semibold text-foreground mb-4">
-            Explore More in {city.name}
-          </h2>
+          <h2 className="font-display font-bold text-foreground mb-4">Explore More in {city.name}</h2>
           <div className="flex flex-wrap gap-2">
             {allCategories?.filter(c => c.slug !== categorySlug).map((cat) => (
-              <Link
-                key={cat.id}
-                to={`/${citySlug}/${cat.slug}`}
-                className="text-xs px-3 py-1.5 bg-muted text-muted-foreground rounded-full hover:bg-primary hover:text-primary-foreground transition-colors"
-              >
+              <Link key={cat.id} to={`/${citySlug}/${cat.slug}`}
+                className="text-xs px-3 py-1.5 bg-card border border-border text-muted-foreground rounded-full hover:bg-accent hover:text-accent-foreground transition-colors">
                 {cat.name} in {city.name}
               </Link>
             ))}
