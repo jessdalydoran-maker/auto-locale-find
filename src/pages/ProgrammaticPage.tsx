@@ -738,9 +738,7 @@ const ProgrammaticPage = () => {
   }, [events, isNIWide, locationFilter]);
 
   const eventCount = events?.length || 0;
-  const listingCount = listings?.length || 0;
   const venueCount = venueListings?.length || 0;
-  const itemCount = (showEvents ? eventCount + venueCount : listingCount) + (shouldFetchEvents && !showEvents ? eventCount : 0);
   const isNeighbourhoodPage = !!parsed?.neighbourhoodSlug;
 
   // ─── Page validation ───
@@ -766,13 +764,17 @@ const ProgrammaticPage = () => {
     });
   }, [listings, events, pageType, parsed?.modifierSlug]);
 
-  // Use deduplication from validation
+  // Use deduplication + shared public quality ranking before rendering
   const dedupedListings = useMemo(() => {
     if (!listings) return [];
     const { unique } = deduplicateListings(listings as any);
     const complete = filterCompleteListings(unique);
     return filterAndRankListings(complete as any);
   }, [listings]);
+
+  const displayListings = dedupedListings;
+  const listingCount = displayListings.length;
+  const itemCount = (showEvents ? eventCount + venueCount : listingCount) + (shouldFetchEvents && !showEvents ? eventCount : 0);
 
   const dedupedEvents = useMemo(() => {
     if (!events) return [];
