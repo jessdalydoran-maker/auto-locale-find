@@ -1,6 +1,6 @@
 import { Link } from "react-router-dom";
 import { Search, Menu, X, ChevronDown } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import logo from "@/assets/logo.png";
 import { Button } from "@/components/ui/button";
 import { SearchBar } from "./SearchBar";
@@ -46,9 +46,21 @@ export const Header = () => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
   const [openDropdown, setOpenDropdown] = useState<string | null>(null);
+  const [scrolled, setScrolled] = useState(false);
+
+  useEffect(() => {
+    const handleScroll = () => setScrolled(window.scrollY > 10);
+    window.addEventListener("scroll", handleScroll, { passive: true });
+    handleScroll();
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
 
   return (
-    <header className="sticky top-0 z-50 bg-card/90 backdrop-blur-md border-b border-border/60">
+    <header className={`sticky top-0 z-50 backdrop-blur-md border-b transition-all duration-200 ${
+      scrolled
+        ? "bg-card shadow-md border-border/60"
+        : "bg-card/90 border-border/30"
+    }`}>
       <div className="container mx-auto px-4">
         <div className="flex items-center justify-between h-16">
           {/* Logo */}

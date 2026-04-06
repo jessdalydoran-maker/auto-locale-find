@@ -32,6 +32,16 @@ const BROWSE_CATEGORIES = [
   { label: "Cafes & Coffee", icon: Coffee, to: "/best-cafes-belfast" },
 ];
 
+const QUICK_LINKS = [
+  { label: "Belfast", to: "/belfast" },
+  { label: "Derry", to: "/derry" },
+  { label: "Ballymena", to: "/ballymena" },
+  { label: "Family Friendly", to: "/family-activities" },
+  { label: "Free Things to Do", to: "/free-things-to-do" },
+  { label: "Best Bars", to: "/bars-belfast" },
+  { label: "Events This Weekend", to: "/events-this-weekend" },
+];
+
 const MOOD_CARDS = [
   { label: "Date Night", to: "/date-night", icon: Heart, desc: "Romantic restaurants, cocktail bars & evening activities" },
   { label: "Family Day Out", to: "/family-activities", icon: Users, desc: "Kids activities, parks & family-friendly fun" },
@@ -107,7 +117,7 @@ const Index = () => {
   return (
     <Layout>
       {/* ═══════ HERO ═══════ */}
-      <section className="relative min-h-[520px] md:min-h-[600px] flex items-center justify-center overflow-hidden">
+      <section className="relative flex items-center justify-center overflow-hidden py-10 md:py-14">
         <img
           src={heroBelfast}
           alt="Belfast cityscape at dusk"
@@ -116,23 +126,37 @@ const Index = () => {
         />
         <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-black/40 to-black/70" />
 
-        <div className="relative z-10 container mx-auto px-4 text-center py-16">
-          <h1 className="font-display font-bold text-4xl md:text-6xl text-white mb-4 leading-[1.1] max-w-3xl mx-auto">
+        <div className="relative z-10 container mx-auto px-4 text-center">
+          <h1 className="font-display font-bold text-3xl md:text-5xl lg:text-6xl text-white mb-3 leading-[1.1] max-w-3xl mx-auto">
             Discover Northern Ireland's Best Kept Secrets
           </h1>
-          <p className="text-white/70 text-base md:text-lg max-w-xl mx-auto mb-10 leading-relaxed">
-            Your local guide to the best food, drink, events and things to do across Northern Ireland
+          <p className="text-white/70 text-sm md:text-base max-w-xl mx-auto mb-6 leading-relaxed">
+            Your local guide to the best food, drink, events and things to do
           </p>
 
-          <div className="max-w-2xl mx-auto">
-            <SearchBar large placeholder="What are you looking for?" />
+          {/* Dual search bar */}
+          <div className="max-w-2xl mx-auto mb-4">
+            <SearchBar dual large />
+          </div>
+
+          {/* Quick-link pills */}
+          <div className="flex gap-2 overflow-x-auto pb-1 -mx-4 px-4 scrollbar-hide justify-start sm:justify-center">
+            {QUICK_LINKS.map((link) => (
+              <Link
+                key={link.to}
+                to={link.to}
+                className="shrink-0 px-4 py-1.5 text-[13px] font-medium text-white bg-white/15 backdrop-blur-sm rounded-full border border-white/20 hover:bg-white/25 transition-colors whitespace-nowrap"
+              >
+                {link.label}
+              </Link>
+            ))}
           </div>
         </div>
       </section>
 
       {/* ═══════ BROWSE BY CATEGORY ═══════ */}
-      <section className="container mx-auto px-4 py-14">
-        <div className="text-center mb-10">
+      <section className="container mx-auto px-4 py-10 md:py-14">
+        <div className="text-center mb-8">
           <h2 className="font-display font-bold text-foreground">Browse by Category</h2>
           <p className="text-muted-foreground mt-2">Find exactly what you're looking for</p>
         </div>
@@ -157,7 +181,7 @@ const Index = () => {
 
       {/* ═══════ FEATURED GUIDES (BLOG) ═══════ */}
       {blogPosts && blogPosts.length > 0 && (
-        <section className="container mx-auto px-4 py-14">
+        <section className="container mx-auto px-4 py-10 md:py-14">
           <div className="flex items-center justify-between mb-8">
             <h2 className="font-display font-bold text-foreground">Featured Guides</h2>
             <Link to="/blog" className="text-sm text-accent font-semibold flex items-center gap-1 hover:underline">
@@ -200,7 +224,7 @@ const Index = () => {
 
       {/* ═══════ UPCOMING EVENTS ═══════ */}
       {upcomingEvents && upcomingEvents.length > 0 && (
-        <section className="py-14 bg-secondary/40">
+        <section className="py-10 md:py-14 bg-secondary/40">
           <div className="container mx-auto px-4">
             <div className="flex items-center justify-between mb-8">
               <h2 className="font-display font-bold text-foreground flex items-center gap-2">
@@ -234,8 +258,8 @@ const Index = () => {
       )}
 
       {/* ═══════ EXPLORE BY MOOD ═══════ */}
-      <section className="container mx-auto px-4 py-14">
-        <div className="text-center mb-10">
+      <section className="container mx-auto px-4 py-10 md:py-14">
+        <div className="text-center mb-8">
           <h2 className="font-display font-bold text-foreground">Explore by Mood</h2>
           <p className="text-muted-foreground mt-2">Find the perfect outing for any occasion</p>
         </div>
@@ -258,7 +282,7 @@ const Index = () => {
       </section>
 
       {/* ═══════ EXPLORE BY LOCATION ═══════ */}
-      <section className="container mx-auto px-4 py-14">
+      <section className="container mx-auto px-4 py-10 md:py-14">
         <div className="flex items-center justify-between mb-8">
           <h2 className="font-display font-bold text-foreground">Explore by Location</h2>
           <Link to="/cities" className="text-sm text-accent font-semibold flex items-center gap-1 hover:underline">
@@ -280,7 +304,7 @@ const Index = () => {
 
       {/* ═══════ FEATURED PLACES ═══════ */}
       {featuredListings && featuredListings.length > 0 && (
-        <section className="py-14 bg-secondary/40">
+        <section className="py-10 md:py-14 bg-secondary/40">
           <div className="container mx-auto px-4">
             <div className="flex items-center justify-between mb-8">
               <h2 className="font-display font-bold text-foreground flex items-center gap-2">

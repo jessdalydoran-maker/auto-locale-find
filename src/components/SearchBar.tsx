@@ -8,6 +8,8 @@ interface SearchBarProps {
   onClose?: () => void;
   large?: boolean;
   placeholder?: string;
+  /** Show dual "What" + "Where" fields */
+  dual?: boolean;
 }
 
 interface Suggestion {
@@ -17,8 +19,9 @@ interface Suggestion {
   link?: string;
 }
 
-export const SearchBar = ({ onClose, large = false, placeholder = "Search by city, category or keyword..." }: SearchBarProps) => {
+export const SearchBar = ({ onClose, large = false, placeholder = "Search by city, category or keyword...", dual = false }: SearchBarProps) => {
   const [query, setQuery] = useState("");
+  const [where, setWhere] = useState("");
   const [suggestions, setSuggestions] = useState<Suggestion[]>([]);
   const [selectedIndex, setSelectedIndex] = useState(-1);
   const [showSuggestions, setShowSuggestions] = useState(false);
@@ -41,7 +44,7 @@ export const SearchBar = ({ onClose, large = false, placeholder = "Search by cit
       return { label: "Tomorrow", dateFrom: fmt(tom), dateTo: fmt(tom) };
     }
     if (lower.includes("this weekend")) {
-      const day = today.getDay(); // 0=Sun
+      const day = today.getDay();
       const fri = new Date(today);
       fri.setDate(today.getDate() + ((5 - day + 7) % 7));
       const sun = new Date(fri);
@@ -53,7 +56,6 @@ export const SearchBar = ({ onClose, large = false, placeholder = "Search by cit
       end.setDate(today.getDate() + 7);
       return { label: "Next 7 Days", dateFrom: fmt(today), dateTo: fmt(end) };
     }
-    // Generic "what's on" / "events" without specific time → next 7 days
     if (/what'?s\s+on|whats\s+on/.test(lower) && !lower.includes("tonight") && !lower.includes("tomorrow") && !lower.includes("weekend")) {
       const end = new Date(today);
       end.setDate(today.getDate() + 7);
@@ -71,12 +73,8 @@ export const SearchBar = ({ onClose, large = false, placeholder = "Search by cit
     }
 
     const results: Suggestion[] = [];
-    const lower = partial.toLowerCase();
-
-    // Check for temporal intent first
     const temporal = detectTemporalIntent(partial);
 
-    // Build temporal events query if needed
     const temporalQuery = temporal
       ? supabase
           .from("events")
@@ -89,48 +87,18 @@ export const SearchBar = ({ onClose, large = false, placeholder = "Search by cit
           .then(r => r)
       : Promise.resolve({ data: null });
 
-    // Run all queries in parallel
     const [byName, byCity, byCat, eventRes, cityRes, catRes, temporalEventsRes] = await Promise.all([
-      supabase
-        .from("listings")
-        .select("name, slug, cities!inner(name, slug), categories!inner(name, slug)")
-        .ilike("name", `%${partial}%`)
-        .limit(8),
-      supabase
-        .from("listings")
-        .select("name, slug, cities!inner(name, slug), categories!inner(name, slug)")
-        .ilike("cities.name", `%${partial}%`)
-        .limit(10),
-      supabase
-        .from("listings")
-        .select("name, slug, cities!inner(name, slug), categories!inner(name, slug)")
-        .ilike("categories.name", `%${partial}%`)
-        .limit(8),
-      supabase
-        .from("events")
-        .select("title, slug")
-        .eq("status", "active")
-        .gte("date_start", new Date().toISOString().split("T")[0])
-        .ilike("title", `%${partial}%`)
-        .limit(3),
-      supabase
-        .from("cities")
-        .select("name, slug")
-        .ilike("name", `%${partial}%`)
-        .limit(3),
-      supabase
-        .from("categories")
-        .select("name, slug")
-        .ilike("name", `%${partial}%`)
-        .eq("is_active", true)
-        .limit(3),
+      supabase.from("listings").select("name, slug, cities!inner(name, slug), categories!inner(name, slug)").ilike("name", `%${partial}%`).limit(8),
+      supabase.from("listings").select("name, slug, cities!inner(name, slug), categories!inner(name, slug)").ilike("cities.name", `%${partial}%`).limit(10),
+      supabase.from("listings").select("name, slug, cities!inner(name, slug), categories!inner(name, slug)").ilike("categories.name", `%${partial}%`).limit(8),
+      supabase.from("events").select("title, slug").eq("status", "active").gte("date_start", new Date().toISOString().split("T")[0]).ilike("title", `%${partial}%`).limit(3),
+      supabase.from("cities").select("name, slug").ilike("name", `%${partial}%`).limit(3),
+      supabase.from("categories").select("name, slug").ilike("name", `%${partial}%`).eq("is_active", true).limit(3),
       temporalQuery,
     ]);
     const temporalEvents = temporalEventsRes as any;
 
-    // If temporal intent, show date-matched events FIRST
     if (temporal && temporalEvents?.data?.length) {
-      // Add a header-style suggestion
       results.push({
         label: `Events ${temporal.label}`,
         type: "event",
@@ -149,7 +117,6 @@ export const SearchBar = ({ onClose, large = false, placeholder = "Search by cit
       }
     }
 
-    // If temporal intent found, skip listing results (user wants events)
     if (!temporal) {
       const seenIds = new Set<string>();
       const addListing = (l: any) => {
@@ -167,26 +134,20 @@ export const SearchBar = ({ onClose, large = false, placeholder = "Search by cit
         });
       };
 
-      // Prioritise: city matches first (location-first), then name, then category
       for (const l of (byCity.data || [])) addListing(l);
       for (const l of (byName.data || [])) addListing(l);
       for (const l of (byCat.data || [])) addListing(l);
 
-      // Events by title match
       if (eventRes.data) {
         for (const e of eventRes.data) {
           results.push({ label: e.title, type: "event", link: `/event/${e.slug}` });
         }
       }
-
-      // Cities as navigation options
       if (cityRes.data) {
         for (const c of cityRes.data) {
           results.push({ label: c.name, type: "city", subtitle: "View all listings", link: `/${c.slug}` });
         }
       }
-
-      // Categories
       if (catRes.data) {
         for (const c of catRes.data) {
           results.push({ label: c.name, type: "category", subtitle: "Category", link: `/categories` });
@@ -194,7 +155,6 @@ export const SearchBar = ({ onClose, large = false, placeholder = "Search by cit
       }
     }
 
-    // Static fallback
     if (results.length < 4) {
       const staticSugs = getAutocompleteSuggestions(partial);
       for (const s of staticSugs) {
@@ -234,9 +194,13 @@ export const SearchBar = ({ onClose, large = false, placeholder = "Search by cit
       return;
     }
     const q = suggestion?.label || query;
-    if (q.trim()) {
+    const w = where.trim();
+    if (q.trim() || w) {
       const clean = q.replace(/\s–\s.+$/, "").trim();
-      navigate(`/search?q=${encodeURIComponent(clean)}`);
+      const params = new URLSearchParams();
+      if (clean) params.set("q", clean);
+      if (w) params.set("town", w);
+      navigate(`/search?${params.toString()}`);
       setShowSuggestions(false);
       onClose?.();
     }
@@ -283,6 +247,77 @@ export const SearchBar = ({ onClose, large = false, placeholder = "Search by cit
       default: return null;
     }
   };
+
+  if (dual) {
+    return (
+      <div ref={wrapperRef} className="relative w-full">
+        <form onSubmit={handleSubmit} className="flex flex-col sm:flex-row gap-2 sm:gap-0 w-full">
+          <div className="relative flex-1">
+            <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-muted-foreground/60 h-[18px] w-[18px]" />
+            <input
+              type="text"
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              onKeyDown={handleKeyDown}
+              onFocus={() => query.length >= 2 && setShowSuggestions(true)}
+              placeholder="What are you looking for?"
+              className="w-full bg-white text-foreground placeholder:text-muted-foreground/50 h-12 pl-11 pr-4 text-[15px] rounded-xl sm:rounded-r-none sm:border-r-0 border border-border/30 focus:outline-none focus:ring-2 focus:ring-ring/50 focus:border-transparent transition-shadow"
+            />
+          </div>
+          <div className="relative flex-1 sm:max-w-[200px]">
+            <MapPin className="absolute left-3.5 top-1/2 -translate-y-1/2 text-muted-foreground/60 h-[18px] w-[18px]" />
+            <input
+              type="text"
+              value={where}
+              onChange={(e) => setWhere(e.target.value)}
+              placeholder="Where?"
+              className="w-full bg-white text-foreground placeholder:text-muted-foreground/50 h-12 pl-11 pr-4 text-[15px] rounded-xl sm:rounded-none border border-border/30 focus:outline-none focus:ring-2 focus:ring-ring/50 focus:border-transparent transition-shadow"
+            />
+          </div>
+          <button
+            type="submit"
+            className="h-12 px-6 bg-accent text-accent-foreground font-semibold text-sm rounded-xl sm:rounded-l-none hover:bg-accent/90 transition-colors flex items-center justify-center gap-2 shrink-0"
+          >
+            <Search className="h-4 w-4" />
+            <span className="sm:hidden">Search</span>
+          </button>
+        </form>
+
+        {showSuggestions && suggestions.length > 0 && (
+          <div className="absolute top-full left-0 right-0 mt-1 bg-card border border-border rounded-lg shadow-lg z-50 overflow-hidden">
+            {suggestions.map((s, i) => (
+              <button
+                key={`${s.type}-${s.label}`}
+                type="button"
+                className={`w-full text-left px-3.5 py-2.5 text-[13px] flex items-center gap-2.5 transition-colors ${
+                  i === selectedIndex
+                    ? "bg-primary text-primary-foreground"
+                    : "text-muted-foreground hover:bg-secondary hover:text-foreground"
+                }`}
+                onMouseEnter={() => setSelectedIndex(i)}
+                onClick={() => doSearch(s)}
+              >
+                {getIcon(s.type)}
+                <div className="flex-1 min-w-0">
+                  <span className="block truncate">{s.label}</span>
+                  {s.subtitle && (
+                    <span className={`block text-[11px] truncate ${i === selectedIndex ? "text-primary-foreground/60" : "text-muted-foreground/60"}`}>
+                      {s.subtitle}
+                    </span>
+                  )}
+                </div>
+                {getTypeLabel(s.type) && (
+                  <span className={`text-[10px] uppercase tracking-wider shrink-0 ${i === selectedIndex ? "text-primary-foreground/60" : "text-muted-foreground/50"}`}>
+                    {getTypeLabel(s.type)}
+                  </span>
+                )}
+              </button>
+            ))}
+          </div>
+        )}
+      </div>
+    );
+  }
 
   return (
     <div ref={wrapperRef} className="relative w-full">

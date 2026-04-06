@@ -41,7 +41,7 @@ const CategoriesPage = () => {
 
   return (
     <Layout>
-      <section className="bg-primary py-12 md:py-16">
+      <section className="bg-primary py-8 md:py-10">
         <div className="container mx-auto px-4">
           <h1 className="font-display font-bold text-2xl md:text-4xl text-primary-foreground">
             Browse by Category
