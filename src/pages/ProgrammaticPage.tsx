@@ -555,7 +555,7 @@ const ProgrammaticPage = () => {
 
   // Fetch events (for event pages, weekend pages, family/free/date-night pages)
   const shouldFetchEvents = showEvents || isWeekendPage || isDateNightPage ||
-    (parsed?.modifierSlug === "family" && parsed?.categorySlug === "things-to-do") ||
+    (parsed?.categorySlug === "things-to-do") ||
     (parsed?.modifierSlug === "free" && parsed?.categorySlug === "things-to-do");
 
   // Family event tag priority scoring
