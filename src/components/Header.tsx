@@ -48,14 +48,16 @@ export const Header = () => {
   const [openDropdown, setOpenDropdown] = useState<string | null>(null);
 
   return (
-    <header className="sticky top-0 z-50 bg-card/95 backdrop-blur-sm border-b border-border">
+    <header className="sticky top-0 z-50 bg-card/90 backdrop-blur-md border-b border-border/60">
       <div className="container mx-auto px-4">
-        <div className="flex items-center justify-between h-28">
-          <Link to="/" className="flex items-center">
-            <img src={logo} alt="City Scout Guide" className="h-28 w-auto" />
+        <div className="flex items-center justify-between h-16">
+          {/* Logo */}
+          <Link to="/" className="flex items-center shrink-0">
+            <img src={logo} alt="City Scout Guide" className="h-10 w-auto" />
           </Link>
 
-          <nav className="hidden lg:flex items-center gap-0.5">
+          {/* Centre nav */}
+          <nav className="hidden lg:flex items-center gap-1">
             {NAV_ITEMS.map((item) => (
               <div
                 key={item.label}
@@ -63,17 +65,17 @@ export const Header = () => {
                 onMouseEnter={() => setOpenDropdown(item.label)}
                 onMouseLeave={() => setOpenDropdown(null)}
               >
-                <button className="flex items-center gap-1 px-3 py-2 text-[13px] text-muted-foreground hover:text-foreground transition-colors rounded-md">
+                <button className="flex items-center gap-1 px-3 py-2 text-sm text-foreground/70 hover:text-foreground transition-colors rounded-md font-medium">
                   {item.label}
                   <ChevronDown className="h-3 w-3 opacity-50" />
                 </button>
                 {openDropdown === item.label && (
-                  <div className="absolute top-full left-0 bg-card border border-border rounded-lg py-1.5 min-w-[200px] z-50 card-shadow-hover animate-fade-in">
+                  <div className="absolute top-full left-0 bg-card border border-border rounded-xl py-2 min-w-[220px] z-50 card-shadow-hover animate-fade-in">
                     {item.links.map((link) => (
                       <Link
                         key={link.to}
                         to={link.to}
-                        className="block px-3.5 py-2 text-[13px] text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors"
+                        className="block px-4 py-2.5 text-sm text-foreground/70 hover:text-foreground hover:bg-secondary/60 transition-colors"
                         onClick={() => setOpenDropdown(null)}
                       >
                         {link.label}
@@ -83,30 +85,33 @@ export const Header = () => {
                 )}
               </div>
             ))}
-            <Link to="/cities" className="px-3 py-2 text-[13px] text-muted-foreground hover:text-foreground transition-colors rounded-md">
+            <Link to="/cities" className="px-3 py-2 text-sm text-foreground/70 hover:text-foreground transition-colors rounded-md font-medium">
               Cities
             </Link>
-            <Link to="/categories" className="px-3 py-2 text-[13px] text-muted-foreground hover:text-foreground transition-colors rounded-md">
-              Categories
-            </Link>
-            <Link to="/blog" className="px-3 py-2 text-[13px] text-muted-foreground hover:text-foreground transition-colors rounded-md">
+            <Link to="/blog" className="px-3 py-2 text-sm text-foreground/70 hover:text-foreground transition-colors rounded-md font-medium">
               Blog
             </Link>
           </nav>
 
-          <div className="flex items-center gap-0.5">
+          {/* Right side */}
+          <div className="flex items-center gap-2">
             <Button
               variant="ghost"
               size="icon"
               onClick={() => setSearchOpen(!searchOpen)}
-              className="text-muted-foreground hover:text-foreground h-9 w-9"
+              className="text-foreground/60 hover:text-foreground h-9 w-9"
             >
               <Search className="h-4 w-4" />
             </Button>
+            <Link to="/submit-venue" className="hidden md:inline-flex">
+              <Button size="sm" className="bg-accent text-accent-foreground hover:bg-accent/90 text-sm font-semibold rounded-lg">
+                List Your Venue
+              </Button>
+            </Link>
             <Button
               variant="ghost"
               size="icon"
-              className="lg:hidden text-muted-foreground h-9 w-9"
+              className="lg:hidden text-foreground/60 h-9 w-9"
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
             >
               {mobileMenuOpen ? <X className="h-4 w-4" /> : <Menu className="h-4 w-4" />}
@@ -121,18 +126,18 @@ export const Header = () => {
         )}
 
         {mobileMenuOpen && (
-          <div className="lg:hidden pb-4 animate-fade-in border-t border-border pt-3 max-h-[calc(100vh-7rem)] overflow-y-auto">
+          <div className="lg:hidden pb-4 animate-fade-in border-t border-border pt-3 max-h-[calc(100vh-4rem)] overflow-y-auto">
             <nav className="flex flex-col gap-0.5">
               {NAV_ITEMS.map((item) => (
                 <div key={item.label}>
-                  <span className="block px-2 py-2 text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">
+                  <span className="block px-2 py-2 text-[11px] font-semibold text-foreground/40 uppercase tracking-wider">
                     {item.label}
                   </span>
                   {item.links.map((link) => (
                     <Link
                       key={link.to}
                       to={link.to}
-                      className="block px-4 py-2 text-[13px] text-muted-foreground hover:text-foreground transition-colors"
+                      className="block px-4 py-2.5 text-sm text-foreground/70 hover:text-foreground transition-colors"
                       onClick={() => setMobileMenuOpen(false)}
                     >
                       {link.label}
@@ -140,27 +145,9 @@ export const Header = () => {
                   ))}
                 </div>
               ))}
-              <Link
-                to="/cities"
-                className="px-2 py-2 text-[13px] text-muted-foreground hover:text-foreground transition-colors"
-                onClick={() => setMobileMenuOpen(false)}
-              >
-                Cities
-              </Link>
-              <Link
-                to="/categories"
-                className="px-2 py-2 text-[13px] text-muted-foreground hover:text-foreground transition-colors"
-                onClick={() => setMobileMenuOpen(false)}
-              >
-                Categories
-              </Link>
-              <Link
-                to="/blog"
-                className="px-2 py-2 text-[13px] text-muted-foreground hover:text-foreground transition-colors"
-                onClick={() => setMobileMenuOpen(false)}
-              >
-                Blog
-              </Link>
+              <Link to="/cities" className="px-2 py-2.5 text-sm text-foreground/70 hover:text-foreground transition-colors" onClick={() => setMobileMenuOpen(false)}>Cities</Link>
+              <Link to="/blog" className="px-2 py-2.5 text-sm text-foreground/70 hover:text-foreground transition-colors" onClick={() => setMobileMenuOpen(false)}>Blog</Link>
+              <Link to="/submit-venue" className="px-2 py-2.5 text-sm font-semibold text-accent hover:text-accent/80 transition-colors" onClick={() => setMobileMenuOpen(false)}>List Your Venue</Link>
             </nav>
           </div>
         )}

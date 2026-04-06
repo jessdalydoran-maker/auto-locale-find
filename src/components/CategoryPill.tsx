@@ -14,22 +14,18 @@ const iconMap: Record<string, React.ReactNode> = {
 };
 
 interface CategoryPillProps {
-  name: string;
-  slug: string;
-  icon: string | null;
-  citySlug?: string;
+  name: string; slug: string; icon: string | null; citySlug?: string;
 }
 
 export const CategoryPill = ({ name, slug, icon, citySlug }: CategoryPillProps) => {
   const to = citySlug ? `/${citySlug}?category=${slug}` : `/categories`;
-
   return (
     <Link
       to={to}
-      className="group flex items-center gap-2.5 px-5 py-3 bg-card border border-border rounded-xl text-sm font-medium text-foreground hover:border-teal/50 hover:text-teal transition-all duration-200 card-shadow hover:card-shadow-hover"
+      className="group flex items-center gap-2.5 px-5 py-3 bg-card rounded-xl text-sm font-medium text-foreground hover:border-accent/50 hover:text-accent transition-all duration-200 card-shadow hover:card-shadow-hover border border-border"
     >
       {icon && iconMap[icon] ? (
-        <span className="w-8 h-8 rounded-lg bg-teal/10 flex items-center justify-center text-teal group-hover:bg-teal/20 transition-colors">
+        <span className="w-8 h-8 rounded-lg bg-accent/10 flex items-center justify-center text-accent group-hover:bg-accent/20 transition-colors">
           {iconMap[icon]}
         </span>
       ) : null}
