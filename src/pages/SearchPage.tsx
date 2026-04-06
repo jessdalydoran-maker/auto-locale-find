@@ -99,16 +99,30 @@ const SearchPage = ({
     queryFn: async () => {
       if (!citySlugToResolve) return null;
 
-      // Try exact slug match first (most common for structured params)
+      const normalized = citySlugToResolve.toLowerCase().trim();
+
+      // Try exact slug match first (case-insensitive)
       const { data: bySlug } = await supabase
         .from("cities")
         .select("id, slug, name, nearby_city_slugs, latitude, longitude")
-        .eq("slug", citySlugToResolve)
+        .ilike("slug", normalized)
+        .limit(1)
         .maybeSingle();
       if (bySlug) return bySlug;
 
-      // Fallback: case-insensitive name match (handles partial matches like "Ballymena, Northern Ireland")
-      const townNameGuess = citySlugToResolve.replace(/-/g, " ");
+      // Try slugified version (e.g. "Belfast" → "belfast", "Co Down" → "co-down")
+      const slugified = normalized.replace(/\s+/g, "-").replace(/[^a-z0-9-]/g, "");
+      if (slugified !== normalized) {
+        const { data: bySlugified } = await supabase
+          .from("cities")
+          .select("id, slug, name, nearby_city_slugs, latitude, longitude")
+          .eq("slug", slugified)
+          .maybeSingle();
+        if (bySlugified) return bySlugified;
+      }
+
+      // Fallback: case-insensitive name match
+      const townNameGuess = normalized.replace(/-/g, " ");
       const { data: byName } = await supabase
         .from("cities")
         .select("id, slug, name, nearby_city_slugs, latitude, longitude")
