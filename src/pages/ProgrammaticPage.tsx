@@ -238,7 +238,8 @@ const ProgrammaticPage = () => {
   const { data: regularListings } = useQuery({
     queryKey: ["prog-listings", parsed?.categorySlug, parsed?.citySlug, parsed?.neighbourhoodSlug, parsed?.modifierSlug, locationFilter, isDateNightPage],
     queryFn: async () => {
-      const fetchLimit = (isFamilyPage || isDateNightPage) && isNIWide ? 200 : 30;
+      const isNIWideThingsToDo = isNIWide && parsed!.categorySlug === "things-to-do";
+      const fetchLimit = (isFamilyPage || isDateNightPage) && isNIWide ? 200 : isNIWideThingsToDo ? 200 : 30;
 
       // For date-night pages, fetch broadly across all categories then filter client-side
       if (isDateNightPage) {
