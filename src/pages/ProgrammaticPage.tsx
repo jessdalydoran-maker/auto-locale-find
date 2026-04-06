@@ -317,7 +317,7 @@ const ProgrammaticPage = () => {
         .select("*, cities!inner(slug, name), categories!inner(slug, name)")
         .eq("is_approved", true)
         .order("rating", { ascending: false })
-        .limit(isFamilyPage && isNIWide ? 100 : 30);
+        .limit((isFamilyPage || isNIWideThingsToDo) && isNIWide ? 200 : 30);
 
       // For NI-wide pages, don't filter by city unless locationFilter is set
       if (isNIWide) {
