@@ -1,6 +1,6 @@
 import { Link } from "react-router-dom";
 import { Search, Menu, X, ChevronDown } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import logo from "@/assets/logo.png";
 import { Button } from "@/components/ui/button";
 import { SearchBar } from "./SearchBar";
