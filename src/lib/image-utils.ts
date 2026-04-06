@@ -178,7 +178,8 @@ const FALLBACK_POOLS: Record<string, string[]> = {
   ],
   "sports": [
     "https://images.unsplash.com/photo-1461896836934-bd45ba1a603c?w=800&h=500&fit=crop&fm=webp&q=80",
-    "https://images.unsplash.com/photo-1571019614242-c5c5dee9f50b?w=800&h=500&fit=crop&fm=webp&q=80",
+    "https://images.unsplash.com/photo-1574629810360-7efbbe195018?w=800&h=500&fit=crop&fm=webp&q=80",
+    "https://images.unsplash.com/photo-1517649763962-0c623066013b?w=800&h=500&fit=crop&fm=webp&q=80",
   ],
   "indoor-activities": [
     "https://images.unsplash.com/photo-1545558014-8692077e9b5c?w=800&h=500&fit=crop&fm=webp&q=80",
