@@ -1570,14 +1570,14 @@ const ProgrammaticPage = () => {
                     : `Top ${modifier?.name || ""} ${category?.name || "Places"}`
               } {locationFilter ? `in ${niCities.find(c => c.slug === locationFilter)?.name || ""}` : isNIWide ? "Across Northern Ireland" : `in ${isLandmarkPage ? city?.name || "" : locationName}`}
             </h2>
-            {listings && listings.length > 0 ? (
+            {displayListings.length > 0 ? (
               <>
                 {/* Grouped by city for NI-wide listing pages */}
                 {isNIWide && !locationFilter ? (
                   <div className="space-y-8">
                     {(() => {
-                      const grouped: Record<string, typeof listings> = {};
-                      for (const l of listings) {
+                      const grouped: Record<string, typeof displayListings> = {};
+                      for (const l of displayListings) {
                         const cn = (l.cities as any)?.name || "Unknown";
                         if (!grouped[cn]) grouped[cn] = [];
                         grouped[cn].push(l);
@@ -1626,7 +1626,7 @@ const ProgrammaticPage = () => {
                   </div>
                 ) : (
                   <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                    {listings.map((listing, i) => (
+                    {displayListings.map((listing, i) => (
                       <div key={listing.id} className="relative">
                         <span className="absolute -top-2 -left-2 z-10 w-7 h-7 bg-primary text-primary-foreground rounded-full flex items-center justify-center text-xs font-bold card-shadow">
                           {i + 1}
