@@ -399,6 +399,20 @@ const TOURISM_BLOCKED_URL_TOKENS = [
   "photo-1476231682828-37e571bc172f",
 ];
 
+const STRONG_MUSIC_IMAGE_KEYWORDS = [
+  "andré rieu", "andre rieu",
+  "concert", "concerts", "gig", "gigs", "live music", "live band",
+  "orchestra", "symphony", "classical", "philharmonic", "recital",
+  "violin", "pianist", "soprano", "tenor", "cello", "chamber music", "concerto",
+  "band", "singer", "songwriter", "musician", "vocalist", "soloist",
+  "acoustic", "open mic", "open-mic", "trad", "folk", "jazz", "blues",
+  "dj set", "tribute", "choir", "choral", "cabaret", "opera",
+];
+
+function hasStrongMusicImageSignal(searchText: string): boolean {
+  return STRONG_MUSIC_IMAGE_KEYWORDS.some((kw) => searchText.includes(kw));
+}
+
 function buildSearchText(title?: string | null, tags?: string[] | null, description?: string | null): string {
   return [title, ...(tags || []), description]
     .filter(Boolean)
@@ -468,6 +482,7 @@ export function detectCategoryFromKeywords(
 ): string | null {
   const searchText = buildSearchText(title, tags, description);
   if (!searchText) return null;
+  const hasStrongMusicSignal = hasStrongMusicImageSignal(searchText);
 
   const strictLgbtCategory = detectStrictLgbtCategory(searchText, categorySlug);
   if (strictLgbtCategory) {
@@ -475,6 +490,10 @@ export function detectCategoryFromKeywords(
   }
 
   for (const entry of KEYWORD_CATEGORY_MAP) {
+    if (entry.category === "sports" && hasStrongMusicSignal) {
+      continue;
+    }
+
     if (entry.keywords.some((kw) => searchText.includes(kw))) {
       return entry.category;
     }
