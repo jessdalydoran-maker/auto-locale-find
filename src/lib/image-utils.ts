@@ -229,9 +229,14 @@ const KEYWORD_CATEGORY_MAP: Array<{ keywords: string[]; category: string }> = [
     keywords: ["choir", "choral", "vocal ensemble", "rehearsal"],
     category: "choir-music",
   },
+  // Classical Music / Orchestra
+  {
+    keywords: ["orchestra", "symphony", "classical", "philharmonic", "recital", "violin", "pianist", "soprano", "tenor", "cello", "chamber music", "concerto", "andré rieu", "andre rieu", "strauss", "beethoven", "mozart", "chopin", "vivaldi", "operatic"],
+    category: "live-music",
+  },
   // Live Music / Gigs
   {
-    keywords: ["gig", "concert", "band", "rock", "indie", "punk", "metal", "live music", "singer", "acoustic", "open mic", "open-mic", "songwriter"],
+    keywords: ["gig", "concert", "band", "rock", "indie", "punk", "metal", "live music", "singer", "acoustic", "open mic", "open-mic", "songwriter", "musician", "performer", "vocalist", "soloist", "tribute"],
     category: "live-music",
   },
   // Trad / Folk
