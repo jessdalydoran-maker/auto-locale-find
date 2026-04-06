@@ -765,14 +765,14 @@ const ProgrammaticPage = () => {
   }, [listings, events, pageType, parsed?.modifierSlug]);
 
   // Use deduplication + shared public quality ranking before rendering
-  const dedupedListings = useMemo(() => {
+  const dedupedListings = useMemo<any[]>(() => {
     if (!listings) return [];
     const { unique } = deduplicateListings(listings as any);
     const complete = filterCompleteListings(unique);
-    return filterAndRankListings(complete as any);
+    return filterAndRankListings(complete as any) as any[];
   }, [listings]);
 
-  const displayListings = dedupedListings;
+  const displayListings: any[] = dedupedListings;
   const listingCount = displayListings.length;
   const itemCount = (showEvents ? eventCount + venueCount : listingCount) + (shouldFetchEvents && !showEvents ? eventCount : 0);
 
