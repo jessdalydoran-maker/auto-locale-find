@@ -238,7 +238,8 @@ const ProgrammaticPage = () => {
   const { data: regularListings } = useQuery({
     queryKey: ["prog-listings", parsed?.categorySlug, parsed?.citySlug, parsed?.neighbourhoodSlug, parsed?.modifierSlug, locationFilter, isDateNightPage],
     queryFn: async () => {
-      const fetchLimit = (isFamilyPage || isDateNightPage) && isNIWide ? 200 : 30;
+      const isNIWideThingsToDo = isNIWide && parsed!.categorySlug === "things-to-do";
+      const fetchLimit = (isFamilyPage || isDateNightPage) && isNIWide ? 200 : isNIWideThingsToDo ? 200 : 30;
 
       // For date-night pages, fetch broadly across all categories then filter client-side
       if (isDateNightPage) {
@@ -316,7 +317,7 @@ const ProgrammaticPage = () => {
         .select("*, cities!inner(slug, name), categories!inner(slug, name)")
         .eq("is_approved", true)
         .order("rating", { ascending: false })
-        .limit(isFamilyPage && isNIWide ? 100 : 30);
+        .limit((isFamilyPage || isNIWideThingsToDo) && isNIWide ? 200 : 30);
 
       // For NI-wide pages, don't filter by city unless locationFilter is set
       if (isNIWide) {
@@ -554,7 +555,7 @@ const ProgrammaticPage = () => {
 
   // Fetch events (for event pages, weekend pages, family/free/date-night pages)
   const shouldFetchEvents = showEvents || isWeekendPage || isDateNightPage ||
-    (parsed?.modifierSlug === "family" && parsed?.categorySlug === "things-to-do") ||
+    (parsed?.categorySlug === "things-to-do") ||
     (parsed?.modifierSlug === "free" && parsed?.categorySlug === "things-to-do");
 
   // Family event tag priority scoring
