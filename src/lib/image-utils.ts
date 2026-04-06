@@ -103,12 +103,12 @@ const FALLBACK_POOLS: Record<string, string[]> = {
   // Attractions / Landmarks / Castles
   "attractions": [
     "https://images.unsplash.com/photo-1590073844006-33379778ae09?w=800&h=500&fit=crop&fm=webp&q=80", // Giant's Causeway
-    "https://images.unsplash.com/photo-1533154683836-84ea7a0bc310?w=800&h=500&fit=crop&fm=webp&q=80", // Belfast skyline
-    "https://images.unsplash.com/photo-1564959130747-897a8e5c33c6?w=800&h=500&fit=crop&fm=webp&q=80", // NI coast
+    "https://images.unsplash.com/photo-1513635269975-59663e0ac1ad?w=800&h=500&fit=crop&fm=webp&q=80", // City landmark
+    "https://images.unsplash.com/photo-1555881400-74d7acaacd8b?w=800&h=500&fit=crop&fm=webp&q=80", // Harbour / waterfront
   ],
   "things-to-do": [
-    "https://images.unsplash.com/photo-1533154683836-84ea7a0bc310?w=800&h=500&fit=crop&fm=webp&q=80",
-    "https://images.unsplash.com/photo-1590073844006-33379778ae09?w=800&h=500&fit=crop&fm=webp&q=80",
+    "https://images.unsplash.com/photo-1528605248644-14dd04022da1?w=800&h=500&fit=crop&fm=webp&q=80", // Group activity
+    "https://images.unsplash.com/photo-1517457373958-b7bdd4587205?w=800&h=500&fit=crop&fm=webp&q=80", // People exploring
   ],
 
   // Events (generic)
