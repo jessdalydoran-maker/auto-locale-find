@@ -110,8 +110,9 @@ export const Footer = () => {
             <nav className="flex flex-col gap-2">
               <Link to="/submit-venue" className="text-sm text-primary-foreground/50 hover:text-accent transition-colors">Submit a Venue</Link>
               <Link to="/suggest-event" className="text-sm text-primary-foreground/50 hover:text-accent transition-colors">Suggest an Event</Link>
-              <span className="text-sm text-primary-foreground/30">Contact</span>
-              <span className="text-sm text-primary-foreground/30">Privacy Policy</span>
+              <Link to="/about" className="text-sm text-primary-foreground/50 hover:text-accent transition-colors">About Us</Link>
+              <Link to="/contact" className="text-sm text-primary-foreground/50 hover:text-accent transition-colors">Contact</Link>
+              <Link to="/privacy-policy" className="text-sm text-primary-foreground/50 hover:text-accent transition-colors">Privacy Policy</Link>
               <Link to="/admin" className="text-sm text-primary-foreground/30 hover:text-primary-foreground/50 transition-colors">Admin</Link>
             </nav>
           </div>
