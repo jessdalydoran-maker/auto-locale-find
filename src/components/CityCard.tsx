@@ -9,9 +9,9 @@ interface CityCardProps {
 }
 
 export const CityCard = ({ name, slug, imageUrl, imageAlt, description, listingCount, index = 0 }: CityCardProps) => {
-  const resolvedImage = getImageUrl(imageUrl, "manual", undefined, slug);
+  const resolvedImage = getImageUrl(imageUrl, "manual", "parks", slug);
   const altText = imageAlt || generateCityAltText(name);
-  const handleImageError = useMemo(() => buildImageErrorHandler("things-to-do", name), [name]);
+  const handleImageError = useMemo(() => buildImageErrorHandler("parks", name), [name]);
 
   return (
     <Link
