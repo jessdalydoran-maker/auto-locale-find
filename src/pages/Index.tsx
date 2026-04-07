@@ -15,6 +15,7 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { getImageUrl, getCategoryPlaceholder, buildImageErrorHandler } from "@/lib/image-utils";
+import { getBlogFallbackImage, hasDeprecatedBlogImageUrl } from "@/lib/blog-image-fallback";
 import { filterAndRankListings } from "@/lib/listing-quality";
 import { Link, useNavigate } from "react-router-dom";
 import { setPageCanonical } from "@/lib/canonical";
@@ -198,10 +199,19 @@ const Index = () => {
               >
                 <div className="relative aspect-[3/2] overflow-hidden">
                   <img
-                    src={post.featured_image_url || getCategoryPlaceholder("default", post.title)}
+                    src={
+                      hasDeprecatedBlogImageUrl(post.featured_image_url)
+                        ? getBlogFallbackImage({ title: post.title, excerpt: post.excerpt }, post.featured_image_url)
+                        : post.featured_image_url || getCategoryPlaceholder("default", post.title)
+                    }
                     alt={post.featured_image_alt || post.title}
                     className="w-full h-full object-cover group-hover:scale-[1.05] transition-transform duration-700"
                     loading="lazy"
+                    onError={(e) => {
+                      const img = e.currentTarget;
+                      const fallback = getCategoryPlaceholder("default", post.title);
+                      if (img.src !== fallback) img.src = fallback;
+                    }}
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent" />
                   <div className="absolute bottom-0 left-0 right-0 p-4">
