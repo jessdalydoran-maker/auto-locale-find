@@ -1,5 +1,6 @@
 import { useState, useMemo } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
+import ImageUpload from "@/components/admin/ImageUpload";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -288,8 +289,13 @@ function EventSheet({ event, open, onClose, cities, categories, qc, mode }: any)
             </div>
           </div>
           <div>
-            <label className="text-xs font-medium text-muted-foreground">Image URL</label>
-            <Input value={form.image_url || ""} onChange={(e) => setForm({ ...form, image_url: e.target.value })} />
+            <label className="text-xs font-medium text-muted-foreground">Image</label>
+            <ImageUpload
+              value={form.image_url}
+              onChange={(url) => setForm({ ...form, image_url: url })}
+              folder="events"
+              className="mt-1"
+            />
           </div>
           <div>
             <label className="text-xs font-medium text-muted-foreground">Ticket URL</label>
