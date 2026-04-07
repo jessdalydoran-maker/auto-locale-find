@@ -644,21 +644,20 @@ const AdminPage = () => {
                               >
                                 Edit Desc
                               </Button>
-                              <Button
-                                size="sm"
-                                variant={listing.is_featured ? "default" : "outline"}
-                                className="text-[10px] h-6 px-2"
-                                onClick={async () => {
-                                  await supabase
-                                    .from("listings")
-                                    .update({ is_featured: !listing.is_featured })
-                                    .eq("id", listing.id);
-                                  queryClient.invalidateQueries({ queryKey: ["admin-listings"] });
-                                  toast.success(`${listing.name} ${listing.is_featured ? "unfeatured" : "featured"}`);
-                                }}
-                              >
-                                {listing.is_featured ? "★ Featured" : "☆ Feature"}
-                              </Button>
+                              <label className="flex items-center gap-1.5 cursor-pointer">
+                                <Switch
+                                  checked={listing.is_featured}
+                                  onCheckedChange={async (checked) => {
+                                    await supabase
+                                      .from("listings")
+                                      .update({ is_featured: checked })
+                                      .eq("id", listing.id);
+                                    queryClient.invalidateQueries({ queryKey: ["admin-listings"] });
+                                    toast.success(`${listing.name} ${checked ? "featured" : "unfeatured"}`);
+                                  }}
+                                />
+                                <span className="text-[9px] text-muted-foreground whitespace-nowrap">Partner sites</span>
+                              </label>
                               <Button
                                 size="sm"
                                 variant={(listing as any).family_friendly ? "default" : "outline"}
