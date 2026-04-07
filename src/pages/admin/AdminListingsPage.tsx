@@ -8,6 +8,7 @@ import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
 import { Star, Plus, Search, ChevronDown, X, Upload } from "lucide-react";
 import { toast } from "sonner";
+import ImageUpload from "@/components/admin/ImageUpload";
 import {
   Select,
   SelectContent,
@@ -334,28 +335,12 @@ function EditListingSheet({ listing, open, onClose, cities, categories, qc }: an
             {/* Image */}
             <div>
               <label className="text-xs font-medium text-muted-foreground">Image</label>
-              {form.image_url && (
-                <img src={form.image_url} alt="" className="w-full h-32 object-cover rounded-lg mt-1" />
-              )}
-              <div className="flex gap-2 mt-2">
-                <label className="cursor-pointer">
-                  <input
-                    type="file"
-                    accept="image/*"
-                    className="hidden"
-                    onChange={(e) => e.target.files?.[0] && handleImageUpload(e.target.files[0])}
-                  />
-                  <Button variant="outline" size="sm" asChild disabled={uploading}>
-                    <span><Upload className="h-3 w-3 mr-1" />{uploading ? "Uploading…" : "Upload"}</span>
-                  </Button>
-                </label>
-                <Input
-                  placeholder="Or paste image URL"
-                  value={form.image_url || ""}
-                  onChange={(e) => setForm({ ...form, image_url: e.target.value })}
-                  className="text-xs"
-                />
-              </div>
+              <ImageUpload
+                value={form.image_url}
+                onChange={(url) => setForm((f: any) => ({ ...f, image_url: url }))}
+                folder={`listings/${listing.id}`}
+                className="mt-1"
+              />
             </div>
 
             <div>
@@ -501,8 +486,13 @@ function AddListingSheet({ open, onClose, cities, categories, qc }: any) {
             </div>
           </div>
           <div>
-            <label className="text-xs font-medium text-muted-foreground">Image URL</label>
-            <Input value={form.image_url} onChange={(e) => setForm({ ...form, image_url: e.target.value })} />
+            <label className="text-xs font-medium text-muted-foreground">Image</label>
+            <ImageUpload
+              value={form.image_url}
+              onChange={(url) => setForm({ ...form, image_url: url })}
+              folder="listings/new"
+              className="mt-1"
+            />
           </div>
           <div className="grid grid-cols-2 gap-3">
             <div>
