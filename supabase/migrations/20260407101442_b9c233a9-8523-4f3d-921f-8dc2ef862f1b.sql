@@ -1,0 +1,5 @@
+UPDATE public.cities SET image_url = 'https://images.unsplash.com/photo-1523712999610-f77fbcfc3843?w=800&h=500&fit=crop', image_alt = 'Green hills in County Armagh' WHERE slug = 'derry';
+UPDATE public.cities SET image_url = 'https://images.unsplash.com/photo-1523712999610-f77fbcfc3843?w=800&h=500&fit=crop', image_alt = 'Green coastal hills near Bangor' WHERE slug = 'bangor';
+UPDATE public.cities SET image_url = 'https://images.unsplash.com/photo-1523712999610-f77fbcfc3843?w=800&h=500&fit=crop', image_alt = 'Green landscape in County Antrim' WHERE slug = 'lisburn';
+UPDATE public.cities SET image_url = 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=800&h=500&fit=crop', image_alt = 'Scenic landscape near Coleraine' WHERE slug = 'coleraine';
+UPDATE public.cities SET image_url = 'https://images.unsplash.com/photo-1523712999610-f77fbcfc3843?w=800&h=500&fit=crop', image_alt = 'Green hills and countryside in Northern Ireland' WHERE slug = 'northern-ireland';
