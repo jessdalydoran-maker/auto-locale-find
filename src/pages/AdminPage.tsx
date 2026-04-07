@@ -9,7 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import {
   BarChart3, Layers, MapPin, TrendingUp, Play, Settings, Clock,
-  CheckCircle2, XCircle, AlertTriangle, Archive, RefreshCw, FileText, Calendar, Image,
+  CheckCircle2, XCircle, AlertTriangle, Archive, RefreshCw, FileText, Calendar, Image, Star,
 } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
@@ -156,6 +156,11 @@ const AdminPage = () => {
   };
 
   const [ingestionSourceType, setIngestionSourceType] = useState<string>("all");
+  const [showFeaturedOnly, setShowFeaturedOnly] = useState(false);
+
+  const filteredListings = listings?.filter((l) =>
+    showFeaturedOnly ? l.is_featured : true
+  );
 
   const runEventIngestion = async () => {
     setIsIngesting(true);
@@ -494,6 +499,13 @@ const AdminPage = () => {
           {/* ─── LISTINGS TAB ─── */}
           <TabsContent value="listings">
             <div className="bg-card rounded-xl card-shadow overflow-hidden">
+              <div className="p-4 border-b border-border flex items-center justify-between">
+                <h3 className="font-display font-semibold text-foreground">Listings Management</h3>
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <span className="text-xs text-muted-foreground">Featured only</span>
+                  <Switch checked={showFeaturedOnly} onCheckedChange={setShowFeaturedOnly} />
+                </label>
+              </div>
               <div className="overflow-x-auto">
                 <table className="w-full text-sm">
                   <thead>
@@ -509,7 +521,7 @@ const AdminPage = () => {
                     </tr>
                   </thead>
                   <tbody>
-                    {listings?.map((listing) => {
+                    {filteredListings?.map((listing) => {
                       const imgStatus = (listing as any).image_status || "needs_review";
                       return (
                         <tr key={listing.id} className="border-b border-border last:border-0">
@@ -522,7 +534,10 @@ const AdminPage = () => {
                               )}
                             </div>
                           </td>
-                          <td className="p-3 font-medium text-foreground text-xs">{listing.name}</td>
+                          <td className="p-3 font-medium text-foreground text-xs flex items-center gap-1">
+                            {listing.is_featured && <Star className="h-3 w-3 fill-amber-400 text-amber-400 shrink-0" />}
+                            {listing.name}
+                          </td>
                           <td className="p-3 text-muted-foreground text-xs">{(listing.cities as any)?.name}</td>
                           <td className="p-3 text-muted-foreground text-xs">{(listing.categories as any)?.name}</td>
                           <td className="p-3 text-xs">{listing.rating}</td>
@@ -629,21 +644,20 @@ const AdminPage = () => {
                               >
                                 Edit Desc
                               </Button>
-                              <Button
-                                size="sm"
-                                variant={listing.is_featured ? "default" : "outline"}
-                                className="text-[10px] h-6 px-2"
-                                onClick={async () => {
-                                  await supabase
-                                    .from("listings")
-                                    .update({ is_featured: !listing.is_featured })
-                                    .eq("id", listing.id);
-                                  queryClient.invalidateQueries({ queryKey: ["admin-listings"] });
-                                  toast.success(`${listing.name} ${listing.is_featured ? "unfeatured" : "featured"}`);
-                                }}
-                              >
-                                {listing.is_featured ? "★ Featured" : "☆ Feature"}
-                              </Button>
+                              <label className="flex items-center gap-1.5 cursor-pointer">
+                                <Switch
+                                  checked={listing.is_featured}
+                                  onCheckedChange={async (checked) => {
+                                    await supabase
+                                      .from("listings")
+                                      .update({ is_featured: checked })
+                                      .eq("id", listing.id);
+                                    queryClient.invalidateQueries({ queryKey: ["admin-listings"] });
+                                    toast.success(`${listing.name} ${checked ? "featured" : "unfeatured"}`);
+                                  }}
+                                />
+                                <span className="text-[9px] text-muted-foreground whitespace-nowrap">Partner sites</span>
+                              </label>
                               <Button
                                 size="sm"
                                 variant={(listing as any).family_friendly ? "default" : "outline"}
