@@ -15,6 +15,7 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { getImageUrl, getCategoryPlaceholder, buildImageErrorHandler } from "@/lib/image-utils";
+import { getBlogFallbackImage, hasDeprecatedBlogImageUrl } from "@/lib/blog-image-fallback";
 import { filterAndRankListings } from "@/lib/listing-quality";
 import { Link, useNavigate } from "react-router-dom";
 import { setPageCanonical } from "@/lib/canonical";
