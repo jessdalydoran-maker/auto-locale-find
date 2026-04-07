@@ -18,6 +18,9 @@ import SuggestEventPage from "./pages/SuggestEventPage.tsx";
 import WeekendGuidePage from "./pages/WeekendGuidePage.tsx";
 import BlogPage from "./pages/BlogPage.tsx";
 import BlogPostPage from "./pages/BlogPostPage.tsx";
+import AboutPage from "./pages/AboutPage.tsx";
+import PrivacyPolicyPage from "./pages/PrivacyPolicyPage.tsx";
+import ContactPage from "./pages/ContactPage.tsx";
 
 const queryClient = new QueryClient();
 
@@ -36,6 +39,9 @@ const App = () => (
           <Route path="/things-to-do-belfast-this-weekend" element={<WeekendGuidePage />} />
           <Route path="/submit-venue" element={<SubmitVenuePage />} />
           <Route path="/suggest-event" element={<SuggestEventPage />} />
+          <Route path="/about" element={<AboutPage />} />
+          <Route path="/privacy-policy" element={<PrivacyPolicyPage />} />
+          <Route path="/contact" element={<ContactPage />} />
           <Route path="/blog" element={<BlogPage />} />
           <Route path="/blog/:slug" element={<BlogPostPage />} />
           <Route path="/place/:slug" element={<PlaceDetailPage />} />
