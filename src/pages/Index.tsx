@@ -305,6 +305,7 @@ const Index = () => {
               key={city.id}
               name={city.name} slug={city.slug}
               imageUrl={city.image_url}
+              imageAlt={city.image_alt}
               description={city.description}
               index={i}
             />
