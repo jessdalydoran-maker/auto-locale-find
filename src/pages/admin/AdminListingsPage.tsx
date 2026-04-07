@@ -105,7 +105,7 @@ export default function AdminListingsPage() {
   const bulkAction = async (action: "feature" | "unfeature" | "approve" | "unapprove" | "archive") => {
     const ids = [...selected];
     if (!ids.length) return;
-    const updates: Record<string, any> = {};
+    const updates: any = {};
     if (action === "feature") updates.is_featured = true;
     if (action === "unfeature") updates.is_featured = false;
     if (action === "approve") updates.is_approved = true;
