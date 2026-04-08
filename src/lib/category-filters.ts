@@ -227,6 +227,13 @@ const CATEGORY_FILTERS: Record<string, CategoryFilter> = {
     excludeSlugs: [],
     isBroadIntent: true,
   },
+  // Alias: "family" → same as "family-activities"
+  "family": {
+    includeSlugs: ["family-activities", "parks", "museums", "cinemas", "leisure-centres", "leisure-entertainment", "indoor-activities", "attractions"],
+    audienceTags: ["family", "kids", "family_friendly", "toddlers", "young-kids", "older-children", "indoor", "outdoor", "adventure", "nature"],
+    excludeSlugs: ["bars", "pubs", "cocktail-bars", "nightlife", "lgbtq"],
+    isBroadIntent: false,
+  },
 };
 
 /**
