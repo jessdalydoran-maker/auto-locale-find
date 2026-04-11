@@ -20,6 +20,7 @@ import BlogPostPage from "./pages/BlogPostPage.tsx";
 import AboutPage from "./pages/AboutPage.tsx";
 import PrivacyPolicyPage from "./pages/PrivacyPolicyPage.tsx";
 import ContactPage from "./pages/ContactPage.tsx";
+import RoamPage from "./pages/RoamPage.tsx";
 import AdminLayout from "./pages/admin/AdminLayout.tsx";
 import AdminLoginPage from "./pages/admin/AdminLoginPage.tsx";
 import AdminDashboardPage from "./pages/admin/AdminDashboardPage.tsx";
@@ -48,6 +49,7 @@ const App = () => (
           <Route path="/about" element={<AboutPage />} />
           <Route path="/privacy-policy" element={<PrivacyPolicyPage />} />
           <Route path="/contact" element={<ContactPage />} />
+          <Route path="/roam" element={<RoamPage />} />
           <Route path="/blog" element={<BlogPage />} />
           <Route path="/blog/:slug" element={<BlogPostPage />} />
           <Route path="/place/:slug" element={<PlaceDetailPage />} />

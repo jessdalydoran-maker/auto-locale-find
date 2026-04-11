@@ -17,6 +17,7 @@ import { Button } from "@/components/ui/button";
 import { getImageUrl, getCategoryPlaceholder, buildImageErrorHandler } from "@/lib/image-utils";
 import { getBlogFallbackImage, hasDeprecatedBlogImageUrl } from "@/lib/blog-image-fallback";
 import { filterAndRankListings } from "@/lib/listing-quality";
+import { RoamConcierge } from "@/components/RoamConcierge";
 import { Link, useNavigate } from "react-router-dom";
 import { setPageCanonical } from "@/lib/canonical";
 import { useEffect, useState } from "react";
@@ -152,6 +153,13 @@ const Index = () => {
               </Link>
             ))}
           </div>
+        </div>
+      </section>
+
+      {/* ═══════ ROAM AI CONCIERGE ═══════ */}
+      <section className="py-10 md:py-14 bg-secondary/40">
+        <div className="container mx-auto px-4">
+          <RoamConcierge compact />
         </div>
       </section>
 
