@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { Search, Menu, X, ChevronDown } from "lucide-react";
+import { Search, Menu, X, ChevronDown, Compass } from "lucide-react";
 import { useState, useEffect } from "react";
 import logo from "@/assets/logo.png";
 import { Button } from "@/components/ui/button";
@@ -103,6 +103,10 @@ export const Header = () => {
             <Link to="/blog" className="px-3 py-2 text-sm text-foreground/70 hover:text-foreground transition-colors rounded-md font-medium">
               Blog
             </Link>
+            <Link to="/roam" className="px-3 py-2 text-sm text-accent font-semibold hover:text-accent/80 transition-colors rounded-md flex items-center gap-1.5">
+              <Compass className="h-3.5 w-3.5" />
+              ROAM
+            </Link>
           </nav>
 
           {/* Right side */}
@@ -159,6 +163,10 @@ export const Header = () => {
               ))}
               <Link to="/cities" className="px-2 py-2.5 text-sm text-foreground/70 hover:text-foreground transition-colors" onClick={() => setMobileMenuOpen(false)}>Cities</Link>
               <Link to="/blog" className="px-2 py-2.5 text-sm text-foreground/70 hover:text-foreground transition-colors" onClick={() => setMobileMenuOpen(false)}>Blog</Link>
+              <Link to="/roam" className="px-2 py-2.5 text-sm font-semibold text-accent hover:text-accent/80 transition-colors flex items-center gap-1.5" onClick={() => setMobileMenuOpen(false)}>
+                <Compass className="h-3.5 w-3.5" />
+                ROAM
+              </Link>
               <Link to="/submit-venue" className="px-2 py-2.5 text-sm font-semibold text-accent hover:text-accent/80 transition-colors" onClick={() => setMobileMenuOpen(false)}>List Your Venue</Link>
             </nav>
           </div>
