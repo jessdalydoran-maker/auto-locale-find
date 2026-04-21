@@ -16,6 +16,7 @@ export default function AdminAutomationPage() {
   const [isHarvesting, setIsHarvesting] = useState(false);
   const [isIngesting, setIsIngesting] = useState(false);
   const [isScraping, setIsScraping] = useState(false);
+  const [isBackfilling, setIsBackfilling] = useState(false);
   const [ingestionSourceType, setIngestionSourceType] = useState("all");
 
   const { data: automationLogs } = useQuery({
@@ -89,6 +90,17 @@ export default function AdminAutomationPage() {
     finally { setIsScraping(false); }
   };
 
+  const runGoogleBackfill = async () => {
+    setIsBackfilling(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("backfill-google-images", { body: { batch_size: 25 } });
+      if (error) throw error;
+      toast.success(`Google: ${data.updated} updated (${data.places_hits} photos, ${data.streetview_hits} street view) · ${data.remaining} remaining`);
+      qc.invalidateQueries({ queryKey: ["admin-listings"] });
+    } catch (err) { toast.error("Failed: " + String(err)); }
+    finally { setIsBackfilling(false); }
+  };
+
   return (
     <div className="space-y-6">
       <h1 className="font-display font-bold text-xl text-foreground">Automation & Data Quality</h1>
@@ -129,6 +141,9 @@ export default function AdminAutomationPage() {
             </Button>
             <Button onClick={runImageScraper} disabled={isScraping} size="sm" variant="outline">
               {isScraping ? <><RefreshCw className="h-3 w-3 mr-1 animate-spin" />Scraping…</> : <><Image className="h-3 w-3 mr-1" />Scrape Images</>}
+            </Button>
+            <Button onClick={runGoogleBackfill} disabled={isBackfilling} size="sm" variant="outline">
+              {isBackfilling ? <><RefreshCw className="h-3 w-3 mr-1 animate-spin" />Backfilling…</> : <><Image className="h-3 w-3 mr-1" />Backfill Google Images</>}
             </Button>
           </div>
         </div>
