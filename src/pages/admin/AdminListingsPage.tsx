@@ -341,6 +341,27 @@ function EditListingSheet({ listing, open, onClose, cities, categories, qc }: an
                 folder={`listings/${listing.id}`}
                 className="mt-1"
               />
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                className="mt-2 w-full"
+                onClick={async () => {
+                  toast.loading("Fetching from Google…", { id: "g-img" });
+                  const { data, error } = await supabase.functions.invoke("fetch-google-image", {
+                    body: { listing_id: listing.id, persist: true },
+                  });
+                  if (error || !data?.image_url) {
+                    toast.error("No Google image found", { id: "g-img" });
+                    return;
+                  }
+                  setForm((f: any) => ({ ...f, image_url: data.image_url }));
+                  toast.success(`Fetched (${data.image_source})`, { id: "g-img" });
+                  qc.invalidateQueries({ queryKey: ["admin-listings"] });
+                }}
+              >
+                Fetch image from Google
+              </Button>
             </div>
 
             <div>

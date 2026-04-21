@@ -6,6 +6,66 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type",
 };
 
+const GOOGLE_KEY = Deno.env.get("GOOGLE_MAPS_API_KEY") || "";
+
+async function findPlaceId(query: string): Promise<string | null> {
+  if (!GOOGLE_KEY) return null;
+  const res = await fetch("https://places.googleapis.com/v1/places:searchText", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "X-Goog-Api-Key": GOOGLE_KEY,
+      "X-Goog-FieldMask": "places.id",
+    },
+    body: JSON.stringify({ textQuery: query, maxResultCount: 1 }),
+  });
+  if (!res.ok) return null;
+  const json = await res.json();
+  return json.places?.[0]?.id || null;
+}
+
+async function getFirstPhotoUrl(placeId: string): Promise<string | null> {
+  if (!GOOGLE_KEY) return null;
+  const res = await fetch(`https://places.googleapis.com/v1/places/${placeId}`, {
+    headers: { "X-Goog-Api-Key": GOOGLE_KEY, "X-Goog-FieldMask": "photos" },
+  });
+  if (!res.ok) return null;
+  const json = await res.json();
+  const photoName = json.photos?.[0]?.name;
+  if (!photoName) return null;
+  const mediaRes = await fetch(`https://places.googleapis.com/v1/${photoName}/media?maxWidthPx=1200&key=${GOOGLE_KEY}&skipHttpRedirect=true`);
+  if (!mediaRes.ok) return null;
+  const m = await mediaRes.json();
+  return m.photoUri || null;
+}
+
+async function streetViewIfExists(lat: number | null, lng: number | null, address: string | null): Promise<string | null> {
+  if (!GOOGLE_KEY) return null;
+  let location: string;
+  if (lat != null && lng != null) location = `${lat},${lng}`;
+  else if (address) location = encodeURIComponent(address);
+  else return null;
+  const meta = await fetch(`https://maps.googleapis.com/maps/api/streetview/metadata?location=${location}&key=${GOOGLE_KEY}`);
+  if (!meta.ok) return null;
+  const j = await meta.json();
+  if (j.status !== "OK") return null;
+  return `https://maps.googleapis.com/maps/api/streetview?size=1200x800&location=${location}&fov=80&pitch=0&key=${GOOGLE_KEY}`;
+}
+
+async function resolveImage(row: any): Promise<{ url: string | null; source: string }> {
+  let placeId = row.place_id;
+  if (!placeId && row.name) {
+    placeId = await findPlaceId([row.name, row.address].filter(Boolean).join(", "));
+  }
+  if (placeId) {
+    const url = await getFirstPhotoUrl(placeId);
+    if (url) return { url, source: "google_places" };
+  }
+  const sv = await streetViewIfExists(row.latitude, row.longitude, row.address);
+  if (sv) return { url: sv, source: "google_streetview" };
+  return { url: null, source: "fallback" };
+}
+
 function parseCSVLine(line: string): string[] {
   const fields: string[] = [];
   let current = "";
@@ -184,6 +244,14 @@ Deno.serve(async (req) => {
       if (!city_id) { noCity++; skipped++; continue; }
       if (!category_id) { noCat++; skipped++; continue; }
 
+      let image_url: string | null = row.image_url;
+      let image_source = row.image_url ? "csv" : "fallback";
+      if (!image_url) {
+        const resolved = await resolveImage(row);
+        image_url = resolved.url;
+        image_source = resolved.source;
+      }
+
       toInsert.push({
         name: row.name,
         slug: row.slug,
@@ -198,13 +266,13 @@ Deno.serve(async (req) => {
         longitude: row.longitude,
         short_description: row.short_description,
         description: row.description,
-        image_url: row.image_url,
+        image_url,
         google_maps_link: row.google_maps_link,
         place_id: row.place_id,
         is_approved: true,
         is_archived: false,
-        image_status: row.image_url ? "approved" : "needs_review",
-        image_source: row.image_url ? "google" : "fallback",
+        image_status: image_url ? "approved" : "needs_review",
+        image_source,
       });
     }
 
