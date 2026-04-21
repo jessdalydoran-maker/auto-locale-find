@@ -244,6 +244,14 @@ Deno.serve(async (req) => {
       if (!city_id) { noCity++; skipped++; continue; }
       if (!category_id) { noCat++; skipped++; continue; }
 
+      let image_url: string | null = row.image_url;
+      let image_source = row.image_url ? "csv" : "fallback";
+      if (!image_url) {
+        const resolved = await resolveImage(row);
+        image_url = resolved.url;
+        image_source = resolved.source;
+      }
+
       toInsert.push({
         name: row.name,
         slug: row.slug,
@@ -258,13 +266,13 @@ Deno.serve(async (req) => {
         longitude: row.longitude,
         short_description: row.short_description,
         description: row.description,
-        image_url: row.image_url,
+        image_url,
         google_maps_link: row.google_maps_link,
         place_id: row.place_id,
         is_approved: true,
         is_archived: false,
-        image_status: row.image_url ? "approved" : "needs_review",
-        image_source: row.image_url ? "google" : "fallback",
+        image_status: image_url ? "approved" : "needs_review",
+        image_source,
       });
     }
 
